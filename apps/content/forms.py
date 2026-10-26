@@ -3,15 +3,11 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import FAQItem, GlossaryTerm, KnowledgeArticle
 
-INPUT_CLS = (
-    "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition bg-white"
-)
-TEXTAREA_CLS = (
-    "w-full px-4 py-3 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition bg-white"
-)
-CHECKBOX_CLS = "w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+INPUT_CLS = "form-input"
+TEXTAREA_CLS = "form-textarea"
+SELECT_CLS = "form-select"
+CHECKBOX_CLS = "form-checkbox"
+FILE_CLS = "form-file"
 
 
 class KnowledgeArticleForm(forms.ModelForm):
@@ -29,7 +25,7 @@ class KnowledgeArticleForm(forms.ModelForm):
             "is_published",
         )
         widgets = {
-            "category": forms.Select(attrs={"class": INPUT_CLS}),
+            "category": forms.Select(attrs={"class": SELECT_CLS}),
             "title": forms.TextInput(
                 attrs={
                     "class": INPUT_CLS,
@@ -52,7 +48,7 @@ class KnowledgeArticleForm(forms.ModelForm):
                     ),
                 }
             ),
-            "attachment": forms.FileInput(attrs={"class": INPUT_CLS}),
+            "attachment": forms.FileInput(attrs={"class": FILE_CLS}),
             "pinned": forms.CheckboxInput(attrs={"class": CHECKBOX_CLS}),
             "is_published": forms.CheckboxInput(attrs={"class": CHECKBOX_CLS}),
         }
@@ -65,7 +61,7 @@ class FAQItemForm(forms.ModelForm):
         model = FAQItem
         fields = ("category", "question", "answer", "order", "is_published")
         widgets = {
-            "category": forms.Select(attrs={"class": INPUT_CLS}),
+            "category": forms.Select(attrs={"class": SELECT_CLS}),
             "question": forms.TextInput(
                 attrs={
                     "class": INPUT_CLS,

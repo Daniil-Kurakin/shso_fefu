@@ -12,96 +12,21 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/brand/favicon-32x32.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/brand/apple-touch-icon.png' %}">
 
-    {# Google Fonts: Montserrat (предзагрузка) #}
+    {# Google Fonts: Montserrat (предзагрузка веб-шрифтов) #}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap" rel="stylesheet">
 
-    {# Локальные фирменные шрифты брендбука (Coolvetica Crammed, Montserrat) #}
-    <style>
-      @font-face {
-        font-family: 'Coolvetica Crammed';
-        src: url("{% static 'fonts/coolvetica_crammed_rg.otf' %}") format('opentype');
-        font-weight: 400 700;
-        font-style: normal;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Coolvetica';
-        src: url("{% static 'fonts/coolvetica_rg.otf' %}") format('opentype');
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Coolvetica';
-        src: url("{% static 'fonts/coolvetica_rg_it.otf' %}") format('opentype');
-        font-weight: 400;
-        font-style: italic;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Montserrat';
-        src: url("{% static 'fonts/Montserrat-Regular.ttf' %}") format('truetype');
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Montserrat';
-        src: url("{% static 'fonts/Montserrat-SemiBold.ttf' %}") format('truetype');
-        font-weight: 600;
-        font-style: normal;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Montserrat';
-        src: url("{% static 'fonts/Montserrat-Bold.ttf' %}") format('truetype');
-        font-weight: 700;
-        font-style: normal;
-        font-display: swap;
-      }
+    {# Вынесенные модульные стили: шрифты, брендбук и UI-компоненты #}
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
-      body {
-        font-family: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-      h1, h2, h3, .font-heading {
-        font-family: 'Coolvetica Crammed', 'Coolvetica', Montserrat, sans-serif;
-        letter-spacing: 0.02em;
-      }
-    </style>
-
-    {# Tailwind CSS v4 — браузерная сборка через CDN с конфигурацией брендбука #}
+    {# Tailwind CSS v4 — браузерная сборка через CDN #}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" defer></script>
-    <style type="text/tailwindcss">
-      @theme {
-        --font-heading: 'Coolvetica Crammed', 'Coolvetica', Montserrat, sans-serif;
-        --font-sans: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-        /* Фирменная палитра ШСО ДВФУ */
-        --color-shso-primary: #0055B8;
-        --color-shso-vivid: #0078F2;
-        --color-shso-dark: #00257D;
-
-        /* Подмена стандартного blue на фирменные синие тона */
-        --color-blue-500: #0078F2;
-        --color-blue-600: #0078F2;
-        --color-blue-700: #0055B8;
-        --color-blue-800: #004494;
-        --color-blue-900: #00257D;
-
-        /* Фирменные цвета направлений отрядов */
-        --color-shso-yellow: #FFB700;
-        --color-shso-pink: #FC90CF;
-        --color-shso-green: #94EE2D;
-        --color-shso-coral: #FF5C5E;
-      }
-    </style>
-
-    {# HTMX — декларативный AJAX без JavaScript #}
+    {# HTMX — декларативный AJAX #}
     <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
 
-    {# Alpine.js — лёгкая реактивность для UI-компонентов #}
+    {# Alpine.js — реактивность компонентов #}
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
     {% block extra_head %}{% endblock %}
@@ -110,251 +35,24 @@
   <body class="min-h-screen bg-white text-gray-900 antialiased flex flex-col"
         hx-boost="true">
 
-    {# ======================= ШАПКА ======================= #}
-    <header class="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm"
-            x-data="{ mobileOpen: false }">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16">
+    {# Шапка сайта #}
+    {% include "includes/header.html" %}
 
-          {# Логотип / название #}
-          <a href="{% url 'core:home' %}"
-             class="flex items-center gap-3 transition-opacity hover:opacity-90">
-            <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
-                 alt="{% trans "ШСО ДВФУ" %}"
-                 class="h-9 w-auto object-contain hidden sm:block">
-            <img src="{% static 'images/brand/logo_icon_color.webp' %}"
-                 alt="{% trans "ШСО ДВФУ" %}"
-                 class="h-9 w-9 object-contain sm:hidden">
-            <span class="font-heading text-xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
-          </a>
+    {# Flash-уведомления #}
+    {% include "includes/messages.html" %}
 
-          {# Навигация (desktop) #}
-          <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <a href="{% url 'core:home' %}"
-               class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
-            <a href="{% url 'squads:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
-            <a href="{% url 'news:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
-            <a href="{% url 'vacancies:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Вакансии" %}</a>
-            <a href="{% url 'content:knowledge_index' %}" class="hover:text-blue-700 transition-colors">{% trans "База знаний" %}</a>
-            <a href="{% url 'content:contacts' %}" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
-          </nav>
-
-          {# Действия (desktop) #}
-          <div class="hidden md:flex items-center gap-3">
-            {% if user.is_authenticated %}
-              <span class="text-sm text-gray-500">{{ user.get_short_name }}</span>
-              {% if user.is_staff %}
-                <a href="{% url 'admin:index' %}"
-                   class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Админка" %}</a>
-              {% endif %}
-              <a href="{% url 'requests:dashboard' %}"
-                 class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Мои заявки" %}</a>
-              <a href="{% url 'accounts:profile' %}"
-                 class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Профиль" %}</a>
-              <form method="post" action="{% url 'accounts:logout' %}" class="inline">
-                {% csrf_token %}
-                <button type="submit"
-                        class="px-4 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                  {% trans "Выйти" %}
-                </button>
-              </form>
-            {% else %}
-              <a href="{% url 'accounts:login' %}"
-                 class="px-3.5 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                {% trans "Войти" %}
-              </a>
-              <a href="{% url 'accounts:register' %}"
-                 class="px-3.5 py-1.5 text-sm rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors font-medium">
-                {% trans "Регистрация" %}
-              </a>
-              <a href="{% url 'vacancies:list' %}"
-                 class="px-3.5 py-1.5 text-sm rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors font-semibold shadow-sm">
-                {% trans "Вступить" %}
-              </a>
-            {% endif %}
-          </div>
-
-          {# Гамбургер (mobile) #}
-          <button type="button"
-                  @click="mobileOpen = !mobileOpen"
-                  class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
-                  aria-label="{% trans "Открыть меню" %}">
-            <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-            <svg x-show="mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-cloak>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      {# Мобильное меню #}
-      <div x-show="mobileOpen"
-           x-transition:enter="transition ease-out duration-200"
-           x-transition:enter-start="opacity-0 -translate-y-2"
-           x-transition:enter-end="opacity-100 translate-y-0"
-           x-transition:leave="transition ease-in duration-150"
-           x-transition:leave-start="opacity-100 translate-y-0"
-           x-transition:leave-end="opacity-0 -translate-y-2"
-           class="md:hidden border-t border-gray-100 bg-white"
-           x-cloak>
-        <nav class="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1 text-sm font-medium">
-          <a href="{% url 'core:home' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Главная" %}</a>
-          <a href="{% url 'squads:list' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Отряды" %}</a>
-          <a href="{% url 'news:list' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
-          <a href="{% url 'vacancies:list' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
-          <a href="{% url 'content:knowledge_index' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "База знаний" %}</a>
-          <a href="{% url 'content:contacts' %}"
-             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Контакты" %}</a>
-          <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
-            {% if user.is_authenticated %}
-              <span class="px-3 py-1 text-sm text-gray-500">{{ user.get_short_name }}</span>
-              <a href="{% url 'requests:dashboard' %}"
-                 class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
-                {% trans "Мои заявки" %}
-              </a>
-              <a href="{% url 'accounts:profile' %}"
-                 class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
-                {% trans "Профиль" %}
-              </a>
-              <form method="post" action="{% url 'accounts:logout' %}">
-                {% csrf_token %}
-                <button type="submit"
-                        class="w-full px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
-                  {% trans "Выйти" %}
-                </button>
-              </form>
-            {% else %}
-              <div class="grid grid-cols-2 gap-2">
-                <a href="{% url 'accounts:login' %}"
-                   class="px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
-                  {% trans "Войти" %}
-                </a>
-                <a href="{% url 'accounts:register' %}"
-                   class="px-3 py-2 rounded-lg text-center border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors font-medium">
-                  {% trans "Регистрация" %}
-                </a>
-              </div>
-              <a href="{% url 'vacancies:list' %}"
-                 class="px-3 py-2 rounded-lg text-center bg-blue-700 text-white hover:bg-blue-800 transition-colors font-semibold">
-                {% trans "Вступить" %}
-              </a>
-            {% endif %}
-          </div>
-        </nav>
-      </div>
-    </header>
-
-    {# ======================= FLASH-СООБЩЕНИЯ ======================= #}
-    {% if messages %}
-      <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-2"
-           aria-live="polite">
-        {% for message in messages %}
-          <div x-data="{ show: true }"
-               x-show="show"
-               x-transition.duration.300ms
-               role="alert"
-               class="flex items-start gap-3 p-4 rounded-xl text-sm
-                      {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
-                      {% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
-                      {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
-                      {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
-            <span class="flex-1">{{ message }}</span>
-            <button type="button"
-                    @click="show = false"
-                    class="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
-                    aria-label="{% trans "Закрыть" %}">✕</button>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {# ======================= ОСНОВНОЙ КОНТЕНТ ======================= #}
+    {# Основной контент страницы #}
     <main class="flex-1">
       {% block content %}{% endblock %}
     </main>
 
-    {# ======================= ПОДВАЛ ======================= #}
-    <footer class="bg-[#00257D] text-blue-100/80 mt-auto border-t border-blue-900">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+    {# Подвал сайта #}
+    {% include "includes/footer.html" %}
 
-          {# Колонка 1: О штабе #}
-          <div>
-            <a href="{% url 'core:home' %}" class="inline-block mb-4">
-              <img src="{% static 'images/brand/logo_horizontal_white.webp' %}"
-                   alt="{% trans "ШСО ДВФУ" %}"
-                   class="h-10 w-auto object-contain">
-            </a>
-            <p class="text-sm leading-relaxed text-blue-100/90">
-              {% trans "Штаб студенческих отрядов Дальневосточного федерального университета." %}
-            </p>
-            <p class="text-xs text-blue-200/70 mt-3">
-              {% trans "Объединяем активных студентов, строим будущее, развиваем лидерство." %}
-            </p>
-          </div>
-
-          {# Колонка 2: Разделы #}
-          <div>
-            <div class="text-white font-heading text-lg mb-3 tracking-wide">{% trans "Разделы" %}</div>
-            <ul class="space-y-2 text-sm">
-              <li><a href="{% url 'squads:list' %}" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
-              <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
-              <li><a href="{% url 'vacancies:list' %}" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
-              <li><a href="{% url 'content:knowledge_index' %}" class="hover:text-white transition-colors">{% trans "База знаний" %}</a></li>
-              <li><a href="{% url 'content:faq' %}" class="hover:text-white transition-colors">{% trans "Вопросы и ответы (FAQ)" %}</a></li>
-              <li><a href="{% url 'content:glossary' %}" class="hover:text-white transition-colors">{% trans "Глоссарий" %}</a></li>
-              <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
-              <li><a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Политика конфиденциальности (152-ФЗ)" %}</a></li>
-              <li><a href="{% url 'content:terms' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Пользовательское соглашение" %}</a></li>
-            </ul>
-          </div>
-
-          {# Колонка 3: Контакты #}
-          <div>
-            <div class="text-white font-heading text-lg mb-3 tracking-wide">{% trans "Контакты" %}</div>
-            <ul class="space-y-2.5 text-sm">
-              <li class="flex items-start gap-2">
-                <span class="shrink-0 text-blue-300">🏛️</span>
-                <span>{{ site_settings.hq_office|default:"Владивосток, о. Русский, ДВФУ, ауд. А826" }}</span>
-              </li>
-              <li class="flex items-center gap-2">
-                <span class="shrink-0 text-blue-300">💬</span>
-                <a href="{{ site_settings.hq_vk|default:'https://vk.com/shso_fefu' }}"
-                   class="hover:text-white transition-colors font-medium"
-                   target="_blank" rel="noopener noreferrer">
-                  VK — shso_fefu
-                </a>
-              </li>
-              {% if site_settings.hq_email %}
-                <li class="flex items-center gap-2">
-                  <span class="shrink-0 text-blue-300">✉️</span>
-                  <a href="mailto:{{ site_settings.hq_email }}" class="hover:text-white transition-colors">
-                    {{ site_settings.hq_email }}
-                  </a>
-                </li>
-              {% endif %}
-            </ul>
-          </div>
-        </div>
-
-        <div class="mt-10 pt-6 border-t border-white/10 text-xs text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>© {% now "Y" %} {% trans "ШСО ДВФУ. Все права защищены." %}</div>
-          <div class="flex items-center gap-3">
-            <a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors">{% trans "152-ФЗ" %}</a>
-            <span>•</span>
-            <a href="{% url 'content:terms' %}" class="hover:text-white transition-colors">{% trans "Пользовательское соглашение" %}</a>
-          </div>
-          <div class="text-blue-200/50">{% trans "Студенческие отряды ДВФУ — Труд крут!" %}</div>
-        </div>
-      </div>
-    </footer>
+    {# Модульные скрипты #}
+    <script src="{% static 'js/main.js' %}" defer></script>
+    <script src="{% static 'js/forms.js' %}" defer></script>
+    <script src="{% static 'js/accordion.js' %}" defer></script>
 
     {% block extra_body %}{% endblock %}
   </body>

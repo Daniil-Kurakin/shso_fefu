@@ -4,15 +4,10 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import Membership, Position, Squad, SquadPageRevision, SquadTransferRequest
 
-INPUT_CLS = (
-    "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
-)
-SELECT_CLS = f"{INPUT_CLS} bg-white"
-FILE_CLS = (
-    "w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 "
-    "file:rounded-xl file:border-0 file:text-sm file:font-semibold "
-    "file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-)
+INPUT_CLS = "form-input"
+SELECT_CLS = "form-select"
+FILE_CLS = "form-file"
+CHECKBOX_CLS = "form-checkbox"
 
 
 class SquadForm(forms.ModelForm):
@@ -63,9 +58,7 @@ class SquadForm(forms.ModelForm):
                     "placeholder": "https://vk.com/squad_name",
                 }
             ),
-            "is_recruiting": forms.CheckboxInput(
-                attrs={"class": "w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"}
-            ),
+            "is_recruiting": forms.CheckboxInput(attrs={"class": CHECKBOX_CLS}),
             "logo": forms.FileInput(attrs={"class": FILE_CLS, "accept": "image/*"}),
         }
 
@@ -131,9 +124,7 @@ class SquadPageRevisionForm(forms.ModelForm):
             "contact_url": forms.URLInput(
                 attrs={"class": INPUT_CLS, "placeholder": "https://vk.com/squad_name"}
             ),
-            "is_recruiting": forms.CheckboxInput(
-                attrs={"class": "w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"}
-            ),
+            "is_recruiting": forms.CheckboxInput(attrs={"class": CHECKBOX_CLS}),
         }
 
 

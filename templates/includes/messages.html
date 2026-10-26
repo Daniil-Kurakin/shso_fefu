@@ -1,0 +1,31 @@
+{% load i18n %}
+{# ======================= УВЕДОМЛЕНИЯ / FLASH-СООБЩЕНИЯ ======================= #}
+{% if messages %}
+  <div class="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-2"
+       aria-live="polite">
+    {% for message in messages %}
+      <div x-data="{ show: true }"
+           x-show="show"
+           x-transition.duration.300ms
+           data-auto-dismiss="5000"
+           role="alert"
+           class="flex items-start gap-3 p-4 rounded-xl text-sm shadow-sm
+                  {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
+                  {% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200
+                  {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
+                  {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+        <span class="text-base shrink-0">
+          {% if message.tags == 'error' %}⚠️
+          {% elif message.tags == 'success' %}✓
+          {% elif message.tags == 'warning' %}🔔
+          {% else %}ℹ️{% endif %}
+        </span>
+        <span class="flex-1 font-medium">{{ message }}</span>
+        <button type="button"
+                @click="show = false"
+                class="shrink-0 opacity-60 hover:opacity-100 transition-opacity font-bold p-0.5"
+                aria-label="{% trans "Закрыть" %}">✕</button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

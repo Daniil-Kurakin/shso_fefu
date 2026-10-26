@@ -3,14 +3,10 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import News
 
-FORM_INPUT_CSS = (
-    "block w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition bg-white"
-)
-FORM_TEXTAREA_CSS = (
-    "block w-full px-4 py-3 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition bg-white"
-)
+FORM_INPUT_CSS = "form-input"
+FORM_TEXTAREA_CSS = "form-textarea"
+FORM_SELECT_CSS = "form-select"
+FORM_FILE_CSS = "form-file"
 
 
 class NewsForm(forms.ModelForm):
@@ -36,9 +32,9 @@ class NewsForm(forms.ModelForm):
                     "class": FORM_INPUT_CSS,
                 }
             ),
-            "category": forms.Select(attrs={"class": FORM_INPUT_CSS}),
-            "organizer": forms.Select(attrs={"class": FORM_INPUT_CSS}),
-            "squad": forms.Select(attrs={"class": FORM_INPUT_CSS}),
+            "category": forms.Select(attrs={"class": FORM_SELECT_CSS}),
+            "organizer": forms.Select(attrs={"class": FORM_SELECT_CSS}),
+            "squad": forms.Select(attrs={"class": FORM_SELECT_CSS}),
             "lead": forms.Textarea(
                 attrs={
                     "rows": 3,
@@ -57,11 +53,11 @@ class NewsForm(forms.ModelForm):
                     "class": FORM_TEXTAREA_CSS,
                 }
             ),
-            "cover": forms.FileInput(attrs={"class": FORM_INPUT_CSS, "accept": "image/*"}),
+            "cover": forms.FileInput(attrs={"class": FORM_FILE_CSS, "accept": "image/*"}),
             "source_url": forms.URLInput(
                 attrs={"placeholder": "https://vk.com/wall-...", "class": FORM_INPUT_CSS}
             ),
-            "status": forms.Select(attrs={"class": FORM_INPUT_CSS}),
+            "status": forms.Select(attrs={"class": FORM_SELECT_CSS}),
         }
 
     def __init__(self, *args, user=None, **kwargs):

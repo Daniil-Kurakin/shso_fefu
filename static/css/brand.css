@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Фирменный стиль и дизайн-токены ШСО ДВФУ
+   ========================================================================== */
+
+:root {
+  /* Основная палитра бренда */
+  --shso-primary: #0055B8;
+  --shso-vivid: #0078F2;
+  --shso-dark: #00257D;
+  --shso-light: #EBF3FC;
+
+  /* Цвета отрядных направлений */
+  --shso-yellow: #FFB700;
+  --shso-pink: #FC90CF;
+  --shso-green: #94EE2D;
+  --shso-coral: #FF5C5E;
+
+  /* Типографика */
+  --font-heading: 'Coolvetica Crammed', 'Coolvetica', 'Montserrat', sans-serif;
+  --font-body: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@theme {
+  --font-heading: 'Coolvetica Crammed', 'Coolvetica', Montserrat, sans-serif;
+  --font-sans: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Фирменная палитра ШСО ДВФУ */
+  --color-shso-primary: #0055B8;
+  --color-shso-vivid: #0078F2;
+  --color-shso-dark: #00257D;
+  --color-shso-light: #EBF3FC;
+
+  /* Подмена стандартного blue на фирменные синие тона */
+  --color-blue-500: #0078F2;
+  --color-blue-600: #0078F2;
+  --color-blue-700: #0055B8;
+  --color-blue-800: #004494;
+  --color-blue-900: #00257D;
+
+  /* Фирменные цвета направлений отрядов */
+  --color-shso-yellow: #FFB700;
+  --color-shso-pink: #FC90CF;
+  --color-shso-green: #94EE2D;
+  --color-shso-coral: #FF5C5E;
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+}

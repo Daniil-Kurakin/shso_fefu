@@ -20,17 +20,9 @@ DISPOSABLE_EMAIL_DOMAINS = {
     "yopmail.com",
 }
 
-INPUT_CSS = (
-    "block w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-)
-INPUT_WITH_ACTION_CSS = (
-    "block w-full px-4 py-2.5 pr-11 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-)
-CHECKBOX_CSS = (
-    "w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0 mt-1 cursor-pointer"
-)
+INPUT_CSS = "form-input"
+INPUT_WITH_ACTION_CSS = "form-input pr-11"
+CHECKBOX_CSS = "form-checkbox mt-1 cursor-pointer"
 
 
 class UserCreationForm(BaseUserCreationForm):

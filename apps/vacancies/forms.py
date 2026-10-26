@@ -4,14 +4,10 @@ from django.utils.translation import gettext_lazy as _
 
 from .models import Vacancy, VacancyApplication
 
-INPUT_CLS = (
-    "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 bg-white"
-)
-TEXTAREA_CLS = (
-    "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
-    "focus:ring-2 focus:ring-blue-500 bg-white"
-)
+INPUT_CLS = "form-input"
+TEXTAREA_CLS = "form-textarea"
+SELECT_CLS = "form-select"
+CHECKBOX_CLS = "form-checkbox"
 
 
 class VacancyForm(forms.ModelForm):
@@ -38,8 +34,8 @@ class VacancyForm(forms.ModelForm):
                     "placeholder": _("Например: Набор вожатых в СПО «Меридиан» на лето 2026"),
                 }
             ),
-            "type": forms.Select(attrs={"class": INPUT_CLS}),
-            "squad": forms.Select(attrs={"class": INPUT_CLS}),
+            "type": forms.Select(attrs={"class": SELECT_CLS}),
+            "squad": forms.Select(attrs={"class": SELECT_CLS}),
             "description": forms.Textarea(
                 attrs={
                     "rows": 4,
@@ -77,7 +73,7 @@ class VacancyForm(forms.ModelForm):
                 }
             ),
             "deadline": forms.DateInput(attrs={"class": INPUT_CLS, "type": "date"}),
-            "status": forms.Select(attrs={"class": INPUT_CLS}),
+            "status": forms.Select(attrs={"class": SELECT_CLS}),
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -108,9 +104,7 @@ class VacancyApplicationForm(forms.ModelForm):
     data_consent = forms.BooleanField(
         required=True,
         label=_("Я даю согласие на обработку персональных данных"),
-        widget=forms.CheckboxInput(
-            attrs={"class": "w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"}
-        ),
+        widget=forms.CheckboxInput(attrs={"class": CHECKBOX_CLS}),
     )
 
     class Meta:
@@ -120,7 +114,7 @@ class VacancyApplicationForm(forms.ModelForm):
             "applicant_name": forms.TextInput(
                 attrs={"class": INPUT_CLS, "placeholder": _("Иван Иванов")}
             ),
-            "contact_type": forms.Select(attrs={"class": INPUT_CLS}),
+            "contact_type": forms.Select(attrs={"class": SELECT_CLS}),
             "contact_value": forms.TextInput(
                 attrs={
                     "class": INPUT_CLS,
