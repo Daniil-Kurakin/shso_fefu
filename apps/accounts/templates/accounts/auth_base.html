@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {# Общий layout для всех страниц авторизации: центрированная карточка #}
 {% block content %}
@@ -8,8 +8,12 @@
 
       {# Логотип / заголовок #}
       <div class="text-center mb-8">
-        <a href="{% url 'core:home' %}" class="inline-block text-3xl mb-3">🏕️</a>
-        <h1 class="text-2xl font-bold text-gray-900">{% block auth_title %}{% endblock %}</h1>
+        <a href="{% url 'core:home' %}" class="inline-block mb-3 hover:opacity-90 transition-opacity">
+          <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
+               alt="{% trans "ШСО ДВФУ" %}"
+               class="h-12 w-auto mx-auto object-contain">
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900 font-heading tracking-wide">{% block auth_title %}{% endblock %}</h1>
         {% block auth_subtitle %}{% endblock %}
       </div>
 

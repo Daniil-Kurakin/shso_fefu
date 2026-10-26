@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n static %}
 
 {# Список карточек новостей (фрагмент для HTMX и полного рендера) #}
 {% if news_list %}
@@ -12,7 +12,7 @@
             <img src="{{ news.cover.url }}" alt="{{ news.title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
           {% else %}
             <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 text-blue-400">
-              <span class="text-4xl">🏕️</span>
+              <img src="{% static 'images/brand/logo_icon_color.webp' %}" alt="" class="h-14 w-14 object-contain opacity-40">
             </div>
           {% endif %}
           

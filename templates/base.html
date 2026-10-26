@@ -7,8 +7,96 @@
     <meta name="description" content="{% block meta_description %}{% trans "Официальный сайт Штаба студенческих отрядов Дальневосточного федерального университета" %}{% endblock %}">
     <title>{% block title %}{% trans "ШСО ДВФУ" %}{% endblock %}</title>
 
-    {# Tailwind CSS v4 — браузерная сборка через CDN (замените на standalone CLI в продакшне) #}
+    {# Favicon #}
+    <link rel="icon" type="image/x-icon" href="{% static 'images/brand/favicon.ico' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/brand/favicon-32x32.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/brand/apple-touch-icon.png' %}">
+
+    {# Google Fonts: Montserrat (предзагрузка) #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap" rel="stylesheet">
+
+    {# Локальные фирменные шрифты брендбука (Coolvetica Crammed, Montserrat) #}
+    <style>
+      @font-face {
+        font-family: 'Coolvetica Crammed';
+        src: url("{% static 'fonts/coolvetica_crammed_rg.otf' %}") format('opentype');
+        font-weight: 400 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Coolvetica';
+        src: url("{% static 'fonts/coolvetica_rg.otf' %}") format('opentype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Coolvetica';
+        src: url("{% static 'fonts/coolvetica_rg_it.otf' %}") format('opentype');
+        font-weight: 400;
+        font-style: italic;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Montserrat';
+        src: url("{% static 'fonts/Montserrat-Regular.ttf' %}") format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Montserrat';
+        src: url("{% static 'fonts/Montserrat-SemiBold.ttf' %}") format('truetype');
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Montserrat';
+        src: url("{% static 'fonts/Montserrat-Bold.ttf' %}") format('truetype');
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      body {
+        font-family: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      h1, h2, h3, .font-heading {
+        font-family: 'Coolvetica Crammed', 'Coolvetica', Montserrat, sans-serif;
+        letter-spacing: 0.02em;
+      }
+    </style>
+
+    {# Tailwind CSS v4 — браузерная сборка через CDN с конфигурацией брендбука #}
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" defer></script>
+    <style type="text/tailwindcss">
+      @theme {
+        --font-heading: 'Coolvetica Crammed', 'Coolvetica', Montserrat, sans-serif;
+        --font-sans: Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+        /* Фирменная палитра ШСО ДВФУ */
+        --color-shso-primary: #0055B8;
+        --color-shso-vivid: #0078F2;
+        --color-shso-dark: #00257D;
+
+        /* Подмена стандартного blue на фирменные синие тона */
+        --color-blue-500: #0078F2;
+        --color-blue-600: #0078F2;
+        --color-blue-700: #0055B8;
+        --color-blue-800: #004494;
+        --color-blue-900: #00257D;
+
+        /* Фирменные цвета направлений отрядов */
+        --color-shso-yellow: #FFB700;
+        --color-shso-pink: #FC90CF;
+        --color-shso-green: #94EE2D;
+        --color-shso-coral: #FF5C5E;
+      }
+    </style>
 
     {# HTMX — декларативный AJAX без JavaScript #}
     <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
@@ -30,9 +118,14 @@
 
           {# Логотип / название #}
           <a href="{% url 'core:home' %}"
-             class="flex items-center gap-2 font-bold text-blue-700 text-lg hover:text-blue-800 transition-colors">
-            <span class="text-2xl">🏕️</span>
-            <span class="hidden sm:inline">{% trans "ШСО ДВФУ" %}</span>
+             class="flex items-center gap-3 transition-opacity hover:opacity-90">
+            <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
+                 alt="{% trans "ШСО ДВФУ" %}"
+                 class="h-9 w-auto object-contain hidden sm:block">
+            <img src="{% static 'images/brand/logo_icon_color.webp' %}"
+                 alt="{% trans "ШСО ДВФУ" %}"
+                 class="h-9 w-9 object-contain sm:hidden">
+            <span class="font-heading text-xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
           </a>
 
           {# Навигация (desktop) #}
@@ -178,21 +271,28 @@
     </main>
 
     {# ======================= ПОДВАЛ ======================= #}
-    <footer class="bg-gray-900 text-gray-400 mt-auto">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <footer class="bg-[#00257D] text-blue-100/80 mt-auto border-t border-blue-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
           {# Колонка 1: О штабе #}
           <div>
-            <div class="text-white font-semibold text-base mb-3">{% trans "ШСО ДВФУ" %}</div>
-            <p class="text-sm leading-relaxed">
+            <a href="{% url 'core:home' %}" class="inline-block mb-4">
+              <img src="{% static 'images/brand/logo_horizontal_white.webp' %}"
+                   alt="{% trans "ШСО ДВФУ" %}"
+                   class="h-10 w-auto object-contain">
+            </a>
+            <p class="text-sm leading-relaxed text-blue-100/90">
               {% trans "Штаб студенческих отрядов Дальневосточного федерального университета." %}
+            </p>
+            <p class="text-xs text-blue-200/70 mt-3">
+              {% trans "Объединяем активных студентов, строим будущее, развиваем лидерство." %}
             </p>
           </div>
 
           {# Колонка 2: Разделы #}
           <div>
-            <div class="text-white font-semibold text-base mb-3">{% trans "Разделы" %}</div>
+            <div class="text-white font-heading text-lg mb-3 tracking-wide">{% trans "Разделы" %}</div>
             <ul class="space-y-2 text-sm">
               <li><a href="{% url 'squads:list' %}" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
               <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
@@ -206,18 +306,23 @@
 
           {# Колонка 3: Контакты #}
           <div>
-            <div class="text-white font-semibold text-base mb-3">{% trans "Контакты" %}</div>
-            <ul class="space-y-2 text-sm">
-              <li>🏛️ {{ site_settings.hq_office|default:"Владивосток, о. Русский, ДВФУ, ауд. А826" }}</li>
-              <li>
+            <div class="text-white font-heading text-lg mb-3 tracking-wide">{% trans "Контакты" %}</div>
+            <ul class="space-y-2.5 text-sm">
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 text-blue-300">🏛️</span>
+                <span>{{ site_settings.hq_office|default:"Владивосток, о. Русский, ДВФУ, ауд. А826" }}</span>
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="shrink-0 text-blue-300">💬</span>
                 <a href="{{ site_settings.hq_vk|default:'https://vk.com/shso_fefu' }}"
-                   class="hover:text-white transition-colors"
+                   class="hover:text-white transition-colors font-medium"
                    target="_blank" rel="noopener noreferrer">
                   VK — shso_fefu
                 </a>
               </li>
               {% if site_settings.hq_email %}
-                <li>
+                <li class="flex items-center gap-2">
+                  <span class="shrink-0 text-blue-300">✉️</span>
                   <a href="mailto:{{ site_settings.hq_email }}" class="hover:text-white transition-colors">
                     {{ site_settings.hq_email }}
                   </a>
@@ -227,8 +332,9 @@
           </div>
         </div>
 
-        <div class="mt-8 pt-6 border-t border-gray-800 text-xs text-center text-gray-600">
-          © {% now "Y" %} {% trans "ШСО ДВФУ. Все права защищены." %}
+        <div class="mt-10 pt-6 border-t border-white/10 text-xs text-center text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>© {% now "Y" %} {% trans "ШСО ДВФУ. Все права защищены." %}</div>
+          <div class="text-blue-200/50">{% trans "Студенческие отряды ДВФУ — Труд крут!" %}</div>
         </div>
       </div>
     </footer>
