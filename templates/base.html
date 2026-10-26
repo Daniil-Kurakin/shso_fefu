@@ -42,6 +42,7 @@
             <a href="{% url 'squads:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
             <a href="{% url 'news:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
             <a href="{% url 'vacancies:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Вакансии" %}</a>
+            <a href="{% url 'content:knowledge_index' %}" class="hover:text-blue-700 transition-colors">{% trans "База знаний" %}</a>
             <a href="{% url 'content:contacts' %}" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
           </nav>
 
@@ -110,6 +111,8 @@
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
           <a href="{% url 'vacancies:list' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
+          <a href="{% url 'content:knowledge_index' %}"
+             class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "База знаний" %}</a>
           <a href="{% url 'content:contacts' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Контакты" %}</a>
           <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
@@ -194,6 +197,9 @@
               <li><a href="{% url 'squads:list' %}" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
               <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
               <li><a href="{% url 'vacancies:list' %}" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
+              <li><a href="{% url 'content:knowledge_index' %}" class="hover:text-white transition-colors">{% trans "База знаний" %}</a></li>
+              <li><a href="{% url 'content:faq' %}" class="hover:text-white transition-colors">{% trans "Вопросы и ответы (FAQ)" %}</a></li>
+              <li><a href="{% url 'content:glossary' %}" class="hover:text-white transition-colors">{% trans "Глоссарий" %}</a></li>
               <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
             </ul>
           </div>

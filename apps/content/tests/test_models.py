@@ -1,9 +1,19 @@
 import datetime
+from urllib.parse import unquote
 
 import pytest
 from django.core.cache import cache
 
-from apps.content.models import Quote, SiteSetting, StaffMember
+from apps.content.models import (
+    FAQCategory,
+    FAQItem,
+    GlossaryTerm,
+    KnowledgeArticle,
+    KnowledgeCategory,
+    Quote,
+    SiteSetting,
+    StaffMember,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -105,3 +115,53 @@ def test_site_setting_get_object():
     assert obj is not None
     assert obj.year == 2026
     assert obj.source == "Официальные данные"
+
+
+def test_knowledge_category_and_article():
+    cat = KnowledgeCategory.objects.create(
+        title="Новая категория",
+        icon="📘",
+        description="Описание",
+    )
+    assert str(cat) == "📘 Новая категория"
+    assert cat.slug == "новая-категория"
+    assert unquote(cat.get_absolute_url()) == "/ru/knowledge/новая-категория/"
+
+    article = KnowledgeArticle.objects.create(
+        category=cat,
+        title="Новая статья",
+        summary="Кратко",
+        content="Подробно",
+    )
+    assert str(article) == "Новая статья"
+    assert article.slug == "новая-статья"
+    assert unquote(article.get_absolute_url()) == "/ru/knowledge/новая-категория/новая-статья/"
+
+
+def test_faq_category_and_item():
+    cat = FAQCategory.objects.create(title="Общие вопросы")
+    assert str(cat) == "Общие вопросы"
+    assert cat.slug == "общие-вопросы"
+
+    item = FAQItem.objects.create(
+        category=cat,
+        question="Как стать бойцом?",
+        answer="Пройти целину.",
+    )
+    assert str(item) == "Как стать бойцом?"
+
+
+def test_glossary_term_letter_and_slug():
+    term1 = GlossaryTerm.objects.create(
+        term="Агитка",
+        definition="Концертная программа",
+    )
+    assert term1.letter == "А"
+    assert term1.slug == "агитка"
+
+    term2 = GlossaryTerm.objects.create(
+        term="«Целинный десант»",
+        definition="Патриотическая акция",
+    )
+    assert term2.letter == "Ц"
+    assert term2.slug == "целинный-десант"

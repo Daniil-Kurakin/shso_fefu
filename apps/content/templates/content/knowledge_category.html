@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ category.title }} — {% trans "База знаний ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Хлебные крошки #}
+    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
+      <span>/</span>
+      <a href="{% url 'content:knowledge_index' %}" class="hover:text-blue-700 transition-colors">{% trans "База знаний" %}</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">{{ category.title }}</span>
+    </nav>
+
+    {# Шапка категории #}
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <div class="text-3xl mb-2">{{ category.icon }}</div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            {{ category.title }}
+          </h1>
+          {% if category.description %}
+            <p class="text-sm text-gray-600 mt-2 max-w-2xl leading-relaxed">
+              {{ category.description }}
+            </p>
+          {% endif %}
+        </div>
+
+        {# Поиск по категории #}
+        <form method="get" class="relative min-w-[260px] sm:min-w-[300px]">
+          <input type="text"
+                 name="q"
+                 value="{{ q }}"
+                 placeholder="{% trans "Поиск в категории..." %}"
+                 class="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </form>
+      </div>
+    </div>
+
+    {# Список статей #}
+    {% if articles %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for article in articles %}
+          <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              {% if article.pinned %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                  📌 {% trans "Важно" %}
+                </span>
+              {% endif %}
+              <span class="text-xs text-gray-400 ml-auto">
+                {{ article.created_at|date:"d.m.Y" }}
+              </span>
+            </div>
+
+            <h2 class="font-bold text-base text-gray-900 mb-2 hover:text-blue-700 transition-colors flex-1">
+              <a href="{{ article.get_absolute_url }}">
+                {{ article.title }}
+              </a>
+            </h2>
+
+            <p class="text-xs text-gray-600 line-clamp-3 mb-4">
+              {{ article.summary }}
+            </p>
+
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+              <span>👁️ {{ article.views_count }}</span>
+              <a href="{{ article.get_absolute_url }}" class="font-semibold text-blue-700 hover:underline">
+                {% trans "Читать статью" %} →
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center max-w-md mx-auto">
+        <div class="text-4xl mb-3">📄</div>
+        <h3 class="text-base font-bold text-gray-900 mb-1">{% trans "Статей не найдено" %}</h3>
+        <p class="text-xs text-gray-500 mb-4">
+          {% if q %}
+            {% trans "По вашему поисковому запросу ничего не нашлось." %}
+          {% else %}
+            {% trans "В этой категории пока нет опубликованных материалов." %}
+          {% endif %}
+        </p>
+        {% if q %}
+          <a href="{{ category.get_absolute_url }}"
+             class="inline-flex px-4 py-2 rounded-xl text-xs font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+            {% trans "Сбросить фильтр" %}
+          </a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

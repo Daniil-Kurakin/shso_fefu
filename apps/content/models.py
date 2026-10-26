@@ -4,7 +4,9 @@ from zoneinfo import ZoneInfo
 from django.conf import settings
 from django.core.cache import cache
 from django.db import DatabaseError, models
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 VLADIVOSTOK_TZ = ZoneInfo("Asia/Vladivostok")
@@ -199,3 +201,164 @@ class SiteSetting(models.Model):
             obj = None
         cache.set(cache_key, obj, timeout=3600)
         return obj
+
+
+class KnowledgeCategory(models.Model):
+    """Категория статей базы знаний."""
+
+    title = models.CharField(_("название категории"), max_length=150)
+    slug = models.SlugField(_("URL"), max_length=150, unique=True, allow_unicode=True)
+    icon = models.CharField(_("иконка (эмодзи)"), max_length=10, default="📚")
+    description = models.TextField(_("описание категории"), blank=True)
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+
+    class Meta:
+        verbose_name = _("категория базы знаний")
+        verbose_name_plural = _("категории базы знаний")
+        ordering = ["order", "title"]
+
+    def __str__(self):
+        return f"{self.icon} {self.title}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("content:knowledge_category", kwargs={"category_slug": self.slug})
+
+
+class KnowledgeArticle(models.Model):
+    """Статья базы знаний или регламент."""
+
+    category = models.ForeignKey(
+        KnowledgeCategory,
+        on_delete=models.CASCADE,
+        related_name="articles",
+        verbose_name=_("категория"),
+    )
+    title = models.CharField(_("название статьи"), max_length=200)
+    slug = models.SlugField(_("URL"), max_length=200, unique=True, allow_unicode=True)
+    summary = models.CharField(
+        _("краткое описание"),
+        max_length=350,
+        help_text=_("Выжимка для карточки статьи и поисковой выдачи"),
+    )
+    content = models.TextField(_("текст статьи"))
+    attachment = models.FileField(
+        _("прикрепленный файл / бланк"),
+        upload_to="content/knowledge/%Y/",
+        blank=True,
+        null=True,
+        help_text=_("Шаблон заявления, регламент или памятка"),
+    )
+    pinned = models.BooleanField(
+        _("закрепить в топе"),
+        default=False,
+        help_text=_("Закреплённые статьи выводятся первыми в категории и на главной базы знаний"),
+    )
+    is_published = models.BooleanField(_("опубликована"), default=True)
+    views_count = models.PositiveIntegerField(_("просмотров"), default=0)
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+    created_at = models.DateTimeField(_("создана"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("обновлена"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("статья базы знаний")
+        verbose_name_plural = _("статьи базы знаний")
+        ordering = ["-pinned", "order", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse(
+            "content:knowledge_detail",
+            kwargs={"category_slug": self.category.slug, "slug": self.slug},
+        )
+
+
+class FAQCategory(models.Model):
+    """Категория вопросов и ответов."""
+
+    title = models.CharField(_("название категории"), max_length=150)
+    slug = models.SlugField(_("URL"), max_length=150, unique=True, allow_unicode=True)
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+
+    class Meta:
+        verbose_name = _("категория FAQ")
+        verbose_name_plural = _("категории FAQ")
+        ordering = ["order", "title"]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+
+class FAQItem(models.Model):
+    """Часто задаваемый вопрос (FAQ)."""
+
+    category = models.ForeignKey(
+        FAQCategory,
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("категория"),
+    )
+    question = models.CharField(_("вопрос"), max_length=255)
+    answer = models.TextField(_("ответ"))
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+    is_published = models.BooleanField(_("опубликован"), default=True)
+    created_at = models.DateTimeField(_("создан"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("вопрос FAQ")
+        verbose_name_plural = _("вопросы и ответы (FAQ)")
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.question
+
+
+class GlossaryTerm(models.Model):
+    """Термин отрядного глоссария / сленга."""
+
+    term = models.CharField(_("термин / понятие"), max_length=150, unique=True)
+    slug = models.SlugField(_("URL"), max_length=150, unique=True, allow_unicode=True)
+    letter = models.CharField(_("буква алфавита"), max_length=2, db_index=True, editable=False)
+    definition = models.TextField(_("определение / толкование"))
+    synonyms = models.CharField(
+        _("синонимы / альтернативные названия"),
+        max_length=200,
+        blank=True,
+        help_text=_("Например: «Строевка, Целинка»"),
+    )
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+
+    class Meta:
+        verbose_name = _("отрядный термин")
+        verbose_name_plural = _("глоссарий студотрядов")
+        ordering = ["letter", "term"]
+
+    def __str__(self):
+        return self.term
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.term, allow_unicode=True)
+        clean_term = self.term.strip()
+        if clean_term:
+            first_char = clean_term[0].upper()
+            if first_char in {'"', "«", "“"} and len(clean_term) > 1:
+                first_char = clean_term[1].upper()
+            self.letter = first_char
+        super().save(*args, **kwargs)

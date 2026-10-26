@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Глоссарий отрядных терминов" %} — {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-10">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Хлебные крошки #}
+    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
+      <span>/</span>
+      <a href="{% url 'content:knowledge_index' %}" class="hover:text-blue-700 transition-colors">{% trans "База знаний" %}</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">{% trans "Глоссарий" %}</span>
+    </nav>
+
+    {# Шапка #}
+    <div class="text-center mb-10">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider mb-3">
+        📖 {% trans "Словарь студотрядов" %}
+      </div>
+      <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">
+        {% trans "Отрядный глоссарий" %}
+      </h1>
+      <p class="mt-2 text-sm text-gray-600 max-w-xl mx-auto">
+        {% trans "Что такое «бойцовка», «целина», «кирпич» и «спевка»? Краткий гид по отрядному сленгу и традициям от А до Я." %}
+      </p>
+
+      {# Поиск по словарю #}
+      <form method="get" class="mt-6 relative max-w-md mx-auto">
+        {% if current_letter %}
+          <input type="hidden" name="letter" value="{{ current_letter }}">
+        {% endif %}
+        <input type="text"
+               name="q"
+               value="{{ q }}"
+               placeholder="{% trans "Поиск термина или определения..." %}"
+               class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white shadow-sm">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </form>
+    </div>
+
+    {# Алфавитный указатель #}
+    {% if letters %}
+      <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-8 flex flex-wrap items-center justify-center gap-1.5">
+        <a href="{% url 'content:glossary' %}{% if q %}?q={{ q|urlencode }}{% endif %}"
+           class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors {% if not current_letter %}bg-blue-700 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+          {% trans "Все" %}
+        </a>
+        {% for let in letters %}
+          <a href="{% url 'content:glossary' %}?letter={{ let }}{% if q %}&q={{ q|urlencode }}{% endif %}"
+             class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors {% if current_letter == let %}bg-blue-700 text-white shadow-sm{% else %}text-gray-700 hover:bg-gray-100{% endif %}">
+            {{ let }}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Список терминов #}
+    {% if terms %}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for item in terms %}
+          <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <h2 class="font-bold text-lg text-gray-900">
+                {{ item.term }}
+              </h2>
+              <span class="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 font-extrabold text-xs flex items-center justify-center shrink-0">
+                {{ item.letter }}
+              </span>
+            </div>
+
+            {% if item.synonyms %}
+              <div class="text-[11px] text-gray-400 font-medium mb-3">
+                {% trans "Также известно как:" %} <span class="text-gray-600">{{ item.synonyms }}</span>
+              </div>
+            {% endif %}
+
+            <p class="text-xs sm:text-sm text-gray-700 leading-relaxed flex-1">
+              {{ item.definition }}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="bg-white rounded-2xl border border-gray-200 p-10 text-center text-sm text-gray-500">
+        <p class="mb-3">{% trans "Терминов не найдено." %}</p>
+        <a href="{% url 'content:glossary' %}" class="text-blue-700 font-semibold hover:underline">
+          {% trans "Сбросить фильтры" %}
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
