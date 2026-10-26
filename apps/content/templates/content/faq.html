@@ -44,6 +44,16 @@
       </form>
     </div>
 
+    {% if user.is_authenticated and user.is_hq_staff %}
+      <div class="flex justify-end mb-6">
+        <a href="{% url 'content:faq_create' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-colors">
+          <span>+</span>
+          <span>{% trans "Добавить вопрос" %}</span>
+        </a>
+      </div>
+    {% endif %}
+
     {# Табы категорий #}
     <div class="flex flex-wrap items-center justify-center gap-2 mb-8">
       <a href="{% url 'content:faq' %}{% if q %}?q={{ q|urlencode }}{% endif %}"

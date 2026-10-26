@@ -44,6 +44,16 @@
       </form>
     </div>
 
+    {% if user.is_authenticated and user.is_hq_staff or user.is_authenticated and user.get_managed_squads.exists %}
+      <div class="flex justify-end mb-6">
+        <a href="{% url 'content:glossary_create' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-colors">
+          <span>+</span>
+          <span>{% trans "Добавить термин" %}</span>
+        </a>
+      </div>
+    {% endif %}
+
     {# Алфавитный указатель #}
     {% if letters %}
       <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm mb-8 flex flex-wrap items-center justify-center gap-1.5">

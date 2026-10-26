@@ -107,3 +107,41 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.full_name.split(" ")[0] if self.full_name else self.email
+
+    @property
+    def is_hq_staff(self) -> bool:
+        """Права штаба: владелец, администратор или куратор."""
+        return bool(self.is_superuser or self.role in {Role.OWNER, Role.ADMIN, Role.CURATOR})
+
+    def get_managed_squads(self):
+        """Возвращает queryset отрядов, которыми пользователь вправе управлять."""
+        from apps.squads.models import Squad
+
+        if not self.is_authenticated:
+            return Squad.objects.none()
+        if self.is_hq_staff:
+            return Squad.objects.all().order_by("name")
+        return (
+            Squad.objects.filter(
+                memberships__user=self,
+                memberships__is_active=True,
+                memberships__position__is_staff=True,
+            )
+            .distinct()
+            .order_by("name")
+        )
+
+    def can_manage_squad(self, squad) -> bool:
+        """Проверяет право пользователя управлять конкретным отрядом."""
+        if not self.is_authenticated or not squad:
+            return False
+        if self.is_hq_staff:
+            return True
+        from apps.squads.models import Membership
+
+        return Membership.objects.filter(
+            user=self,
+            squad=squad,
+            is_active=True,
+            position__is_staff=True,
+        ).exists()

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if object %}{% trans "Редактирование вакансии" %}: {{ object.title }}{% else %}{% trans "Конструктор вакансии / набора — ШСО ДВФУ" %}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 border-b border-gray-200 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 mb-2">
+          💼 {% trans "Вакансии и наборы в отряды" %}
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 font-heading">
+          {% if object %}{% trans "Редактирование вакансии" %}{% else %}{% trans "Конструктор вакансии" %}{% endif %}
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">
+          {% trans "Опубликуйте новый набор в студотряд или откройте рабочие места на кампусе ДВФУ." %}
+        </p>
+      </div>
+      <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'vacancies:list' %}{% endif %}"
+         class="px-4 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors shrink-0">
+        ← {% trans "Назад" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form method="post" novalidate class="space-y-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 space-y-1">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Секция 1: Название и привязка #}
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <h2 class="text-lg font-bold text-gray-900 font-heading border-b border-gray-100 pb-3">
+        {% trans "1. Основные параметры" %}
+      </h2>
+
+      <div>
+        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.title.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.title }}
+        {% for error in form.title.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.type.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.type }}
+          {% for error in form.type.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.squad.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.squad.label }}
+          </label>
+          {{ form.squad }}
+          {% if form.squad.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ form.squad.help_text }}</p>
+          {% endif %}
+          {% for error in form.squad.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# Секция 2: Описание и требования #}
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <h2 class="text-lg font-bold text-gray-900 font-heading border-b border-gray-100 pb-3">
+        {% trans "2. Описание и требования" %}
+      </h2>
+
+      <div>
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.description.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.description }}
+        {% for error in form.description.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.requirements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.requirements.label }}
+        </label>
+        {{ form.requirements }}
+        {% for error in form.requirements.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Секция 3: Условия, слоты и дедлайн #}
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <h2 class="text-lg font-bold text-gray-900 font-heading border-b border-gray-100 pb-3">
+        {% trans "3. Условия и сроки" %}
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.salary.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.salary.label }}
+          </label>
+          {{ form.salary }}
+          {% for error in form.salary.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.schedule.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.schedule.label }}
+          </label>
+          {{ form.schedule }}
+          {% for error in form.schedule.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label for="{{ form.slots_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.slots_count.label }}
+          </label>
+          {{ form.slots_count }}
+          {% for error in form.slots_count.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.deadline.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.deadline.label }}
+          </label>
+          {{ form.deadline }}
+          {% for error in form.deadline.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.status.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.status }}
+          {% for error in form.status.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# Кнопки сохранения #}
+    <div class="flex items-center gap-4 pt-2">
+      <button type="submit"
+              class="px-8 py-3 rounded-xl bg-blue-700 text-white font-bold text-sm
+                     hover:bg-blue-800 active:bg-blue-900 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500">
+        {% if object %}{% trans "Сохранить изменения" %}{% else %}{% trans "Опубликовать вакансию" %}{% endif %}
+      </button>
+      <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'vacancies:list' %}{% endif %}"
+         class="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+        {% trans "Отмена" %}
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

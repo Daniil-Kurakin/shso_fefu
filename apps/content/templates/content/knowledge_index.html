@@ -37,7 +37,7 @@
     </div>
 
     {# Быстрые ссылки на FAQ и Глоссарий #}
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8">
       <a href="{% url 'content:faq' %}"
          class="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition-all group">
         <span class="text-2xl p-2.5 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">❓</span>
@@ -64,6 +64,16 @@
         </div>
       </a>
     </div>
+
+    {% if user.is_authenticated and user.is_hq_staff %}
+      <div class="flex justify-end mb-8">
+        <a href="{% url 'content:knowledge_create' %}"
+           class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-colors">
+          <span>+</span>
+          <span>{% trans "Добавить статью" %}</span>
+        </a>
+      </div>
+    {% endif %}
 
     {# РЕЗУЛЬТАТЫ ПОИСКА (если был запрос) #}
     {% if q %}

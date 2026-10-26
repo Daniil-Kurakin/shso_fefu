@@ -333,8 +333,10 @@ class GlossaryTerm(models.Model):
     """Термин отрядного глоссария / сленга."""
 
     term = models.CharField(_("термин / понятие"), max_length=150, unique=True)
-    slug = models.SlugField(_("URL"), max_length=150, unique=True, allow_unicode=True)
-    letter = models.CharField(_("буква алфавита"), max_length=2, db_index=True, editable=False)
+    slug = models.SlugField(_("URL"), max_length=150, unique=True, blank=True, allow_unicode=True)
+    letter = models.CharField(
+        _("буква алфавита"), max_length=2, db_index=True, blank=True, editable=False
+    )
     definition = models.TextField(_("определение / толкование"))
     synonyms = models.CharField(
         _("синонимы / альтернативные названия"),
@@ -362,3 +364,14 @@ class GlossaryTerm(models.Model):
                 first_char = clean_term[1].upper()
             self.letter = first_char
         super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if not self.slug and self.term:
+            self.slug = slugify(self.term, allow_unicode=True)
+        clean_term = (self.term or "").strip()
+        if clean_term:
+            first_char = clean_term[0].upper()
+            if first_char in {'"', "«", "“"} and len(clean_term) > 1:
+                first_char = clean_term[1].upper()
+            self.letter = first_char

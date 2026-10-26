@@ -4,12 +4,16 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, DetailView, ListView
+from django.views.generic import CreateView, DetailView, FormView, ListView
 
-from apps.accounts.models import Role
 from apps.news.models import News
 
-from .forms import SquadPageRevisionForm, SquadTransferRequestForm
+from .forms import (
+    SquadForm,
+    SquadMemberAddForm,
+    SquadPageRevisionForm,
+    SquadTransferRequestForm,
+)
 from .models import Direction, Membership, Squad, SquadPageRevision, SquadTransferRequest
 
 
@@ -17,7 +21,7 @@ def user_can_edit_squad(user, squad: Squad) -> bool:
     """Проверяет право пользователя редактировать страницу данного отряда."""
     if not user.is_authenticated:
         return False
-    if user.is_superuser or user.role in {Role.OWNER, Role.ADMIN}:
+    if user.is_hq_staff:
         return True
     return Membership.objects.filter(
         user=user,
@@ -31,7 +35,7 @@ def user_can_transfer_squad(user, squad: Squad) -> bool:
     """Проверяет право пользователя инициировать переход из данного отряда (командир)."""
     if not user.is_authenticated:
         return False
-    if user.is_superuser or user.role in {Role.OWNER, Role.ADMIN}:
+    if user.is_hq_staff:
         return True
     return Membership.objects.filter(
         user=user,
@@ -184,6 +188,65 @@ class SquadTransferCreateView(LoginRequiredMixin, CreateView):
         messages.success(
             self.request,
             _("Заявка на перевод бойца передана на рассмотрение руководству штаба."),
+        )
+        return redirect(self.squad.get_absolute_url())
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["squad"] = self.squad
+        return context
+
+
+class SquadCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор создания нового студенческого отряда (только руководство штаба)."""
+
+    model = Squad
+    form_class = SquadForm
+    template_name = "squads/squad_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_hq_staff:
+            raise PermissionDenied(_("Создавать новые отряды может только руководство штаба."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        squad = form.save()
+        messages.success(
+            self.request,
+            _("Отряд «%(name)s» успешно создан!") % {"name": squad.name},
+        )
+        return redirect(squad.get_absolute_url())
+
+
+class SquadMemberAddView(LoginRequiredMixin, FormView):
+    """Конструктор добавления бойца в отряд комсоставом или штабом."""
+
+    form_class = SquadMemberAddForm
+    template_name = "squads/squad_member_add.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        self.squad = get_object_or_404(Squad, slug=self.kwargs["slug"])
+        if not request.user.can_manage_squad(self.squad):
+            raise PermissionDenied(_("Добавлять бойцов может только комсостав отряда или штаб."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["squad"] = self.squad
+        return kwargs
+
+    def form_valid(self, form):
+        membership = form.save(commit=False)
+        membership.squad = self.squad
+        membership.save()
+        name = membership.user.get_full_name() or membership.user.username
+        messages.success(
+            self.request,
+            _("Боец %(name)s успешно добавлен в состав отряда!") % {"name": name},
         )
         return redirect(self.squad.get_absolute_url())
 

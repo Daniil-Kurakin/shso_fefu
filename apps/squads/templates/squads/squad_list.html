@@ -7,13 +7,24 @@
   {# ===== ЗАГОЛОВОК КАТАЛОГА ===== #}
   <div class="bg-gray-50 border-b border-gray-200 py-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="max-w-3xl">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
-          {% trans "Студенческие отряды ДВФУ" %}
-        </h1>
-        <p class="text-base text-gray-600 leading-relaxed">
-          {% trans "Каталог всех отрядов штаба: выбирай своё направление, знакомься с комсоставом и традициями и вступай в отрядное движение." %}
-        </p>
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div class="max-w-3xl">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+            {% trans "Студенческие отряды ДВФУ" %}
+          </h1>
+          <p class="text-base text-gray-600 leading-relaxed">
+            {% trans "Каталог всех отрядов штаба: выбирай своё направление, знакомься с комсоставом и традициями и вступай в отрядное движение." %}
+          </p>
+        </div>
+        {% if user.is_authenticated and user.is_hq_staff %}
+          <div>
+            <a href="{% url 'squads:create' %}"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-sm shadow-sm transition-colors whitespace-nowrap">
+              <span>+</span>
+              <span>{% trans "Создать отряд" %}</span>
+            </a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>

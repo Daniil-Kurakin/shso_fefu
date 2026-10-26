@@ -1,7 +1,13 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
-from django.views.generic import DetailView, ListView, TemplateView
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
+from .forms import FAQItemForm, GlossaryTermForm, KnowledgeArticleForm
 from .models import (
     FAQCategory,
     FAQItem,
@@ -175,3 +181,81 @@ class TermsOfServiceView(TemplateView):
     """Пользовательское соглашение и правила пользования сайтом."""
 
     template_name = "content/terms_of_service.html"
+
+
+class KnowledgeArticleCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор создания статьи базы знаний."""
+
+    model = KnowledgeArticle
+    form_class = KnowledgeArticleForm
+    template_name = "content/knowledge_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_hq_staff:
+            raise PermissionDenied(_("У вас нет прав на добавление статей в базу знаний."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Статья успешно добавлена в базу знаний!"))
+        return super().form_valid(form)
+
+
+class KnowledgeArticleUpdateView(LoginRequiredMixin, UpdateView):
+    """Конструктор редактирования статьи базы знаний."""
+
+    model = KnowledgeArticle
+    form_class = KnowledgeArticleForm
+    template_name = "content/knowledge_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_hq_staff:
+            raise PermissionDenied(_("У вас нет прав на редактирование статей базы знаний."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Статья успешно обновлена!"))
+        return super().form_valid(form)
+
+
+class FAQItemCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор добавления вопроса-ответа FAQ."""
+
+    model = FAQItem
+    form_class = FAQItemForm
+    template_name = "content/faq_form.html"
+    success_url = reverse_lazy("content:faq")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not request.user.is_hq_staff:
+            raise PermissionDenied(_("У вас нет прав на добавление вопросов в FAQ."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Вопрос успешно добавлен в FAQ!"))
+        return super().form_valid(form)
+
+
+class GlossaryTermCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор добавления термина в глоссарий."""
+
+    model = GlossaryTerm
+    form_class = GlossaryTermForm
+    template_name = "content/glossary_form.html"
+    success_url = reverse_lazy("content:glossary")
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_hq_staff or request.user.get_managed_squads().exists()):
+            raise PermissionDenied(_("У вас нет прав на добавление терминов в глоссарий."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Термин успешно добавлен в глоссарий!"))
+        return super().form_valid(form)

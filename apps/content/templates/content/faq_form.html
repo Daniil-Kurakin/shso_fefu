@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Добавить вопрос-ответ FAQ — ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 border-b border-gray-200 py-8">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 mb-2">
+          ❓ {% trans "Часто задаваемые вопросы (FAQ)" %}
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 font-heading">
+          {% trans "Добавление вопроса в FAQ" %}
+        </h1>
+      </div>
+      <a href="{% url 'content:faq' %}"
+         class="px-4 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors">
+        ← {% trans "Назад" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form method="post" novalidate class="space-y-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 space-y-1">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <div>
+        <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.category.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.category }}
+        {% for error in form.category.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.question.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.question.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.question }}
+        {% for error in form.question.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.answer.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.answer.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.answer }}
+        {% for error in form.answer.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+        <div>
+          <label for="{{ form.order.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.order.label }}
+          </label>
+          {{ form.order }}
+          {% for error in form.order.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div class="flex items-center pt-6">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            {{ form.is_published }}
+            <span class="text-sm font-medium text-gray-700">{{ form.is_published.label }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <button type="submit"
+              class="px-8 py-3 rounded-xl bg-blue-700 text-white font-bold text-sm
+                     hover:bg-blue-800 active:bg-blue-900 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500">
+        {% trans "Сохранить вопрос" %}
+      </button>
+      <a href="{% url 'content:faq' %}"
+         class="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+        {% trans "Отмена" %}
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

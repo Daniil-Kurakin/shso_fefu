@@ -1,11 +1,13 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import DetailView, ListView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.views.generic.edit import FormMixin
 
-from .forms import VacancyApplicationForm
+from .forms import VacancyApplicationForm, VacancyForm
 from .models import Vacancy, VacancyApplication
 
 
@@ -56,6 +58,18 @@ class VacancyDetailView(FormMixin, DetailView):
         kwargs["user"] = self.request.user
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        can_edit = bool(
+            user.is_authenticated
+            and (
+                user.is_hq_staff or (self.object.squad and user.can_manage_squad(self.object.squad))
+            )
+        )
+        context["can_edit"] = can_edit
+        return context
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         if not self.object.is_accepting_applications:
@@ -83,3 +97,54 @@ class VacancyDetailView(FormMixin, DetailView):
             ),
         )
         return redirect(self.object.get_absolute_url())
+
+
+class VacancyCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор создания вакансии / набора со стороны фронтенда."""
+
+    model = Vacancy
+    form_class = VacancyForm
+    template_name = "vacancies/vacancy_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_hq_staff or request.user.get_managed_squads().exists()):
+            raise PermissionDenied(_("У вас нет прав на создание вакансий."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Вакансия успешно создана!"))
+        return super().form_valid(form)
+
+
+class VacancyUpdateView(LoginRequiredMixin, UpdateView):
+    """Конструктор редактирования вакансии."""
+
+    model = Vacancy
+    form_class = VacancyForm
+    template_name = "vacancies/vacancy_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        vacancy = self.get_object()
+        user = request.user
+        can_edit = user.is_hq_staff or user.can_manage_squad(vacancy.squad)
+        if not can_edit:
+            raise PermissionDenied(_("У вас нет прав на редактирование этой вакансии."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Вакансия успешно обновлена!"))
+        return super().form_valid(form)

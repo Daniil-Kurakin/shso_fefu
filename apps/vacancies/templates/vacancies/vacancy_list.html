@@ -8,16 +8,27 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
     {# Шапка страницы #}
-    <div class="mb-8">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider mb-3">
-        {% trans "Карьера и отрядная жизнь" %}
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider mb-3">
+          {% trans "Карьера и отрядная жизнь" %}
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight font-heading">
+          {% trans "Вакансии и наборы" %}
+        </h1>
+        <p class="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl">
+          {% trans "Выбирай свой отряд для третьего трудового семестра или находи официальную работу на проектах кампуса ДВФУ." %}
+        </p>
       </div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-        {% trans "Вакансии и наборы" %}
-      </h1>
-      <p class="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl">
-        {% trans "Выбирай свой отряд для третьего трудового семестра или находи официальную работу на проектах кампуса ДВФУ." %}
-      </p>
+      {% if user.is_authenticated and user.is_hq_staff or user.get_managed_squads.exists %}
+        <div class="shrink-0">
+          <a href="{% url 'vacancies:create' %}"
+             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white text-sm font-bold hover:bg-blue-800 shadow-sm transition-colors">
+            <span>+</span>
+            <span>{% trans "Разместить вакансию" %}</span>
+          </a>
+        </div>
+      {% endif %}
     </div>
 
     {# Фильтры и поиск #}

@@ -1,9 +1,14 @@
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.views.generic import DetailView, ListView
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from apps.accounts.models import Role
 from apps.squads.models import Squad
 
+from .forms import NewsForm
 from .models import News
 
 
@@ -89,4 +94,73 @@ class NewsDetailView(DetailView):
         context["recent_news"] = (
             News.objects.published().exclude(pk=self.object.pk).select_related("squad")[:3]
         )
+        user = self.request.user
+        can_edit = bool(
+            user.is_authenticated
+            and (
+                user.is_hq_staff
+                or (self.object.squad and user.can_manage_squad(self.object.squad))
+                or (
+                    self.object.author == user
+                    and (not self.object.squad or user.can_manage_squad(self.object.squad))
+                )
+            )
+        )
+        context["can_edit"] = can_edit
         return context
+
+
+class NewsCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор создания новости со стороны фронтенда."""
+
+    model = News
+    form_class = NewsForm
+    template_name = "news/news_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        if not (request.user.is_hq_staff or request.user.get_managed_squads().exists()):
+            raise PermissionDenied(_("У вас нет прав на создание новостей."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        messages.success(self.request, _("Новость успешно создана!"))
+        return super().form_valid(form)
+
+
+class NewsUpdateView(LoginRequiredMixin, UpdateView):
+    """Конструктор редактирования новости."""
+
+    model = News
+    form_class = NewsForm
+    template_name = "news/news_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        news = self.get_object()
+        user = request.user
+        can_edit = (
+            user.is_hq_staff
+            or (news.squad and user.can_manage_squad(news.squad))
+            or (news.author == user and (not news.squad or user.can_manage_squad(news.squad)))
+        )
+        if not can_edit:
+            raise PermissionDenied(_("У вас нет прав на редактирование этой новости."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Изменения успешно сохранены!"))
+        return super().form_valid(form)

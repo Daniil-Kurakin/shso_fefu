@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if object %}{% trans "Редактирование статьи" %}: {{ object.title }}{% else %}{% trans "Конструктор статьи базы знаний — ШСО ДВФУ" %}{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 border-b border-gray-200 py-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 mb-2">
+          📚 {% trans "База знаний и регламенты ШСО ДВФУ" %}
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 font-heading">
+          {% if object %}{% trans "Редактирование статьи" %}{% else %}{% trans "Конструктор статьи" %}{% endif %}
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">
+          {% trans "Добавьте регламент, инструкцию или полезный материал для бойцов и комсостава." %}
+        </p>
+      </div>
+      <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'content:knowledge_index' %}{% endif %}"
+         class="px-4 py-2 rounded-xl border border-gray-300 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors shrink-0">
+        ← {% trans "Назад" %}
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <form method="post" enctype="multipart/form-data" novalidate class="space-y-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 space-y-1">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm space-y-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.category.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.category }}
+          {% for error in form.category.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.title.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.title }}
+          {% for error in form.title.errors %}
+            <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form.summary.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.summary.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.summary }}
+        {% for error in form.summary.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.content.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.content }}
+        {% for error in form.content.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.attachment.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.attachment.label }}
+        </label>
+        {% if object and object.attachment %}
+          <div class="mb-2 text-xs text-gray-600">
+            {% trans "Текущий файл:" %} <a href="{{ object.attachment.url }}" class="text-blue-600 underline" target="_blank">{{ object.attachment.name }}</a>
+          </div>
+        {% endif %}
+        {{ form.attachment }}
+        {% for error in form.attachment.errors %}
+          <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="pt-2 flex flex-wrap gap-6 border-t border-gray-100">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          {{ form.pinned }}
+          <span class="text-sm font-medium text-gray-700">{{ form.pinned.label }}</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          {{ form.is_published }}
+          <span class="text-sm font-medium text-gray-700">{{ form.is_published.label }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4">
+      <button type="submit"
+              class="px-8 py-3 rounded-xl bg-blue-700 text-white font-bold text-sm
+                     hover:bg-blue-800 active:bg-blue-900 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500">
+        {% if object %}{% trans "Сохранить изменения" %}{% else %}{% trans "Опубликовать статью" %}{% endif %}
+      </button>
+      <a href="{% if object %}{{ object.get_absolute_url }}{% else %}{% url 'content:knowledge_index' %}{% endif %}"
+         class="px-6 py-3 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+        {% trans "Отмена" %}
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
