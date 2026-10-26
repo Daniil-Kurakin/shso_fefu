@@ -18,8 +18,23 @@ urlpatterns = [
     path("register/done/", views.RegistrationDoneView.as_view(), name="registration_done"),
     path("activate/<uidb64>/<token>/", views.ActivateView.as_view(), name="activate"),
     path("resend-activation/", views.ResendActivationView.as_view(), name="resend_activation"),
-    # Личный кабинет
+    # Личный кабинет (витрина профиля)
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    # Настройки и редактирование профиля (отдельная страница)
+    path("profile/settings/", views.ProfileSettingsView.as_view(), name="settings"),
+    path("profile/edit/", views.ProfileSettingsView.as_view(), name="profile_edit"),
+    # Портфолио бойца (CRUD)
+    path("profile/portfolio/add/", views.PortfolioItemCreateView.as_view(), name="portfolio_add"),
+    path(
+        "profile/portfolio/<int:pk>/edit/",
+        views.PortfolioItemUpdateView.as_view(),
+        name="portfolio_edit",
+    ),
+    path(
+        "profile/portfolio/<int:pk>/delete/",
+        views.PortfolioItemDeleteView.as_view(),
+        name="portfolio_delete",
+    ),
     # Смена пароля
     path(
         "password-change/",

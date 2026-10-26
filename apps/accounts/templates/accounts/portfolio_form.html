@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if form.instance.pk %}{% trans "Редактирование записи портфолио" %}{% else %}{% trans "Новая запись в портфолио" %}{% endif %} | {% trans "ШСО ДВФУ" %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+  {# Хлебные крошки #}
+  <nav class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+    <a href="{% url 'accounts:profile' %}" class="hover:text-blue-700 transition">{% trans "Мой профиль" %}</a>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">{% trans "Портфолио" %}</span>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">
+      {% if form.instance.pk %}{% trans "Редактирование" %}{% else %}{% trans "Добавление" %}{% endif %}
+    </span>
+  </nav>
+
+  {# Карточка формы #}
+  <div class="card-base p-6 sm:p-8">
+    <div class="mb-6 pb-4 border-b border-gray-100 flex items-center gap-3">
+      <span class="p-2.5 rounded-xl bg-blue-50 text-blue-700 font-bold text-xl">
+        {% if form.instance.pk %}✏️{% else %}🏅{% endif %}
+      </span>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading">
+          {% if form.instance.pk %}
+            {% trans "Редактировать запись портфолио" %}
+          {% else %}
+            {% trans "Добавить в портфолио" %}
+          {% endif %}
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-0.5">
+          {% trans "Зафиксируйте свои трудовые семестры, целины, награды и участие в проектах" %}
+        </p>
+      </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" novalidate class="space-y-5">
+      {% csrf_token %}
+
+      {# Название #}
+      <div>
+        <label class="form-label" for="{{ form.title.id_for_label }}">
+          {{ form.title.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ form.title }}
+        {% if form.title.errors %}
+          <div class="form-error">{{ form.title.errors }}</div>
+        {% endif %}
+      </div>
+
+      {# Сетка: Категория и Год #}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="form-label" for="{{ form.category.id_for_label }}">
+            {{ form.category.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.category }}
+          {% if form.category.errors %}
+            <div class="form-error">{{ form.category.errors }}</div>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="form-label" for="{{ form.year.id_for_label }}">
+            {{ form.year.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.year }}
+          {% if form.year.errors %}
+            <div class="form-error">{{ form.year.errors }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Организация / Место #}
+      <div>
+        <label class="form-label" for="{{ form.organization.id_for_label }}">
+          {{ form.organization.label }}
+        </label>
+        {{ form.organization }}
+        {% if form.organization.errors %}
+          <div class="form-error">{{ form.organization.errors }}</div>
+        {% endif %}
+        <p class="form-help">{{ form.organization.help_text }}</p>
+      </div>
+
+      {# Описание #}
+      <div>
+        <label class="form-label" for="{{ form.description.id_for_label }}">
+          {{ form.description.label }}
+        </label>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="form-error">{{ form.description.errors }}</div>
+        {% endif %}
+        <p class="form-help">{{ form.description.help_text }}</p>
+      </div>
+
+      {# Фото / Грамота / Сертификат #}
+      <div>
+        <label class="form-label" for="{{ form.image.id_for_label }}">
+          {{ form.image.label }}
+        </label>
+
+        {% if form.instance.image %}
+          <div class="mb-3">
+            <img id="portfolio-image-preview"
+                 src="{{ form.instance.image.url }}"
+                 alt="{{ form.instance.title }}"
+                 class="w-32 h-32 object-cover rounded-xl border border-gray-200">
+          </div>
+        {% else %}
+          <img id="portfolio-image-preview" src="#" alt="Превью" class="hidden w-32 h-32 object-cover rounded-xl border border-gray-200 mb-3">
+        {% endif %}
+
+        {{ form.image }}
+        {% if form.image.errors %}
+          <div class="form-error">{{ form.image.errors }}</div>
+        {% endif %}
+        <p class="form-help">
+          {% trans "Прикрепите фото с целины, скан грамоты или свидетельства об обучении" %}
+        </p>
+      </div>
+
+      {# Кнопки действий #}
+      <div class="pt-4 border-t border-gray-100 flex items-center gap-3">
+        <button type="submit" class="btn btn-primary px-6 py-2.5 text-sm font-semibold">
+          {% if form.instance.pk %}{% trans "Сохранить изменения" %}{% else %}{% trans "Добавить в портфолио" %}{% endif %}
+        </button>
+        <a href="{% url 'accounts:profile' %}" class="btn btn-outline px-5 py-2.5 text-sm font-semibold">
+          {% trans "Отмена" %}
+        </a>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

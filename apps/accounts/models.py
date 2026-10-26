@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models.functions import Lower
@@ -51,6 +52,24 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=120,
         blank=True,
         help_text=_("Отображаемая подпись (например, «Комиссар по связям»). На права не влияет."),
+    )
+    avatar = models.ImageField(
+        _("аватар / фото профиля"),
+        upload_to="avatars/",
+        blank=True,
+        null=True,
+    )
+    bio = models.TextField(
+        _("о себе"),
+        blank=True,
+        help_text=_("Краткий рассказ о себе, увлечениях и опыте в студотрядах"),
+    )
+    vk_url = models.URLField(_("профиль ВКонтакте"), blank=True)
+    telegram = models.CharField(
+        _("Telegram"),
+        max_length=100,
+        blank=True,
+        help_text=_("@username или ссылка"),
     )
     language = models.CharField(
         _("язык интерфейса"),
@@ -108,6 +127,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     def get_short_name(self):
         return self.full_name.split(" ")[0] if self.full_name else self.email
 
+    def get_avatar_url(self) -> str | None:
+        return self.avatar.url if self.avatar else None
+
+    def get_initials(self) -> str:
+        if self.full_name:
+            parts = self.full_name.strip().split()
+            if len(parts) >= 2:
+                return f"{parts[0][0]}{parts[1][0]}".upper()
+            return parts[0][0].upper()
+        return self.email[0].upper()
+
     @property
     def is_hq_staff(self) -> bool:
         """Права штаба: владелец, администратор или куратор."""
@@ -145,3 +175,64 @@ class User(AbstractBaseUser, PermissionsMixin):
             is_active=True,
             position__is_staff=True,
         ).exists()
+
+
+def get_current_year() -> int:
+    return timezone.now().year
+
+
+class UserPortfolioItem(models.Model):
+    """Элемент личного портфолио бойца (целина, награда, мероприятие, проект)."""
+
+    class Category(models.TextChoices):
+        CELINA = "celina", _("Трудовой семестр / Целина")
+        AWARD = "award", _("Награда / Знак отличия")
+        EVENT = "event", _("Слёт / Мероприятие / Форум")
+        PROJECT = "project", _("Проект / Волонтёрство")
+        EDUCATION = "education", _("Обучение / Сертификат")
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="portfolio_items",
+        verbose_name=_("пользователь"),
+    )
+    title = models.CharField(_("название"), max_length=200)
+    category = models.CharField(
+        _("категория"),
+        max_length=30,
+        choices=Category.choices,
+        default=Category.CELINA,
+    )
+    year = models.PositiveSmallIntegerField(
+        _("год"),
+        default=get_current_year,
+    )
+    organization = models.CharField(
+        _("организация / место"),
+        max_length=200,
+        blank=True,
+        help_text=_("Например: ВДЦ «Океан», Приморский край или ШСО ДВФУ"),
+    )
+    description = models.TextField(
+        _("описание"),
+        blank=True,
+        help_text=_("Краткое описание обязанностей, результатов, роли или впечатлений"),
+    )
+    image = models.ImageField(
+        _("фотография / грамота"),
+        upload_to="portfolio/",
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(_("дата создания"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("дата обновления"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("элемент портфолио")
+        verbose_name_plural = _("портфолио бойцов")
+        ordering = ["-year", "-created_at"]
+
+    def __str__(self):
+        user_name = self.user.get_full_name() if self.user_id else "—"
+        return f"{self.title} ({self.year}) — {user_name}"

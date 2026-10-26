@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Настройки профиля" %} | {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+  {# Хлебные крошки и заголовок #}
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <nav class="flex items-center gap-2 text-xs text-gray-500 mb-2">
+        <a href="{% url 'accounts:profile' %}" class="hover:text-blue-700 transition">{% trans "Мой профиль" %}</a>
+        <span>/</span>
+        <span class="text-gray-800 font-medium">{% trans "Настройки" %}</span>
+      </nav>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+        {% trans "Настройки профиля" %}
+      </h1>
+      <p class="text-sm text-gray-500 mt-1">
+        {% trans "Управление персональной информацией, контактами и безопасностью аккаунта" %}
+      </p>
+    </div>
+
+    <a href="{% url 'accounts:profile' %}"
+       class="btn btn-outline inline-flex items-center gap-2 self-start sm:self-center">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      {% trans "Вернуться в профиль" %}
+    </a>
+  </div>
+
+  {# Основная форма настроек профиля #}
+  <form method="post" enctype="multipart/form-data" novalidate class="space-y-8">
+    {% csrf_token %}
+
+    {# КАРТОЧКА 1: Личная информация и аватар #}
+    <div class="card-base p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-gray-900 font-heading mb-6 pb-3 border-b border-gray-100 flex items-center gap-2">
+        <span class="p-1.5 rounded-lg bg-blue-50 text-blue-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </span>
+        <span>{% trans "Личные данные" %}</span>
+      </h2>
+
+      {# Аватар #}
+      <div class="mb-6 flex flex-col sm:flex-row sm:items-center gap-6">
+        <div class="shrink-0">
+          {% if user.avatar %}
+            <img id="avatar-preview"
+                 src="{{ user.avatar.url }}"
+                 alt="{{ user.get_full_name }}"
+                 class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-2 ring-blue-500/20">
+          {% else %}
+            <div id="avatar-preview"
+                 class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white font-heading text-2xl font-bold flex items-center justify-center ring-2 ring-blue-500/20">
+              {{ user.get_initials }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="flex-1">
+          <label class="form-label" for="{{ form.avatar.id_for_label }}">
+            {{ form.avatar.label }}
+          </label>
+          {{ form.avatar }}
+          {% if form.avatar.errors %}
+            <div class="form-error">{{ form.avatar.errors }}</div>
+          {% endif %}
+          <p class="form-help">
+            {% trans "Рекомендуется квадратное фото бойца (JPG, PNG или WebP, до 5 МБ)" %}
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+        {# ФИО #}
+        <div>
+          <label class="form-label" for="{{ form.full_name.id_for_label }}">
+            {{ form.full_name.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.full_name }}
+          {% if form.full_name.errors %}
+            <div class="form-error">{{ form.full_name.errors }}</div>
+          {% endif %}
+        </div>
+
+        {# Телефон #}
+        <div>
+          <label class="form-label" for="{{ form.phone.id_for_label }}">
+            {{ form.phone.label }}
+          </label>
+          {{ form.phone }}
+          {% if form.phone.errors %}
+            <div class="form-error">{{ form.phone.errors }}</div>
+          {% endif %}
+        </div>
+
+        {# Telegram #}
+        <div>
+          <label class="form-label" for="{{ form.telegram.id_for_label }}">
+            {{ form.telegram.label }}
+          </label>
+          {{ form.telegram }}
+          {% if form.telegram.errors %}
+            <div class="form-error">{{ form.telegram.errors }}</div>
+          {% endif %}
+          <p class="form-help">{% trans "Никнейм в Telegram (например, @ivan_rso)" %}</p>
+        </div>
+
+        {# ВКонтакте #}
+        <div>
+          <label class="form-label" for="{{ form.vk_url.id_for_label }}">
+            {{ form.vk_url.label }}
+          </label>
+          {{ form.vk_url }}
+          {% if form.vk_url.errors %}
+            <div class="form-error">{{ form.vk_url.errors }}</div>
+          {% endif %}
+          <p class="form-help">{% trans "Ссылка на личную страницу ВКонтакте" %}</p>
+        </div>
+      </div>
+
+      {# Подпись #}
+      <div class="mb-5">
+        <label class="form-label" for="{{ form.signature.id_for_label }}">
+          {{ form.signature.label }}
+        </label>
+        {{ form.signature }}
+        {% if form.signature.errors %}
+          <div class="form-error">{{ form.signature.errors }}</div>
+        {% endif %}
+        <p class="form-help">{{ form.signature.help_text }}</p>
+      </div>
+
+      {# О себе #}
+      <div>
+        <label class="form-label" for="{{ form.bio.id_for_label }}">
+          {{ form.bio.label }}
+        </label>
+        {{ form.bio }}
+        {% if form.bio.errors %}
+          <div class="form-error">{{ form.bio.errors }}</div>
+        {% endif %}
+        <p class="form-help">{{ form.bio.help_text }}</p>
+      </div>
+    </div>
+
+    {# КАРТОЧКА 2: Язык и интерфейс #}
+    <div class="card-base p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-gray-900 font-heading mb-6 pb-3 border-b border-gray-100 flex items-center gap-2">
+        <span class="p-1.5 rounded-lg bg-emerald-50 text-emerald-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+          </svg>
+        </span>
+        <span>{% trans "Язык и интерфейс" %}</span>
+      </h2>
+
+      <div class="max-w-xs">
+        <label class="form-label" for="{{ form.language.id_for_label }}">
+          {{ form.language.label }}
+        </label>
+        {{ form.language }}
+        {% if form.language.errors %}
+          <div class="form-error">{{ form.language.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Кнопки сохранения #}
+    <div class="flex items-center gap-4">
+      <button type="submit" class="btn btn-primary px-6 py-2.5 text-sm font-semibold">
+        {% trans "Сохранить изменения" %}
+      </button>
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline px-5 py-2.5 text-sm font-semibold">
+        {% trans "Отмена" %}
+      </a>
+    </div>
+  </form>
+
+  {# РАЗДЕЛ БЕЗОПАСНОСТИ И 152-ФЗ #}
+  <div class="mt-10 space-y-8">
+
+    {# КАРТОЧКА: Безопасность и пароль #}
+    <div class="card-base p-6 sm:p-8">
+      <h2 class="text-lg font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+        <span class="p-1.5 rounded-lg bg-purple-50 text-purple-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </span>
+        <span>{% trans "Безопасность учётной записи" %}</span>
+      </h2>
+
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-900">{% trans "Пароль" %}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">
+            {% trans "Для защиты учётной записи рекомендуется использовать стойкий пароль не менее 8 символов" %}
+          </p>
+        </div>
+        <a href="{% url 'accounts:password_change' %}"
+           class="btn btn-outline text-xs px-4 py-2 font-semibold shrink-0">
+          {% trans "Сменить пароль" %}
+        </a>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="text-sm font-semibold text-gray-900">{% trans "Электронная почта" %}</h3>
+          <p class="text-xs text-gray-500 mt-0.5">
+            {{ user.email }}
+            {% if user.email_verified %}
+              <span class="text-green-600 font-semibold ml-2">✓ {% trans "Подтверждён (149-ФЗ)" %}</span>
+            {% else %}
+              <span class="text-amber-600 font-semibold ml-2">⚠ {% trans "Требует подтверждения" %}</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {# КАРТОЧКА: Аудит согласия на ОПД (152-ФЗ РФ) #}
+    <div class="card-base p-6 sm:p-8 bg-gray-50/50">
+      <h2 class="text-lg font-bold text-gray-900 font-heading mb-3 flex items-center gap-2">
+        <span class="p-1.5 rounded-lg bg-blue-50 text-blue-700">⚖️</span>
+        <span>{% trans "Персональные данные и 152-ФЗ" %}</span>
+      </h2>
+      <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+        {% trans "Обработка ваших данных осуществляется в строгом соответствии с Федеральным законом РФ № 152-ФЗ «О персональных данных» и внутренними регламентами ДВФУ." %}
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs bg-white p-4 rounded-xl border border-gray-200">
+        <div>
+          <span class="text-gray-400 block mb-0.5">{% trans "Статус согласия" %}</span>
+          <span class="font-semibold text-green-700">{% trans "Действующее" %}</span>
+        </div>
+        <div>
+          <span class="text-gray-400 block mb-0.5">{% trans "Дата фиксации" %}</span>
+          <span class="font-medium text-gray-800">{{ user.consent_date|date:"d.m.Y H:i"|default:"—" }}</span>
+        </div>
+        <div>
+          <span class="text-gray-400 block mb-0.5">{% trans "IP-адрес фиксации" %}</span>
+          <span class="font-mono text-gray-800">{{ user.consent_ip|default:"127.0.0.1" }}</span>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap gap-4 text-xs text-blue-700">
+        <a href="{% url 'content:privacy' %}" class="hover:underline">{% trans "Политика конфиденциальности" %} →</a>
+        <a href="{% url 'content:terms' %}" class="hover:underline">{% trans "Пользовательское соглашение" %} →</a>
+      </div>
+    </div>
+
+    {# КАРТОЧКА: Завершение сессии / Выход #}
+    <div class="card-base p-6 sm:p-8 border-red-100 bg-red-50/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h3 class="text-sm font-bold text-gray-900">{% trans "Завершение сеанса" %}</h3>
+        <p class="text-xs text-gray-500 mt-0.5">
+          {% trans "Выйти из учётной записи на этом устройстве" %}
+        </p>
+      </div>
+
+      <form method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline text-red-600 border-red-200 hover:bg-red-50 text-xs px-4 py-2 font-semibold">
+          {% trans "Выйти из аккаунта" %}
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

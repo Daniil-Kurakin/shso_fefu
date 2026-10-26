@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserPortfolioItem
 
 pytestmark = pytest.mark.django_db
 
@@ -107,6 +107,114 @@ class TestProfileView:
         )
         admin_user.refresh_from_db()
         assert admin_user.full_name != "Хакер"
+
+
+class TestProfileSettingsView:
+    def test_settings_requires_login(self, client):
+        url = reverse("accounts:settings")
+        response = client.get(url)
+        assert response.status_code == 302
+        assert "login" in response["Location"]
+
+    def test_settings_renders_for_authenticated(self, client, user):
+        client.force_login(user)
+        url = reverse("accounts:settings")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert user.email.encode() in response.content
+
+    def test_settings_update_personal_data(self, client, user):
+        client.force_login(user)
+        url = reverse("accounts:settings")
+        response = client.post(
+            url,
+            {
+                "full_name": "Боец Студотряда",
+                "phone": "+7 (999) 111-22-33",
+                "telegram": "@fighter_rso",
+                "vk_url": "https://vk.com/fighter",
+                "bio": "Опыт двух целин в ВДЦ Океан",
+                "signature": "Старший вожатый",
+                "language": "ru",
+            },
+        )
+        assert response.status_code == 302
+        user.refresh_from_db()
+        assert user.full_name == "Боец Студотряда"
+        assert user.telegram == "@fighter_rso"
+        assert user.bio == "Опыт двух целин в ВДЦ Океан"
+
+
+class TestPortfolioCRUD:
+    def test_portfolio_add_requires_login(self, client):
+        url = reverse("accounts:portfolio_add")
+        response = client.get(url)
+        assert response.status_code == 302
+        assert "login" in response["Location"]
+
+    def test_portfolio_create_success(self, client, user):
+        client.force_login(user)
+        url = reverse("accounts:portfolio_add")
+        response = client.post(
+            url,
+            {
+                "title": "Целина 2025",
+                "category": UserPortfolioItem.Category.CELINA,
+                "year": 2025,
+                "organization": "ВДЦ Океан",
+                "description": "Педагогическая практика",
+            },
+        )
+        assert response.status_code == 302
+        assert UserPortfolioItem.objects.filter(user=user, title="Целина 2025").exists()
+
+    def test_portfolio_edit_success(self, client, user):
+        client.force_login(user)
+        item = UserPortfolioItem.objects.create(
+            user=user,
+            title="Старая целина",
+            category=UserPortfolioItem.Category.CELINA,
+            year=2024,
+        )
+        url = reverse("accounts:portfolio_edit", kwargs={"pk": item.pk})
+        response = client.post(
+            url,
+            {
+                "title": "Обновленная целина",
+                "category": UserPortfolioItem.Category.CELINA,
+                "year": 2024,
+                "organization": "ДВФУ",
+                "description": "Обновлено",
+            },
+        )
+        assert response.status_code == 302
+        item.refresh_from_db()
+        assert item.title == "Обновленная целина"
+
+    def test_portfolio_delete_success(self, client, user):
+        client.force_login(user)
+        item = UserPortfolioItem.objects.create(
+            user=user,
+            title="Удаляемое достижение",
+            category=UserPortfolioItem.Category.AWARD,
+            year=2025,
+        )
+        url = reverse("accounts:portfolio_delete", kwargs={"pk": item.pk})
+        response = client.post(url)
+        assert response.status_code == 302
+        assert not UserPortfolioItem.objects.filter(pk=item.pk).exists()
+
+    def test_portfolio_cannot_edit_other_user_item(self, client, user, admin_user):
+        item = UserPortfolioItem.objects.create(
+            user=admin_user,
+            title="Достижение админа",
+            category=UserPortfolioItem.Category.AWARD,
+            year=2025,
+        )
+        client.force_login(user)
+        url = reverse("accounts:portfolio_edit", kwargs={"pk": item.pk})
+        response = client.get(url)
+        assert response.status_code == 404
 
 
 class TestPasswordResetView:

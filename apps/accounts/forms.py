@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.auth.forms import UserCreationForm as BaseUserCreationForm
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import User, UserPortfolioItem
 
 # Список запрещённых доменов одноразовых почтовых сервисов (борьба со спамом и фишингом)
 DISPOSABLE_EMAIL_DOMAINS = {
@@ -224,3 +224,123 @@ class ResendActivationForm(forms.Form):
 
     def clean_email(self):
         return self.cleaned_data["email"].strip().lower()
+
+
+class ProfileSettingsForm(forms.ModelForm):
+    """Форма редактирования настроек и данных профиля пользователя."""
+
+    class Meta:
+        model = User
+        fields = (
+            "avatar",
+            "full_name",
+            "phone",
+            "telegram",
+            "vk_url",
+            "bio",
+            "signature",
+            "language",
+        )
+        widgets = {
+            "avatar": forms.FileInput(
+                attrs={
+                    "class": "form-file",
+                    "accept": "image/*",
+                    "data-preview-target": "#avatar-preview",
+                }
+            ),
+            "full_name": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": _("Иванов Иван Иванович"),
+                    "autocomplete": "name",
+                }
+            ),
+            "phone": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "+7 (999) 000-00-00",
+                    "autocomplete": "tel",
+                }
+            ),
+            "telegram": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "@username",
+                }
+            ),
+            "vk_url": forms.URLInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "https://vk.com/id12345",
+                }
+            ),
+            "bio": forms.Textarea(
+                attrs={
+                    "class": "form-textarea",
+                    "rows": 3,
+                    "placeholder": _("Пара слов о себе, отрядном пути, увлечениях..."),
+                }
+            ),
+            "signature": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": _("Например: Командир СПО «Меридиан»"),
+                }
+            ),
+            "language": forms.Select(attrs={"class": "form-select"}),
+        }
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get("phone", "").strip()
+        if not phone:
+            return ""
+        digits = re.sub(r"[^\d+]", "", phone)
+        if len(re.sub(r"\D", "", digits)) < 10:
+            raise forms.ValidationError(_("Введите корректный номер телефона (не менее 10 цифр)."))
+        return phone
+
+
+class PortfolioItemForm(forms.ModelForm):
+    """Форма добавления и редактирования записи портфолио бойца."""
+
+    class Meta:
+        model = UserPortfolioItem
+        fields = ("title", "category", "year", "organization", "description", "image")
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": _("Например: Целина 2025: ВДЦ «Океан» или Лучший боец СПО"),
+                }
+            ),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "year": forms.NumberInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "2025",
+                }
+            ),
+            "organization": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": _("Например: ВДЦ «Океан», Приморский край или ШСО ДВФУ"),
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "form-textarea",
+                    "rows": 3,
+                    "placeholder": _(
+                        "Краткое описание проекта, ваши обязанности, результаты и впечатления"
+                    ),
+                }
+            ),
+            "image": forms.FileInput(
+                attrs={
+                    "class": "form-file",
+                    "accept": "image/*",
+                    "data-preview-target": "#portfolio-image-preview",
+                }
+            ),
+        }

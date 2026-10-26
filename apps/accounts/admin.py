@@ -3,7 +3,13 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import User
+from .models import User, UserPortfolioItem
+
+
+class UserPortfolioItemInline(admin.TabularInline):
+    model = UserPortfolioItem
+    extra = 0
+    fields = ("title", "category", "year", "organization", "image")
 
 
 @admin.register(User)
@@ -11,6 +17,7 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     ordering = ("email",)
+    inlines = [UserPortfolioItemInline]
     list_display = (
         "email",
         "full_name",
@@ -24,7 +31,21 @@ class UserAdmin(BaseUserAdmin):
     readonly_fields = ("consent_date", "consent_ip")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (_("Личные данные"), {"fields": ("full_name", "phone", "signature", "language")}),
+        (
+            _("Личные данные"),
+            {
+                "fields": (
+                    "full_name",
+                    "avatar",
+                    "phone",
+                    "telegram",
+                    "vk_url",
+                    "bio",
+                    "signature",
+                    "language",
+                )
+            },
+        ),
         (
             _("Права и статус"),
             {
@@ -52,3 +73,11 @@ class UserAdmin(BaseUserAdmin):
         (_("Даты"), {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = ((None, {"classes": ("wide",), "fields": ("email", "password1", "password2")}),)
+
+
+@admin.register(UserPortfolioItem)
+class UserPortfolioItemAdmin(admin.ModelAdmin):
+    list_display = ("title", "user", "category", "year", "organization", "created_at")
+    list_filter = ("category", "year")
+    search_fields = ("title", "organization", "user__email", "user__full_name")
+    raw_id_fields = ("user",)

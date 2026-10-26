@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Удаление записи портфолио" %} | {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+  <div class="card-base p-6 sm:p-8 border-red-200">
+    <div class="text-center mb-6">
+      <span class="w-14 h-14 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto text-2xl font-bold mb-3">
+        🗑️
+      </span>
+      <h1 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading">
+        {% trans "Удалить запись из портфолио?" %}
+      </h1>
+      <p class="text-sm text-gray-500 mt-2">
+        {% trans "Вы действительно хотите удалить запись" %}
+        <strong class="text-gray-900">«{{ object.title }}» ({{ object.year }} г.)</strong>?
+      </p>
+      <p class="text-xs text-red-500 mt-1">
+        {% trans "Это действие нельзя будет отменить." %}
+      </p>
+    </div>
+
+    <form method="post" class="flex items-center justify-center gap-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger px-6 py-2.5 text-sm font-semibold">
+        {% trans "Да, удалить" %}
+      </button>
+      <a href="{% url 'accounts:profile' %}" class="btn btn-outline px-5 py-2.5 text-sm font-semibold">
+        {% trans "Отмена" %}
+      </a>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

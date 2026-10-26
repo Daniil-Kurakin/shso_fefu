@@ -16,10 +16,15 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
-from django.views.generic.edit import UpdateView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
-from .forms import RegistrationForm, ResendActivationForm
-from .models import Role, User
+from .forms import (
+    PortfolioItemForm,
+    ProfileSettingsForm,
+    RegistrationForm,
+    ResendActivationForm,
+)
+from .models import Role, User, UserPortfolioItem
 
 logger = logging.getLogger(__name__)
 
@@ -191,17 +196,109 @@ def logout_view(request: HttpRequest) -> HttpResponseRedirect:
     return redirect("core:home")
 
 
-class ProfileView(LoginRequiredMixin, UpdateView):
-    """Страница профиля: редактирование имени, подписи, телефона и языка интерфейса."""
+class ProfileView(LoginRequiredMixin, TemplateView):
+    """
+    Основная витрина профиля пользователя:
+    информация о бойце, членство в отряде, портфолио, история и активность.
+    """
+
+    template_name = "accounts/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context["active_membership"] = (
+            user.memberships.filter(is_active=True)
+            .select_related("squad__direction", "position")
+            .first()
+        )
+        context["past_memberships"] = (
+            user.memberships.filter(is_active=False)
+            .select_related("squad__direction", "position")
+            .order_by("-start_date")
+        )
+        context["portfolio_items"] = user.portfolio_items.all()
+        context["portfolio_form"] = PortfolioItemForm()
+        context["vacancy_applications"] = user.vacancy_applications.select_related(
+            "vacancy"
+        ).order_by("-id")[:5]
+        context["room_bookings"] = user.room_bookings.select_related("room").order_by(
+            "-event_date"
+        )[:5]
+        context["pass_requests"] = user.pass_requests.order_by("-visit_date")[:5]
+        context["managed_squads"] = user.get_managed_squads()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Быстрое сохранение данных профиля для совместимости."""
+        form = ProfileSettingsForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Профиль успешно сохранён."))
+            return redirect("accounts:profile")
+        context = self.get_context_data(form=form)
+        return self.render_to_response(context)
+
+
+class ProfileSettingsView(LoginRequiredMixin, UpdateView):
+    """
+    Отдельная страница настроек и редактирования профиля:
+    личные данные, контакты, язык, 152-ФЗ аудит, безопасность.
+    """
 
     model = User
-    fields = ["full_name", "phone", "signature", "language"]
-    template_name = "accounts/profile.html"
-    success_url = reverse_lazy("accounts:profile")
+    form_class = ProfileSettingsForm
+    template_name = "accounts/settings.html"
+    success_url = reverse_lazy("accounts:settings")
 
     def get_object(self, queryset=None):
         return self.request.user
 
     def form_valid(self, form):
-        messages.success(self.request, _("Профиль успешно сохранён."))
+        messages.success(self.request, _("Настройки профиля успешно сохранены."))
+        return super().form_valid(form)
+
+
+class PortfolioItemCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор добавления нового достижения или целины в портфолио."""
+
+    model = UserPortfolioItem
+    form_class = PortfolioItemForm
+    template_name = "accounts/portfolio_form.html"
+    success_url = reverse_lazy("accounts:profile")
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        messages.success(self.request, _("Запись успешно добавлена в ваше портфолио."))
+        return super().form_valid(form)
+
+
+class PortfolioItemUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование записи портфолио."""
+
+    model = UserPortfolioItem
+    form_class = PortfolioItemForm
+    template_name = "accounts/portfolio_form.html"
+    success_url = reverse_lazy("accounts:profile")
+
+    def get_queryset(self):
+        return UserPortfolioItem.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Запись портфолио успешно обновлена."))
+        return super().form_valid(form)
+
+
+class PortfolioItemDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление записи из портфолио."""
+
+    model = UserPortfolioItem
+    template_name = "accounts/portfolio_confirm_delete.html"
+    success_url = reverse_lazy("accounts:profile")
+
+    def get_queryset(self):
+        return UserPortfolioItem.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, _("Запись удалена из портфолио."))
         return super().form_valid(form)

@@ -1,7 +1,7 @@
 import pytest
 from django.db import IntegrityError, transaction
 
-from apps.accounts.models import Role, User
+from apps.accounts.models import Role, User, UserPortfolioItem
 
 pytestmark = pytest.mark.django_db
 
@@ -32,3 +32,28 @@ def test_email_is_unique_case_insensitively():
 def test_email_required():
     with pytest.raises(ValueError):
         User.objects.create_user("", "pass-12345-xyz")
+
+
+def test_user_initials_and_avatar():
+    user = User.objects.create_user("test@example.com", "pass-12345-xyz", full_name="Иванов Иван")
+    assert user.get_initials() == "ИИ"
+    assert user.get_avatar_url() is None
+
+    user_no_name = User.objects.create_user("petrov@example.com", "pass-12345-xyz")
+    assert user_no_name.get_initials() == "P"
+
+
+def test_user_portfolio_item_str_and_creation():
+    user = User.objects.create_user(
+        "fighter@example.com", "pass-12345-xyz", full_name="Сидоров Сидор"
+    )
+    item = UserPortfolioItem.objects.create(
+        user=user,
+        title="Целина 2025: ВДЦ Океан",
+        category=UserPortfolioItem.Category.CELINA,
+        year=2025,
+        organization="ВДЦ «Океан»",
+    )
+    assert "Целина 2025: ВДЦ Океан" in str(item)
+    assert "Сидоров Сидор" in str(item)
+    assert item.user == user
