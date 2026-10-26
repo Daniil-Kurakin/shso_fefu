@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Лента событий — ШСО ДВФУ" %}{% endblock %}
+{% block meta_description %}{% trans "Все новости, события, достижения и объявления Штаба студенческих отрядов ДВФУ." %}{% endblock %}
+
+{% block content %}
+  <div class="bg-gray-50 min-h-screen py-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      {# Заголовок страницы #}
+      <div class="mb-8">
+        <nav class="flex items-center gap-2 text-xs text-gray-500 mb-3" aria-label="{% trans "Хлебные крошки" %}">
+          <a href="{% url 'core:home' %}" class="hover:text-blue-700">{% trans "Главная" %}</a>
+          <span>/</span>
+          <span class="text-gray-800 font-medium">{% trans "Новости" %}</span>
+        </nav>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          {% trans "Лента событий ШСО ДВФУ" %}
+        </h1>
+        <p class="mt-2 text-base text-gray-600">
+          {% trans "Жизнь штаба, трудовые семестры, победы и объявления отрядов ДВФУ." %}
+        </p>
+      </div>
+
+      {# Панель фильтров #}
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-8">
+        <form method="get" action="{% url 'news:list' %}" class="space-y-4">
+          
+          {# Поиск и основные селекты #}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            
+            {# Поисковая строка #}
+            <div class="relative">
+              <input
+                type="text"
+                name="q"
+                value="{{ current_q }}"
+                placeholder="{% trans "Поиск по новостям..." %}"
+                class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+              <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-gray-400">
+                🔍
+              </div>
+            </div>
+
+            {# Категория #}
+            <div>
+              <select
+                name="category"
+                class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">{% trans "Все категории" %}</option>
+                {% for code, label in categories %}
+                  <option value="{{ code }}" {% if current_category == code %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            {# Организатор #}
+            <div>
+              <select
+                name="organizer"
+                class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">{% trans "Все организаторы" %}</option>
+                {% for code, label in organizers %}
+                  <option value="{{ code }}" {% if current_organizer == code %}selected{% endif %}>
+                    {{ label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            {# Отряд #}
+            <div>
+              <select
+                name="squad"
+                class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">{% trans "Все отряды" %}</option>
+                {% for squad in squads %}
+                  <option value="{{ squad.slug }}" {% if current_squad == squad.slug %}selected{% endif %}>
+                    {{ squad.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+          </div>
+
+          {# Кнопки применить и сбросить #}
+          <div class="flex items-center gap-3 pt-2">
+            <button
+              type="submit"
+              class="px-5 py-2 rounded-xl bg-blue-700 text-white font-medium text-sm hover:bg-blue-800 transition-colors shadow-sm"
+            >
+              {% trans "Применить фильтры" %}
+            </button>
+            {% if current_category or current_organizer or current_squad or current_q %}
+              <a
+                href="{% url 'news:list' %}"
+                class="px-4 py-2 rounded-xl border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-50 transition-colors"
+              >
+                {% trans "Сбросить" %}
+              </a>
+            {% endif %}
+          </div>
+
+        </form>
+      </div>
+
+      {# Контейнер карточек новостей #}
+      <div id="news-container">
+        {% include "news/_news_list_partial.html" %}
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

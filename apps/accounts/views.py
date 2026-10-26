@@ -2,7 +2,6 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth import logout
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect

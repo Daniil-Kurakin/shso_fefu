@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ news.title }} — {% trans "ШСО ДВФУ" %}{% endblock %}
+{% block meta_description %}{{ news.lead|default:news.content|striptags|truncatewords:30 }}{% endblock %}
+
+{% block content %}
+  <article class="bg-gray-50 min-h-screen py-10" x-data="{ copied: false }">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      {# Навигация / Хлебные крошки #}
+      <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="{% trans "Хлебные крошки" %}">
+        <a href="{% url 'core:home' %}" class="hover:text-blue-700">{% trans "Главная" %}</a>
+        <span>/</span>
+        <a href="{% url 'news:list' %}" class="hover:text-blue-700">{% trans "Новости" %}</a>
+        <span>/</span>
+        <span class="text-gray-800 font-medium truncate max-w-xs">{{ news.title }}</span>
+      </nav>
+
+      {# Предупреждение, если новость ещё не опубликована (для автора или админа) #}
+      {% if news.status != "published" %}
+        <div class="mb-6 p-4 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-sm flex items-start gap-3">
+          <span class="text-xl">⚠️</span>
+          <div>
+            <div class="font-bold">{% trans "Предварительный просмотр" %}</div>
+            <div>
+              {% blocktrans with status=news.get_status_display %}Статус новости: <strong>{{ status }}</strong>. Посетители сайта пока не видят эту публикацию.{% endblocktrans %}
+            </div>
+            {% if news.moderator_comment %}
+              <div class="mt-2 text-xs font-semibold text-red-700">
+                {% trans "Комментарий модератора:" %} {{ news.moderator_comment }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      {# Основная карточка новости #}
+      <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden p-6 sm:p-10 mb-8">
+
+        {# Метаданные и бейджи #}
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-700 text-white shadow-sm">
+            {{ news.get_category_display }}
+          </span>
+          <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gray-100 text-gray-800">
+            {{ news.get_organizer_display }}
+          </span>
+          {% if news.squad %}
+            <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700">
+              🏕️ {{ news.squad.name }}
+            </span>
+          {% endif %}
+          <span class="text-xs text-gray-400 ml-auto">
+            📅 {{ news.published_at|default:news.created_at|date:"d E Y" }}
+          </span>
+        </div>
+
+        {# Заголовок #}
+        <h1 class="text-2xl sm:text-4xl font-extrabold text-gray-900 leading-tight mb-6">
+          {{ news.title }}
+        </h1>
+
+        {# Лид (анонс) #}
+        {% if news.lead %}
+          <div class="text-base sm:text-lg text-gray-700 font-medium leading-relaxed bg-blue-50/60 border-l-4 border-blue-600 p-4 rounded-r-xl mb-8">
+            {{ news.lead }}
+          </div>
+        {% endif %}
+
+        {# Обложка #}
+        {% if news.cover %}
+          <div class="mb-8 rounded-2xl overflow-hidden aspect-video bg-gray-100 shadow-inner">
+            <img src="{{ news.cover.url }}" alt="{{ news.title }}" class="w-full h-full object-cover">
+          </div>
+        {% endif %}
+
+        {# Полный текст новости #}
+        <div class="prose max-w-none text-gray-800 leading-relaxed space-y-4 text-base sm:text-lg mb-8">
+          {{ news.content|linebreaks }}
+        </div>
+
+        {# Галерея фотографий #}
+        {% if news.gallery_images.all %}
+          <div class="mt-10 pt-8 border-t border-gray-100">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">{% trans "Галерея мероприятия" %}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {% for item in news.gallery_images.all %}
+                <div class="rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  <img src="{{ item.image.url }}" alt="{{ item.caption|default:news.title }}" class="w-full aspect-[4/3] object-cover hover:scale-105 transition-transform duration-300">
+                  {% if item.caption %}
+                    <p class="p-2 text-xs text-gray-600 bg-white border-t border-gray-100 text-center">
+                      {{ item.caption }}
+                    </p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# Подвал новости: первоисточник и поделиться #}
+        <div class="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+          
+          <div>
+            {% if news.source_url %}
+              <a href="{{ news.source_url }}" target="_blank" rel="noopener noreferrer"
+                 class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 transition-colors">
+                🔗 {% trans "Оригинальный пост в соцсетях" %}
+              </a>
+            {% endif %}
+          </div>
+
+          {# Кнопки «Поделиться» #}
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-gray-500 font-medium mr-1">{% trans "Поделиться:" %}</span>
+            
+            <a :href="'https://vk.com/share.php?url=' + encodeURIComponent(window.location.href) + '&title=' + encodeURIComponent('{{ news.title|escapejs }}')"
+               target="_blank" rel="noopener noreferrer"
+               class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
+              VK
+            </a>
+            
+            <button @click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2500)"
+                    type="button"
+                    class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+              <span x-show="!copied">📋 {% trans "Ссылка" %}</span>
+              <span x-show="copied" x-cloak class="text-green-600">✓ {% trans "Скопировано!" %}</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {# Читайте также #}
+      {% if recent_news %}
+        <div class="mt-12">
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">{% trans "Другие события" %}</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for item in recent_news %}
+              <a href="{{ item.get_absolute_url }}" class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm hover:border-blue-300 hover:shadow-md transition-all group block">
+                <div class="text-xs text-gray-400 mb-1.5">
+                  📅 {{ item.published_at|date:"d E Y" }}
+                </div>
+                <h3 class="font-bold text-sm text-gray-900 group-hover:text-blue-700 transition-colors line-clamp-2 mb-2">
+                  {{ item.title }}
+                </h3>
+                <p class="text-xs text-gray-500 line-clamp-2">
+                  {{ item.lead|default:item.content|striptags }}
+                </p>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+    </div>
+  </article>
+{% endblock %}

@@ -40,7 +40,7 @@
             <a href="{% url 'core:home' %}"
                class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
-            <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
+            <a href="{% url 'news:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Вакансии" %}</a>
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
           </nav>
@@ -75,7 +75,8 @@
           </div>
 
           {# Гамбургер (mobile) #}
-          <button @click="mobileOpen = !mobileOpen"
+          <button type="button"
+                  @click="mobileOpen = !mobileOpen"
                   class="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
                   aria-label="{% trans "Открыть меню" %}">
             <svg x-show="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +104,7 @@
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Главная" %}</a>
           <a href="#"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Отряды" %}</a>
-          <a href="#"
+          <a href="{% url 'news:list' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
           <a href="#"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
@@ -153,7 +154,8 @@
                       {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200
                       {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
             <span class="flex-1">{{ message }}</span>
-            <button @click="show = false"
+            <button type="button"
+                    @click="show = false"
                     class="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
                     aria-label="{% trans "Закрыть" %}">✕</button>
           </div>
@@ -184,7 +186,7 @@
             <div class="text-white font-semibold text-base mb-3">{% trans "Разделы" %}</div>
             <ul class="space-y-2 text-sm">
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
+              <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
             </ul>

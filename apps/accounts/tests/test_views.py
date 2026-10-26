@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from apps.accounts.models import Role, User
+from apps.accounts.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -81,11 +81,14 @@ class TestProfileView:
     def test_profile_update_full_name(self, client, user):
         client.force_login(user)
         url = reverse("accounts:profile")
-        response = client.post(url, {
-            "full_name": "Иванов Иван Иванович",
-            "signature": "",
-            "language": "ru",
-        })
+        response = client.post(
+            url,
+            {
+                "full_name": "Иванов Иван Иванович",
+                "signature": "",
+                "language": "ru",
+            },
+        )
         assert response.status_code == 302
         user.refresh_from_db()
         assert user.full_name == "Иванов Иван Иванович"
@@ -94,11 +97,14 @@ class TestProfileView:
         """ProfileView всегда редактирует текущего пользователя, не чужого."""
         client.force_login(user)
         url = reverse("accounts:profile")
-        response = client.post(url, {
-            "full_name": "Хакер",
-            "signature": "",
-            "language": "ru",
-        })
+        client.post(
+            url,
+            {
+                "full_name": "Хакер",
+                "signature": "",
+                "language": "ru",
+            },
+        )
         admin_user.refresh_from_db()
         assert admin_user.full_name != "Хакер"
 
@@ -143,11 +149,14 @@ class TestPasswordChangeView:
     def test_change_success(self, client, user):
         client.force_login(user)
         url = reverse("accounts:password_change")
-        response = client.post(url, {
-            "old_password": "ValidPass123!",
-            "new_password1": "NewValidPass456!",
-            "new_password2": "NewValidPass456!",
-        })
+        response = client.post(
+            url,
+            {
+                "old_password": "ValidPass123!",
+                "new_password1": "NewValidPass456!",
+                "new_password2": "NewValidPass456!",
+            },
+        )
         assert response.status_code == 302
         user.refresh_from_db()
         assert user.check_password("NewValidPass456!")
@@ -155,11 +164,14 @@ class TestPasswordChangeView:
     def test_change_wrong_old_password(self, client, user):
         client.force_login(user)
         url = reverse("accounts:password_change")
-        response = client.post(url, {
-            "old_password": "wrongpassword",
-            "new_password1": "NewValidPass456!",
-            "new_password2": "NewValidPass456!",
-        })
+        response = client.post(
+            url,
+            {
+                "old_password": "wrongpassword",
+                "new_password1": "NewValidPass456!",
+                "new_password2": "NewValidPass456!",
+            },
+        )
         assert response.status_code == 200
         user.refresh_from_db()
         assert user.check_password("ValidPass123!")  # не изменился

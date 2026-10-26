@@ -15,6 +15,7 @@ urlpatterns = [
 urlpatterns += i18n_patterns(
     path("admin/", admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
+    path("news/", include("apps.news.urls")),
     path("", include("apps.core.urls")),
     prefix_default_language=True,
 )
