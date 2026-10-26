@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Контакты — ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+  {# ===== ЗАГОЛОВОК СТРАНИЦЫ ===== #}
+  <div class="bg-gray-50 border-b border-gray-200 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+          {% trans "Контакты и руководство" %}
+        </h1>
+        <p class="text-base text-gray-600 leading-relaxed">
+          {% trans "Штаб студенческих отрядов Дальневосточного федерального университета открыт для бойцов, кандидатов, партнёров и работодателей." %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    {# ===== БЛОК «ШТАБ» ===== #}
+    <div class="mb-16">
+      <div class="bg-gradient-to-br from-blue-900 to-blue-800 text-white rounded-3xl p-8 sm:p-10 shadow-sm relative overflow-hidden">
+        <div class="relative z-10 max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-cyan-300 text-xs font-semibold uppercase tracking-wider mb-4">
+            🏛️ {% trans "Офис штаба" %}
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold mb-4">
+            {% trans "Штаб студенческих отрядов ДВФУ" %}
+          </h2>
+          <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-8">
+            {% trans "Здесь проходят совещания комсостава, консультации кандидатов, приём документов и координация отрядной деятельности." %}
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-6 border-t border-white/15">
+            {# Адрес / аудитория #}
+            <div>
+              <div class="text-xs text-blue-200 uppercase tracking-wider font-semibold mb-1">
+                {% trans "Адрес и кабинет" %}
+              </div>
+              <div class="text-sm font-medium">
+                {{ site_settings.hq_office|default:"о. Русский, Кампус ДВФУ, корпус А, ауд. А826" }}
+              </div>
+              <div class="text-xs text-blue-300 mt-1">
+                {% trans "Уровень 8 (рабочий офис, без бронирования)" %}
+              </div>
+            </div>
+
+            {# Электронная почта #}
+            <div>
+              <div class="text-xs text-blue-200 uppercase tracking-wider font-semibold mb-1">
+                {% trans "Электронная почта" %}
+              </div>
+              <a href="mailto:{{ site_settings.hq_email|default:'shso@dvfu.ru' }}"
+                 class="text-sm font-medium text-white hover:text-cyan-300 transition-colors underline decoration-white/40">
+                {{ site_settings.hq_email|default:"shso@dvfu.ru" }}
+              </a>
+              <div class="text-xs text-blue-300 mt-1">
+                {% trans "Для официальных писем и запросов" %}
+              </div>
+            </div>
+
+            {# Социальные сети #}
+            <div>
+              <div class="text-xs text-blue-200 uppercase tracking-wider font-semibold mb-1">
+                {% trans "Мы в сети" %}
+              </div>
+              <div class="flex flex-col gap-1.5 text-sm">
+                <a href="{{ site_settings.hq_vk|default:'https://vk.com/shso_fefu' }}"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center gap-1.5 text-white hover:text-cyan-300 transition-colors">
+                  <span>VK:</span>
+                  <span class="underline decoration-white/40">vk.com/shso_fefu</span>
+                </a>
+                {% if site_settings.hq_telegram %}
+                  <a href="{{ site_settings.hq_telegram }}"
+                     target="_blank" rel="noopener noreferrer"
+                     class="inline-flex items-center gap-1.5 text-white hover:text-cyan-300 transition-colors">
+                    <span>Telegram:</span>
+                    <span class="underline decoration-white/40">@fefudvfu</span>
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ===== РУКОВОДСТВО ШТАБА ===== #}
+    <div>
+      <div class="mb-8">
+        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+          {% trans "Руководящий состав" %}
+        </h2>
+        <p class="text-sm text-gray-500">
+          {% trans "Команда штаба, отвечающая за развитие отрядного движения в университете" %}
+        </p>
+      </div>
+
+      {% if staff_members %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% for member in staff_members %}
+            <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col">
+              <div class="flex items-center gap-4 mb-4">
+                {% if member.photo %}
+                  <img src="{{ member.photo.url }}" alt="{{ member.full_name }}" class="w-16 h-16 rounded-full object-cover border border-gray-200">
+                {% else %}
+                  <div class="w-16 h-16 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl font-bold">
+                    {{ member.full_name|first|upper }}
+                  </div>
+                {% endif %}
+                <div>
+                  <h3 class="font-bold text-gray-900 text-base leading-tight">
+                    {{ member.full_name }}
+                  </h3>
+                  <p class="text-xs text-blue-700 font-semibold mt-1">
+                    {% if LANGUAGE_CODE == "en" and member.position_en %}{{ member.position_en }}{% else %}{{ member.position }}{% endif %}
+                  </p>
+                </div>
+              </div>
+
+              {% if member.responsibility %}
+                <p class="text-xs text-gray-600 mb-4 bg-gray-50 rounded-xl p-3 flex-1">
+                  {{ member.responsibility }}
+                </p>
+              {% endif %}
+
+              <div class="space-y-1.5 text-xs text-gray-500 pt-3 border-t border-gray-100">
+                {% if member.email %}
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">✉️</span>
+                    <a href="mailto:{{ member.email }}" class="text-blue-700 hover:underline">{{ member.email }}</a>
+                  </div>
+                {% endif %}
+                {% if member.phone %}
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">📞</span>
+                    <a href="tel:{{ member.phone }}" class="text-gray-700 hover:text-blue-700">{{ member.phone }}</a>
+                  </div>
+                {% endif %}
+                {% if member.vk_url %}
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">VK:</span>
+                    <a href="{{ member.vk_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">
+                      {% trans "Страница ВКонтакте" %}
+                    </a>
+                  </div>
+                {% endif %}
+                {% if member.telegram_url %}
+                  <div class="flex items-center gap-2">
+                    <span class="text-gray-400">TG:</span>
+                    <a href="{{ member.telegram_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">
+                      {% trans "Telegram" %}
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        {# Плейсхолдеры для первичного отображения до добавления руководителей в админке #}
+        <div class="p-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+          <span class="text-4xl block mb-2">👥</span>
+          <h3 class="text-base font-semibold text-gray-700 mb-1">
+            {% trans "Список руководства наполняется" %}
+          </h3>
+          <p class="text-xs text-gray-500 max-w-md mx-auto">
+            {% trans "Карточки руководящего состава настраиваются в панели администратора." %}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -4,6 +4,7 @@ from django.db import connection
 from django.http import JsonResponse
 from django.views.generic import TemplateView
 
+from apps.content.models import Quote
 from apps.news.models import News
 from apps.squads.models import Direction
 
@@ -17,6 +18,8 @@ class HomeView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["latest_news"] = News.objects.published().select_related("squad")[:3]
         context["directions"] = Direction.objects.all()
+        lang = getattr(self.request, "LANGUAGE_CODE", "ru")
+        context["quote_of_the_day"] = Quote.get_quote_of_the_day(lang=lang)
         return context
 
 

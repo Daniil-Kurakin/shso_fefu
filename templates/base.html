@@ -42,7 +42,7 @@
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
             <a href="{% url 'news:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Вакансии" %}</a>
-            <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
+            <a href="{% url 'content:contacts' %}" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
           </nav>
 
           {# Действия (desktop) #}
@@ -108,7 +108,7 @@
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
           <a href="#"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
-          <a href="#"
+          <a href="{% url 'content:contacts' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Контакты" %}</a>
           <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
             {% if user.is_authenticated %}
@@ -188,7 +188,7 @@
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
               <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
-              <li><a href="#" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
+              <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
             </ul>
           </div>
 
@@ -196,14 +196,21 @@
           <div>
             <div class="text-white font-semibold text-base mb-3">{% trans "Контакты" %}</div>
             <ul class="space-y-2 text-sm">
-              <li>🏛️ {% trans "Владивосток, о. Русский, ДВФУ" %}</li>
+              <li>🏛️ {{ site_settings.hq_office|default:"Владивосток, о. Русский, ДВФУ, ауд. А826" }}</li>
               <li>
-                <a href="https://vk.com/shso_fefu"
+                <a href="{{ site_settings.hq_vk|default:'https://vk.com/shso_fefu' }}"
                    class="hover:text-white transition-colors"
                    target="_blank" rel="noopener noreferrer">
                   VK — shso_fefu
                 </a>
               </li>
+              {% if site_settings.hq_email %}
+                <li>
+                  <a href="mailto:{{ site_settings.hq_email }}" class="hover:text-white transition-colors">
+                    {{ site_settings.hq_email }}
+                  </a>
+                </li>
+              {% endif %}
             </ul>
           </div>
         </div>
