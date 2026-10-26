@@ -11,22 +11,41 @@ class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
     ordering = ("email",)
-    list_display = ("email", "full_name", "role", "signature", "is_active")
-    list_filter = ("role", "is_active", "is_staff")
-    search_fields = ("email", "full_name")
+    list_display = (
+        "email",
+        "full_name",
+        "role",
+        "email_verified",
+        "is_active",
+        "consent_personal_data",
+    )
+    list_filter = ("role", "email_verified", "is_active", "is_staff", "consent_personal_data")
+    search_fields = ("email", "full_name", "phone")
+    readonly_fields = ("consent_date", "consent_ip")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (_("Личные данные"), {"fields": ("full_name", "signature", "language")}),
+        (_("Личные данные"), {"fields": ("full_name", "phone", "signature", "language")}),
         (
-            _("Права"),
+            _("Права и статус"),
             {
                 "fields": (
                     "role",
+                    "email_verified",
                     "is_active",
                     "is_staff",
                     "is_superuser",
                     "groups",
                     "user_permissions",
+                )
+            },
+        ),
+        (
+            _("152-ФЗ и аудит согласий"),
+            {
+                "fields": (
+                    "consent_personal_data",
+                    "consent_date",
+                    "consent_ip",
                 )
             },
         ),

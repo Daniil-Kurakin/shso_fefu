@@ -175,3 +175,170 @@ class TestPasswordChangeView:
         assert response.status_code == 200
         user.refresh_from_db()
         assert user.check_password("ValidPass123!")  # не изменился
+
+
+class TestRegistrationView:
+    def test_registration_page_renders(self, client):
+        url = reverse("accounts:register")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "152-ФЗ" in response.content.decode("utf-8")
+
+    def test_registration_success(self, client, mailoutbox):
+        url = reverse("accounts:register")
+        response = client.post(
+            url,
+            {
+                "full_name": "Иванов Иван Иванович",
+                "email": "ivanov@dvfu.ru",
+                "phone": "+7 (999) 123-45-67",
+                "password": "StrongPassword123!",
+                "password_confirm": "StrongPassword123!",
+                "consent_personal_data": "on",
+                "website": "",
+            },
+        )
+        assert response.status_code == 302
+        assert response["Location"] == reverse("accounts:registration_done")
+
+        # Проверяем, что пользователь создан в БД
+        user = User.objects.get(email="ivanov@dvfu.ru")
+        assert not user.is_active  # Должен быть неактивен до перехода по ссылке
+        assert not user.email_verified
+        assert user.consent_personal_data
+        assert user.consent_date is not None
+        assert user.consent_ip is not None
+        assert user.phone == "+7 (999) 123-45-67"
+
+        # Проверяем отправку письма активации (149-ФЗ)
+        assert len(mailoutbox) == 1
+        assert "Активация учётной записи" in mailoutbox[0].subject
+        assert user.email in mailoutbox[0].to
+        assert "/accounts/activate/" in mailoutbox[0].body
+
+    def test_registration_requires_152fz_consent(self, client):
+        url = reverse("accounts:register")
+        response = client.post(
+            url,
+            {
+                "full_name": "Иванов Иван Иванович",
+                "email": "ivanov@dvfu.ru",
+                "password": "StrongPassword123!",
+                "password_confirm": "StrongPassword123!",
+                # без согласия consent_personal_data!
+            },
+        )
+        assert response.status_code == 200
+        assert not User.objects.filter(email="ivanov@dvfu.ru").exists()
+        assert "обработку персональных данных" in response.content.decode("utf-8")
+
+    def test_registration_rejects_duplicate_email(self, client, user):
+        url = reverse("accounts:register")
+        response = client.post(
+            url,
+            {
+                "full_name": "Тестовый дубликат",
+                "email": "TEST@EXAMPLE.COM",  # уже существует
+                "password": "StrongPassword123!",
+                "password_confirm": "StrongPassword123!",
+                "consent_personal_data": "on",
+            },
+        )
+        assert response.status_code == 200
+        assert "уже зарегистрирован" in response.content.decode("utf-8")
+
+    def test_registration_rejects_disposable_email(self, client):
+        url = reverse("accounts:register")
+        response = client.post(
+            url,
+            {
+                "full_name": "Спамер",
+                "email": "spammer@tempmail.com",
+                "password": "StrongPassword123!",
+                "password_confirm": "StrongPassword123!",
+                "consent_personal_data": "on",
+            },
+        )
+        assert response.status_code == 200
+        assert "одноразовой почты запрещена" in response.content.decode("utf-8")
+
+    def test_registration_honeypot_catches_bot(self, client):
+        url = reverse("accounts:register")
+        response = client.post(
+            url,
+            {
+                "full_name": "Бот",
+                "email": "bot@example.com",
+                "password": "StrongPassword123!",
+                "password_confirm": "StrongPassword123!",
+                "consent_personal_data": "on",
+                "website": "http://spamsite.com",  # Honeypot заполнен
+            },
+        )
+        assert response.status_code == 200
+        assert not User.objects.filter(email="bot@example.com").exists()
+
+
+class TestActivationView:
+    def test_activation_success(self, client):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        user = User.objects.create_user("new_user@dvfu.ru", "StrongPassword123!", is_active=False)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        url = reverse("accounts:activate", kwargs={"uidb64": uid, "token": token})
+        response = client.get(url)
+        assert response.status_code == 302
+
+        user.refresh_from_db()
+        assert user.is_active
+        assert user.email_verified
+
+        # Проверяем, что пользователь авторизован
+        assert int(client.session["_auth_user_id"]) == user.pk
+
+    def test_activation_invalid_token(self, client):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        user = User.objects.create_user("new_user@dvfu.ru", "StrongPassword123!", is_active=False)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        url = reverse("accounts:activate", kwargs={"uidb64": uid, "token": "invalid-token"})
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "Ссылка недействительна" in response.content.decode("utf-8")
+
+        user.refresh_from_db()
+        assert not user.is_active
+
+
+class TestResendActivationView:
+    def test_resend_activation_sends_email_for_unverified(self, client, mailoutbox):
+        User.objects.create_user("waiting@dvfu.ru", "StrongPassword123!", is_active=False)
+        url = reverse("accounts:resend_activation")
+        response = client.post(url, {"email": "waiting@dvfu.ru"})
+        assert response.status_code == 302
+        assert len(mailoutbox) == 1
+        assert "Активация учётной записи" in mailoutbox[0].subject
+
+
+class TestLegalPages:
+    def test_privacy_policy_page(self, client):
+        url = reverse("content:privacy")
+        response = client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "152-ФЗ" in content
+        assert "ШСО ДВФУ" in content
+
+    def test_terms_of_service_page(self, client):
+        url = reverse("content:terms")
+        response = client.get(url)
+        assert response.status_code == 200
+        content = response.content.decode("utf-8")
+        assert "Пользовательское соглашение" in content
+        assert "149-ФЗ" in content

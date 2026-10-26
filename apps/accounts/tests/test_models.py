@@ -18,6 +18,9 @@ def test_create_superuser_is_owner():
     user = User.objects.create_superuser("boss@example.com", "pass-12345-xyz")
     assert user.is_staff and user.is_superuser
     assert user.role == Role.OWNER
+    assert user.email_verified
+    assert user.consent_personal_data
+    assert user.consent_date is not None
 
 
 def test_email_is_unique_case_insensitively():

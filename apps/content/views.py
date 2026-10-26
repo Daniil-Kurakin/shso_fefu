@@ -163,3 +163,15 @@ class GlossaryListView(ListView):
         context["current_letter"] = self.request.GET.get("letter", "").strip().upper()
         context["q"] = self.request.GET.get("q", "")
         return context
+
+
+class PrivacyPolicyView(TemplateView):
+    """Политика в отношении обработки персональных данных (152-ФЗ ст. 18.1)."""
+
+    template_name = "content/privacy_policy.html"
+
+
+class TermsOfServiceView(TemplateView):
+    """Пользовательское соглашение и правила пользования сайтом."""
+
+    template_name = "content/terms_of_service.html"

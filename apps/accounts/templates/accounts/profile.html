@@ -49,6 +49,28 @@
           {% endfor %}
         </div>
 
+        {# Телефон #}
+        <div class="mb-5">
+          <label for="{{ form.phone.id_for_label }}"
+                 class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.phone.label }}
+          </label>
+          <input
+            id="{{ form.phone.id_for_label }}"
+            type="tel"
+            name="{{ form.phone.html_name }}"
+            value="{{ form.phone.value|default:'' }}"
+            autocomplete="tel"
+            placeholder="+7 (999) 000-00-00"
+            class="block w-full px-4 py-2.5 rounded-xl border text-sm
+                   {% if form.phone.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %}
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          >
+          {% for error in form.phone.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
         {# Подпись #}
         <div class="mb-5">
           <label for="{{ form.signature.id_for_label }}"

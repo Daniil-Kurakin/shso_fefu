@@ -1,0 +1,32 @@
+{% extends "accounts/auth_base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Ссылка недействительна — ШСО ДВФУ" %}{% endblock %}
+{% block auth_title %}{% trans "Ошибка активации" %}{% endblock %}
+
+{% block auth_body %}
+  <div class="text-center py-4 space-y-4">
+    <div class="w-16 h-16 mx-auto rounded-full bg-red-50 text-red-600 flex items-center justify-center text-3xl">
+      ⚠️
+    </div>
+
+    <h2 class="text-lg font-bold text-gray-900 font-heading">
+      {% trans "Ссылка недействительна или устарела" %}
+    </h2>
+
+    <p class="text-sm text-gray-600 leading-relaxed">
+      {% trans "Возможно, срок действия ссылки истёк, либо аккаунт уже был успешно активирован ранее." %}
+    </p>
+
+    <div class="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
+      <a href="{% url 'accounts:resend_activation' %}"
+         class="px-5 py-2.5 rounded-xl bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800 transition-colors">
+        {% trans "Запросить новую ссылку" %}
+      </a>
+      <a href="{% url 'accounts:login' %}"
+         class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors">
+        {% trans "Попробовать войти" %}
+      </a>
+    </div>
+  </div>
+{% endblock %}

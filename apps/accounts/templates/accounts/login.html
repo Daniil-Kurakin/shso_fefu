@@ -95,6 +95,6 @@
 {% block auth_footer %}
   <p class="mt-5 text-center text-sm text-gray-500">
     {% trans "Нет аккаунта?" %}
-    <a href="#" class="text-blue-600 hover:underline font-medium">{% trans "Обратитесь к куратору" %}</a>
+    <a href="{% url 'accounts:register' %}" class="text-blue-600 hover:underline font-semibold">{% trans "Зарегистрироваться" %}</a>
   </p>
 {% endblock %}

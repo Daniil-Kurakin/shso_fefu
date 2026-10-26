@@ -35,12 +35,16 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("role", Role.OWNER)
+        extra_fields.setdefault("email_verified", True)
+        extra_fields.setdefault("consent_personal_data", True)
+        extra_fields.setdefault("consent_date", timezone.now())
         return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_("email"), max_length=254, unique=True)
     full_name = models.CharField(_("ФИО"), max_length=200, blank=True)
+    phone = models.CharField(_("номер телефона"), max_length=20, blank=True)
     role = models.CharField(_("системная роль"), max_length=20, choices=Role, default=Role.MEMBER)
     signature = models.CharField(
         _("подпись"),
@@ -54,9 +58,30 @@ class User(AbstractBaseUser, PermissionsMixin):
         choices=[("ru", "Русский"), ("en", "English")],
         default="ru",
     )
+    # Статус учётной записи и подтверждение email (149-ФЗ)
+    email_verified = models.BooleanField(_("email подтверждён"), default=False)
     is_active = models.BooleanField(_("активен"), default=True)
     is_staff = models.BooleanField(_("доступ в админ-панель"), default=False)
     date_joined = models.DateTimeField(_("дата регистрации"), default=timezone.now)
+
+    # 152-ФЗ «О персональных данных» — согласие и аудит
+    consent_personal_data = models.BooleanField(
+        _("согласие на ОПД (152-ФЗ)"),
+        default=True,
+        help_text=_("Подтверждение факта дачи согласия на обработку персональных данных"),
+    )
+    consent_date = models.DateTimeField(
+        _("дата и время согласия"),
+        null=True,
+        blank=True,
+        help_text=_("Временная метка фиксации согласия"),
+    )
+    consent_ip = models.GenericIPAddressField(
+        _("IP-адрес согласия"),
+        null=True,
+        blank=True,
+        help_text=_("IP-адрес при даче согласия (для аудита 152-ФЗ)"),
+    )
 
     objects = UserManager()
 

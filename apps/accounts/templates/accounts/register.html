@@ -1,0 +1,167 @@
+{% extends "accounts/auth_base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Регистрация — ШСО ДВФУ" %}{% endblock %}
+{% block auth_title %}{% trans "Регистрация" %}{% endblock %}
+{% block auth_subtitle %}
+  <p class="mt-1 text-sm text-gray-500">
+    {% trans "Создайте учётную запись для вступления в отряды и управления заявками" %}
+  </p>
+{% endblock %}
+
+{% block auth_body %}
+  <form method="post" novalidate class="space-y-4">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="p-3.5 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 space-y-1">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {# Honeypot поле (скрыто для пользователей) #}
+    <div class="hidden" aria-hidden="true">
+      {{ form.website }}
+    </div>
+
+    {# ФИО #}
+    <div>
+      <label for="{{ form.full_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+        {% trans "Фамилия, Имя и Отчество" %} <span class="text-red-500">*</span>
+      </label>
+      {{ form.full_name }}
+      {% if form.full_name.help_text %}
+        <p class="mt-1 text-xs text-gray-500">{{ form.full_name.help_text }}</p>
+      {% endif %}
+      {% for error in form.full_name.errors %}
+        <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    {# Email #}
+    <div>
+      <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+        {% trans "Электронная почта" %} <span class="text-red-500">*</span>
+      </label>
+      {{ form.email }}
+      <p class="mt-1 text-xs text-gray-500">
+        🇷🇺 {% trans "Рекомендуется корпоративная почта ДВФУ (@dvfu.ru) или российские сервисы (Яндекс, Mail.ru, VK) по 149-ФЗ." %}
+      </p>
+      {% for error in form.email.errors %}
+        <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    {# Номер телефона #}
+    <div>
+      <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+        {% trans "Номер телефона" %} <span class="text-xs text-gray-400 font-normal">({% trans "опционально" %})</span>
+      </label>
+      {{ form.phone }}
+      {% for error in form.phone.errors %}
+        <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    {# Пароль #}
+    <div x-data="{ show: false }">
+      <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+        {% trans "Пароль" %} <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <input
+          id="{{ form.password.id_for_label }}"
+          :type="show ? 'text' : 'password'"
+          name="{{ form.password.html_name }}"
+          autocomplete="new-password"
+          class="block w-full px-4 py-2.5 pr-11 rounded-xl border text-sm
+                 {% if form.password.errors %}border-red-400 bg-red-50 focus:ring-red-400
+                 {% else %}border-gray-300 focus:ring-blue-500{% endif %}
+                 focus:outline-none focus:ring-2 focus:border-transparent transition"
+        >
+        <button type="button"
+                @click="show = !show"
+                class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                :aria-label="show ? '{% trans "Скрыть пароль" %}' : '{% trans "Показать пароль" %}'">
+          <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <svg x-show="show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-cloak>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+          </svg>
+        </button>
+      </div>
+      <p class="mt-1 text-xs text-gray-500">{% trans "Минимум 8 символов, разные регистры и цифры." %}</p>
+      {% for error in form.password.errors %}
+        <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    {# Подтверждение пароля #}
+    <div x-data="{ show: false }">
+      <label for="{{ form.password_confirm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+        {% trans "Подтверждение пароля" %} <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <input
+          id="{{ form.password_confirm.id_for_label }}"
+          :type="show ? 'text' : 'password'"
+          name="{{ form.password_confirm.html_name }}"
+          autocomplete="new-password"
+          class="block w-full px-4 py-2.5 pr-11 rounded-xl border text-sm
+                 {% if form.password_confirm.errors %}border-red-400 bg-red-50 focus:ring-red-400
+                 {% else %}border-gray-300 focus:ring-blue-500{% endif %}
+                 focus:outline-none focus:ring-2 focus:border-transparent transition"
+        >
+        <button type="button"
+                @click="show = !show"
+                class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                :aria-label="show ? '{% trans "Скрыть пароль" %}' : '{% trans "Показать пароль" %}'">
+          <svg x-show="!show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          <svg x-show="show" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-cloak>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+          </svg>
+        </button>
+      </div>
+      {% for error in form.password_confirm.errors %}
+        <p class="mt-1 text-xs text-red-600 font-medium">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    {# 152-ФЗ: Явный чекбокс согласия на обработку персональных данных #}
+    <div class="pt-2">
+      <div class="flex items-start gap-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200">
+        {{ form.consent_personal_data }}
+        <label for="{{ form.consent_personal_data.id_for_label }}" class="text-xs text-gray-700 leading-relaxed cursor-pointer select-none">
+          {% trans "Я подтверждаю, что ознакомлен(а) с" %}
+          <a href="{% url 'content:privacy' %}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">{% trans "Политикой обработки персональных данных" %}</a>
+          {% trans "и" %}
+          <a href="{% url 'content:terms' %}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline font-medium">{% trans "Пользовательским соглашением" %}</a>,
+          {% trans "и даю добровольное информированное согласие на обработку моих персональных данных в соответствии с Федеральным законом № 152-ФЗ." %}
+        </label>
+      </div>
+      {% for error in form.consent_personal_data.errors %}
+        <p class="mt-1.5 text-xs text-red-600 font-semibold">{{ error }}</p>
+      {% endfor %}
+    </div>
+
+    <button type="submit"
+            class="w-full py-3 px-4 rounded-xl bg-blue-700 text-white font-semibold text-sm
+                   hover:bg-blue-800 active:bg-blue-900 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      {% trans "Зарегистрироваться" %}
+    </button>
+  </form>
+{% endblock %}
+
+{% block auth_footer %}
+  <p class="mt-5 text-center text-sm text-gray-500">
+    {% trans "Уже зарегистрированы?" %}
+    <a href="{% url 'accounts:login' %}" class="text-blue-600 hover:underline font-semibold">{% trans "Войти" %}</a>
+  </p>
+{% endblock %}

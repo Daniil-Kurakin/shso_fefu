@@ -21,4 +21,7 @@ urlpatterns = [
     # FAQ и Глоссарий
     path("faq/", views.FAQListView.as_view(), name="faq"),
     path("glossary/", views.GlossaryListView.as_view(), name="glossary"),
+    # Правовые документы (152-ФЗ, 149-ФЗ)
+    path("privacy/", views.PrivacyPolicyView.as_view(), name="privacy"),
+    path("terms/", views.TermsOfServiceView.as_view(), name="terms"),
 ]

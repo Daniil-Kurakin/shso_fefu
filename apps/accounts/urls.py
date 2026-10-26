@@ -13,6 +13,11 @@ urlpatterns = [
         name="login",
     ),
     path("logout/", views.logout_view, name="logout"),
+    # Регистрация (152-ФЗ, 149-ФЗ)
+    path("register/", views.RegisterView.as_view(), name="register"),
+    path("register/done/", views.RegistrationDoneView.as_view(), name="registration_done"),
+    path("activate/<uidb64>/<token>/", views.ActivateView.as_view(), name="activate"),
+    path("resend-activation/", views.ResendActivationView.as_view(), name="resend_activation"),
     # Личный кабинет
     path("profile/", views.ProfileView.as_view(), name="profile"),
     # Смена пароля

@@ -160,11 +160,15 @@
               </form>
             {% else %}
               <a href="{% url 'accounts:login' %}"
-                 class="px-4 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                 class="px-3.5 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 {% trans "Войти" %}
               </a>
+              <a href="{% url 'accounts:register' %}"
+                 class="px-3.5 py-1.5 text-sm rounded-lg border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors font-medium">
+                {% trans "Регистрация" %}
+              </a>
               <a href="{% url 'vacancies:list' %}"
-                 class="px-4 py-1.5 text-sm rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+                 class="px-3.5 py-1.5 text-sm rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors font-semibold shadow-sm">
                 {% trans "Вступить" %}
               </a>
             {% endif %}
@@ -227,12 +231,18 @@
                 </button>
               </form>
             {% else %}
-              <a href="{% url 'accounts:login' %}"
-                 class="px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
-                {% trans "Войти" %}
-              </a>
+              <div class="grid grid-cols-2 gap-2">
+                <a href="{% url 'accounts:login' %}"
+                   class="px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
+                  {% trans "Войти" %}
+                </a>
+                <a href="{% url 'accounts:register' %}"
+                   class="px-3 py-2 rounded-lg text-center border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors font-medium">
+                  {% trans "Регистрация" %}
+                </a>
+              </div>
               <a href="{% url 'vacancies:list' %}"
-                 class="px-3 py-2 rounded-lg text-center bg-blue-700 text-white hover:bg-blue-800 transition-colors">
+                 class="px-3 py-2 rounded-lg text-center bg-blue-700 text-white hover:bg-blue-800 transition-colors font-semibold">
                 {% trans "Вступить" %}
               </a>
             {% endif %}
@@ -301,6 +311,8 @@
               <li><a href="{% url 'content:faq' %}" class="hover:text-white transition-colors">{% trans "Вопросы и ответы (FAQ)" %}</a></li>
               <li><a href="{% url 'content:glossary' %}" class="hover:text-white transition-colors">{% trans "Глоссарий" %}</a></li>
               <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
+              <li><a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Политика конфиденциальности (152-ФЗ)" %}</a></li>
+              <li><a href="{% url 'content:terms' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Пользовательское соглашение" %}</a></li>
             </ul>
           </div>
 
@@ -332,8 +344,13 @@
           </div>
         </div>
 
-        <div class="mt-10 pt-6 border-t border-white/10 text-xs text-center text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="mt-10 pt-6 border-t border-white/10 text-xs text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>© {% now "Y" %} {% trans "ШСО ДВФУ. Все права защищены." %}</div>
+          <div class="flex items-center gap-3">
+            <a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors">{% trans "152-ФЗ" %}</a>
+            <span>•</span>
+            <a href="{% url 'content:terms' %}" class="hover:text-white transition-colors">{% trans "Пользовательское соглашение" %}</a>
+          </div>
           <div class="text-blue-200/50">{% trans "Студенческие отряды ДВФУ — Труд крут!" %}</div>
         </div>
       </div>
