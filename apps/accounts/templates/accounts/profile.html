@@ -436,10 +436,10 @@
               <span>{% trans "Открыть вакансию / набор" %}</span>
             </a>
 
-            <a href="{% url 'content:quote_create' %}"
+            <a href="{% url 'content:knowledge_create' %}"
                class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-blue-50 text-sm font-medium text-gray-700 hover:text-blue-800 transition">
-              <span class="text-blue-600 font-bold">💬</span>
-              <span>{% trans "Добавить цитату бойца" %}</span>
+              <span class="text-blue-600 font-bold">📚</span>
+              <span>{% trans "Создать статью базы знаний" %}</span>
             </a>
 
             {% if user.is_hq_staff %}

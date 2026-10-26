@@ -78,6 +78,14 @@ class TestProfileView:
         assert response.status_code == 200
         assert user.email.encode() in response.content
 
+    def test_profile_renders_for_staff_user(self, client, admin_user):
+        """Профиль штабного пользователя отображает блок быстрых действий/конструкторов."""
+        client.force_login(admin_user)
+        url = reverse("accounts:profile")
+        response = client.get(url)
+        assert response.status_code == 200
+        assert "Управление".encode() in response.content
+
     def test_profile_update_full_name(self, client, user):
         client.force_login(user)
         url = reverse("accounts:profile")
