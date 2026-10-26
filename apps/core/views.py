@@ -1,6 +1,6 @@
 import logging
 
-from django.db import connection
+from django.db import DatabaseError, connection
 from django.http import JsonResponse
 from django.views.generic import TemplateView
 
@@ -16,10 +16,19 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["latest_news"] = News.objects.published().select_related("squad")[:3]
-        context["directions"] = Direction.objects.all()
-        lang = getattr(self.request, "LANGUAGE_CODE", "ru")
-        context["quote_of_the_day"] = Quote.get_quote_of_the_day(lang=lang)
+        try:
+            context["latest_news"] = News.objects.published().select_related("squad")[:3]
+        except DatabaseError:
+            context["latest_news"] = []
+        try:
+            context["directions"] = Direction.objects.all()
+        except DatabaseError:
+            context["directions"] = []
+        try:
+            lang = getattr(self.request, "LANGUAGE_CODE", "ru")
+            context["quote_of_the_day"] = Quote.get_quote_of_the_day(lang=lang)
+        except DatabaseError:
+            context["quote_of_the_day"] = None
         return context
 
 

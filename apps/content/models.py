@@ -3,7 +3,7 @@ from zoneinfo import ZoneInfo
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db import models
+from django.db import DatabaseError, models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -61,20 +61,21 @@ class Quote(models.Model):
             return cached
 
         # 1. Проверяем закреплённую цитату на этот день
-        pinned = cls.objects.filter(is_active=True, pinned_date=today)
-        quote = pinned.filter(language=lang).first() or pinned.filter(language="ru").first()
+        try:
+            pinned = cls.objects.filter(is_active=True, pinned_date=today)
+            quote = pinned.filter(language=lang).first() or pinned.filter(language="ru").first()
 
-        # 2. Если закреплённой нет, выбираем детерминированно из банка активных цитат
-        if not quote:
-            quotes = list(cls.objects.filter(is_active=True, language=lang))
-            if not quotes and lang != "ru":
-                quotes = list(cls.objects.filter(is_active=True, language="ru"))
+            # 2. Если закреплённой нет, выбираем детерминированно из банка активных цитат
+            if not quote:
+                quotes = list(cls.objects.filter(is_active=True, language=lang))
+                if not quotes and lang != "ru":
+                    quotes = list(cls.objects.filter(is_active=True, language="ru"))
 
-            if quotes:
-                # Детерминированный выбор по дню: без повторов, пока не исчерпан банк
-                # day_number позволяет плавно циклически перебирать весь список
-                index = today.toordinal() % len(quotes)
-                quote = quotes[index]
+                if quotes:
+                    index = today.toordinal() % len(quotes)
+                    quote = quotes[index]
+        except DatabaseError:
+            return None
 
         # 3. Вычисляем количество секунд до полуночи во Владивостоке
         tomorrow = datetime.datetime.combine(
@@ -179,7 +180,7 @@ class SiteSetting(models.Model):
         try:
             setting = cls.objects.get(key=key)
             val = setting.value_en if lang == "en" and setting.value_en else setting.value
-        except cls.DoesNotExist:
+        except (cls.DoesNotExist, DatabaseError):
             val = default
 
         cache.set(cache_key, val, timeout=3600)
@@ -194,7 +195,7 @@ class SiteSetting(models.Model):
             return cached
         try:
             obj = cls.objects.get(key=key)
-        except cls.DoesNotExist:
+        except (cls.DoesNotExist, DatabaseError):
             obj = None
         cache.set(cache_key, obj, timeout=3600)
         return obj
