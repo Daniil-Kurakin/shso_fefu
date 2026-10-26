@@ -149,7 +149,7 @@
               </svg>
             </span>
             <div>
-              <h2 class="text-xl font-bold text-gray-900 font-heading">
+              <h2 class="text-2xl font-bold text-gray-900 font-heading">
                 {% trans "Портфолио и достижения" %}
               </h2>
               <p class="text-xs text-gray-500">
@@ -208,7 +208,7 @@
                     </span>
                   </div>
 
-                  <h3 class="text-base font-semibold text-gray-900 font-heading">
+                  <h3 class="text-base font-semibold text-gray-900">
                     {{ item.title }}
                   </h3>
 
@@ -302,7 +302,7 @@
                   <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider block mb-1">
                     {% trans "Бронь зала" %} ({{ booking.event_date|date:"d.m.Y" }})
                   </span>
-                  <h4 class="text-sm font-semibold text-gray-900">{{ booking.room.name }} — {{ booking.event_name }}</h4>
+                  <h4 class="text-sm font-semibold text-gray-900">{{ booking.rooms_display }} — {{ booking.event_name }}</h4>
                 </div>
                 <span class="badge badge-success">
                   {{ booking.get_status_display }}
@@ -334,7 +334,7 @@
 
       {# КАРТОЧКА: Студенческий отряд #}
       <div class="card-base p-6 sm:p-7">
-        <h3 class="text-lg font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center justify-between">
           <span>{% trans "Студенческий отряд" %}</span>
           {% if active_membership %}
             <span class="badge badge-primary text-xs">{{ active_membership.squad.direction.name }}</span>
@@ -418,7 +418,7 @@
       {# КАРТОЧКА: Быстрый доступ и конструкторы (для комсостава и штаба) #}
       {% if managed_squads or user.is_hq_staff %}
         <div class="card-base p-6 sm:p-7">
-          <h3 class="text-lg font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+          <h3 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
             <span class="p-1 rounded bg-amber-100 text-amber-800 text-xs">⚡</span>
             <span>{% trans "Управление и конструкторы" %}</span>
           </h3>

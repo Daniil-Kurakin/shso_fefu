@@ -116,6 +116,36 @@ class TestRoomBookingViews:
             event_name="Вторая бронь в то же время"
         ).exists()
 
+    def test_create_booking_with_multiple_rooms_formset(self, client, user):
+        client.force_login(user)
+        tomorrow = timezone.localdate() + timedelta(days=2)
+        url = reverse("requests:room_create")
+
+        data = {
+            "event_name": "Большой слёт с несколькими залами",
+            "event_date": tomorrow.strftime("%Y-%m-%d"),
+            "expected_participants": 50,
+            "equipment_required": "Проекторы и звук",
+            "premises-TOTAL_FORMS": "2",
+            "premises-INITIAL_FORMS": "0",
+            "premises-MIN_NUM_FORMS": "0",
+            "premises-MAX_NUM_FORMS": "1000",
+            "premises-0-custom_room": "Синий зал",
+            "premises-0-start_time": "10:00",
+            "premises-0-end_time": "13:00",
+            "premises-1-custom_room": "Коворкинг Аякс",
+            "premises-1-start_time": "13:30",
+            "premises-1-end_time": "16:00",
+        }
+        response = client.post(url, data=data, follow=True)
+        assert response.status_code == 200
+
+        booking = RoomBookingRequest.objects.get(event_name="Большой слёт с несколькими залами")
+        assert booking.premises.count() == 2
+        p1, p2 = list(booking.premises.all())
+        assert p1.room_name == "Синий зал"
+        assert p2.room_name == "Коворкинг Аякс"
+
     def test_detail_view_permissions(self, client, user, other_user, room):
         tomorrow = timezone.localdate() + timedelta(days=1)
         booking = RoomBookingRequest.objects.create(

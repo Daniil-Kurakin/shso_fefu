@@ -5,7 +5,13 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.requests.models import CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from apps.requests.models import (
+    BookedPremise,
+    CampusPremise,
+    PassRequest,
+    PassVisitor,
+    RoomBookingRequest,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -120,6 +126,42 @@ class TestRoomBookingRequestModel:
 
         booking.cancel()
         assert booking.status == RoomBookingRequest.Status.CANCELLED
+
+    def test_booked_premise_creation_and_validation(self, applicant):
+        tomorrow = timezone.localdate() + timedelta(days=1)
+        booking = RoomBookingRequest.objects.create(
+            user=applicant,
+            event_name="Мультирум событие",
+            event_date=tomorrow,
+        )
+        premise = BookedPremise.objects.create(
+            booking=booking,
+            custom_room="А826 Коворкинг",
+            start_time=time(10, 0),
+            end_time=time(12, 0),
+        )
+        assert "А826 Коворкинг" in str(premise)
+        assert premise.room_name == "А826 Коворкинг"
+        assert "А826 Коворкинг" in booking.rooms_display
+
+        # Невалидное время: окончание раньше начала
+        invalid_premise = BookedPremise(
+            booking=booking,
+            custom_room="D504",
+            start_time=time(15, 0),
+            end_time=time(14, 0),
+        )
+        with pytest.raises(ValidationError):
+            invalid_premise.clean()
+
+        # Пустая аудитория
+        empty_premise = BookedPremise(
+            booking=booking,
+            start_time=time(14, 0),
+            end_time=time(15, 0),
+        )
+        with pytest.raises(ValidationError):
+            empty_premise.clean()
 
 
 class TestPassRequestModel:

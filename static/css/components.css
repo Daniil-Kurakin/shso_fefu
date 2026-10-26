@@ -246,3 +246,237 @@
   color: #1e40af;
   border-color: #bfdbfe;
 }
+
+/* ===== Радиальный циферблат выбора времени (Timepicker) ===== */
+.tp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.tp-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.tp-dialog {
+  position: relative;
+  z-index: 10;
+  background: #ffffff;
+  border-radius: 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 320px;
+  overflow: hidden;
+  display: flex;
+  flex-col: column;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.tp-header {
+  background: linear-gradient(135deg, #0045B5 0%, #002c77 100%);
+  color: #ffffff;
+  padding: 1.25rem 1.5rem 1rem;
+  text-align: center;
+}
+
+.tp-title {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.tp-time-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tp-digits {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 2.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.tp-digits:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tp-digits.tp-active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.tp-colon {
+  color: rgba(255, 255, 255, 0.6);
+  padding-bottom: 0.25rem;
+}
+
+.tp-clock-wrap {
+  padding: 1.25rem 0 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.tp-clock-face {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+.tp-hand-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tp-numbers-container {
+  position: absolute;
+  inset: 0;
+}
+
+.tp-num-btn {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 2;
+  padding: 0;
+}
+
+.tp-num-btn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+.tp-num-inner {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.tp-num-btn.tp-selected {
+  background-color: #0045B5 !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 69, 181, 0.4);
+}
+
+.tp-minutes-quick {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.25rem 1rem 0.5rem;
+}
+
+.tp-preset-btn {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0045B5;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tp-preset-btn:hover {
+  background: #0045B5;
+  color: #ffffff;
+}
+
+.tp-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.tp-btn-cancel,
+.tp-btn-submit {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tp-btn-cancel {
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+.tp-btn-cancel:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.tp-btn-submit {
+  background: #0045B5;
+  border: 1px solid #0045B5;
+  color: #ffffff;
+}
+
+.tp-btn-submit:hover {
+  background: #00368f;
+}
+
+.tp-clock-icon-btn {
+  margin-left: 0.5rem;
+  padding: 0.5rem;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.625rem;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.tp-clock-icon-btn:hover {
+  background: #e2e8f0;
+  color: #0045B5;
+}

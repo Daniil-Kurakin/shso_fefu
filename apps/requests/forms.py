@@ -3,7 +3,7 @@ from django.forms import inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from .models import BookedPremise, CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
 
 INPUT_CLS = (
     "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
@@ -18,6 +18,7 @@ class RoomBookingRequestForm(forms.ModelForm):
         model = RoomBookingRequest
         fields = (
             "room",
+            "custom_room",
             "squad",
             "event_name",
             "event_date",
@@ -28,13 +29,23 @@ class RoomBookingRequestForm(forms.ModelForm):
         )
         widgets = {
             "room": forms.Select(attrs={"class": INPUT_CLS}),
+            "custom_room": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": _("Например: А826, Коворкинг «Аякс», D504"),
+                }
+            ),
             "squad": forms.Select(attrs={"class": INPUT_CLS}),
             "event_name": forms.TextInput(
                 attrs={"class": INPUT_CLS, "placeholder": _("Собрание отряда / Репетиция")}
             ),
             "event_date": forms.DateInput(attrs={"class": INPUT_CLS, "type": "date"}),
-            "start_time": forms.TimeInput(attrs={"class": INPUT_CLS, "type": "time"}),
-            "end_time": forms.TimeInput(attrs={"class": INPUT_CLS, "type": "time"}),
+            "start_time": forms.TimeInput(
+                attrs={"class": INPUT_CLS, "type": "time", "data-timepicker": "true"}
+            ),
+            "end_time": forms.TimeInput(
+                attrs={"class": INPUT_CLS, "type": "time", "data-timepicker": "true"}
+            ),
             "expected_participants": forms.NumberInput(
                 attrs={"class": INPUT_CLS, "min": 1, "max": 500}
             ),
@@ -51,8 +62,20 @@ class RoomBookingRequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
 
-        # Показываем только активные аудитории
-        self.fields["room"].queryset = CampusPremise.objects.filter(is_active=True)
+        # Выпадающий список пока оставляем пустым по требованию заказчика
+        # (список будет загружен позже)
+        if self.data and self.data.get("room"):
+            self.fields["room"].queryset = CampusPremise.objects.all()
+        elif self.instance and self.instance.room_id:
+            self.fields["room"].queryset = CampusPremise.objects.filter(pk=self.instance.room_id)
+        else:
+            self.fields["room"].queryset = CampusPremise.objects.none()
+
+        self.fields["room"].required = False
+        self.fields["room"].empty_label = _("— Список помещений будет доступен позже —")
+        self.fields["custom_room"].required = False
+        self.fields["start_time"].required = False
+        self.fields["end_time"].required = False
 
         # Если пользователь привязан к отрядам, ограничиваем выбор его отрядами
         if user and not user.is_staff:
@@ -99,6 +122,84 @@ class RoomBookingRequestForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+
+class BookedPremiseForm(forms.ModelForm):
+    """Форма добавления одной аудитории в заявку на бронирование."""
+
+    class Meta:
+        model = BookedPremise
+        fields = ("room", "custom_room", "start_time", "end_time")
+        widgets = {
+            "room": forms.Select(attrs={"class": INPUT_CLS}),
+            "custom_room": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": _("Например: А826, D504, Коворкинг «Аякс»"),
+                }
+            ),
+            "start_time": forms.TimeInput(
+                attrs={"class": INPUT_CLS, "type": "time", "data-timepicker": "true"}
+            ),
+            "end_time": forms.TimeInput(
+                attrs={"class": INPUT_CLS, "type": "time", "data-timepicker": "true"}
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Выпадающий список пока пустой по требованию заказчика (список будет позже)
+        if self.data and any(k.endswith("-room") and self.data.get(k) for k in self.data):
+            self.fields["room"].queryset = CampusPremise.objects.all()
+        elif self.instance and self.instance.room_id:
+            self.fields["room"].queryset = CampusPremise.objects.filter(pk=self.instance.room_id)
+        else:
+            self.fields["room"].queryset = CampusPremise.objects.none()
+
+        self.fields["room"].required = False
+        self.fields["room"].empty_label = _("— Список помещений будет доступен позже —")
+        self.fields["custom_room"].required = False
+        self.fields["start_time"].required = False
+        self.fields["end_time"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.cleaned_data.get("DELETE"):
+            return cleaned_data
+
+        room = cleaned_data.get("room")
+        custom_room = (cleaned_data.get("custom_room") or "").strip()
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        # Если вся строка пустая (например, незаполненная дополнительная форма), пропускаем
+        if not room and not custom_room and not start_time and not end_time:
+            return cleaned_data
+
+        if not room and not custom_room:
+            self.add_error("custom_room", _("Укажите аудиторию или зал."))
+
+        if not start_time:
+            self.add_error("start_time", _("Укажите время начала."))
+
+        if not end_time:
+            self.add_error("end_time", _("Укажите время окончания."))
+
+        if start_time and end_time and start_time >= end_time:
+            self.add_error(
+                "end_time", _("Время окончания должно быть строго позже времени начала.")
+            )
+
+        return cleaned_data
+
+
+BookedPremiseFormSet = inlineformset_factory(
+    RoomBookingRequest,
+    BookedPremise,
+    form=BookedPremiseForm,
+    extra=1,
+    can_delete=True,
+)
 
 
 class PassRequestForm(forms.ModelForm):

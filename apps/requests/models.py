@@ -89,14 +89,22 @@ class RoomBookingRequest(models.Model):
     )
     room = models.ForeignKey(
         CampusPremise,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name="bookings",
         verbose_name=_("помещение"),
     )
+    custom_room = models.CharField(
+        _("аудитория / зал (вручную)"),
+        max_length=150,
+        blank=True,
+        help_text=_("Укажите номер или название аудитории"),
+    )
     event_name = models.CharField(_("название мероприятия / встречи"), max_length=200)
     event_date = models.DateField(_("дата бронирования"))
-    start_time = models.TimeField(_("время начала"))
-    end_time = models.TimeField(_("время окончания"))
+    start_time = models.TimeField(_("время начала"), null=True, blank=True)
+    end_time = models.TimeField(_("время окончания"), null=True, blank=True)
     expected_participants = models.PositiveIntegerField(
         _("ожидаемое число участников"),
         default=10,
@@ -136,12 +144,36 @@ class RoomBookingRequest(models.Model):
 
     def __str__(self):
         user_display = self.user.get_full_name() if self.user_id else "—"
-        room_display = self.room.name if self.room_id else "—"
+        room_display = self.rooms_display
         date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
         return f"{self.event_name} — {room_display} ({date_str}) [{user_display}]"
 
     def get_absolute_url(self):
         return reverse("requests:room_detail", kwargs={"pk": self.pk})
+
+    @property
+    def rooms_display(self) -> str:
+        items = list(self.premises.all())
+        if items:
+            return ", ".join(
+                f"{item.room_name} ({item.start_time:%H:%M}–{item.end_time:%H:%M})"
+                for item in items
+            )
+        if self.custom_room:
+            time_part = (
+                f" ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')})"
+                if self.start_time and self.end_time
+                else ""
+            )
+            return f"{self.custom_room}{time_part}"
+        if self.room:
+            time_part = (
+                f" ({self.start_time.strftime('%H:%M')}–{self.end_time.strftime('%H:%M')})"
+                if self.start_time and self.end_time
+                else ""
+            )
+            return f"{self.room.name}{time_part}"
+        return "—"
 
     def get_conflicting_bookings(self):
         """
@@ -212,6 +244,60 @@ class RoomBookingRequest(models.Model):
         """Отмена заявки заявителем."""
         self.status = self.Status.CANCELLED
         self.save(update_fields=["status", "updated_at"])
+
+
+class BookedPremise(models.Model):
+    """
+    Отдельная аудитория / помещение в заявке на бронирование.
+    Позволяет добавлять несколько аудиторий в одну заявку с разным временем.
+    """
+
+    booking = models.ForeignKey(
+        RoomBookingRequest,
+        on_delete=models.CASCADE,
+        related_name="premises",
+        verbose_name=_("заявка на бронирование"),
+    )
+    room = models.ForeignKey(
+        CampusPremise,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="booked_premises",
+        verbose_name=_("помещение из списка"),
+    )
+    custom_room = models.CharField(
+        _("аудитория / зал (вручную)"),
+        max_length=150,
+        blank=True,
+        help_text=_("Номер или название аудитории, например: А826, D504, Коворкинг «Аякс»"),
+    )
+    start_time = models.TimeField(_("время начала"))
+    end_time = models.TimeField(_("время окончания"))
+
+    class Meta:
+        verbose_name = _("забронированная аудитория")
+        verbose_name_plural = _("забронированные аудитории")
+        ordering = ["start_time", "pk"]
+
+    def __str__(self):
+        name = self.room_name
+        start = self.start_time.strftime("%H:%M") if self.start_time else "—"
+        end = self.end_time.strftime("%H:%M") if self.end_time else "—"
+        return f"{name} ({start} – {end})"
+
+    @property
+    def room_name(self) -> str:
+        return self.custom_room or (self.room.name if self.room else "—")
+
+    def clean(self):
+        super().clean()
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError(
+                {"end_time": _("Время окончания должно быть строго позже времени начала.")}
+            )
+        if not self.room and not (self.custom_room and self.custom_room.strip()):
+            raise ValidationError({"custom_room": _("Укажите номер или название аудитории.")})
 
 
 class PassRequest(models.Model):

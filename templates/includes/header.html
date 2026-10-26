@@ -3,47 +3,57 @@
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-xs"
         x-data="{ mobileOpen: false }">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
+    <div class="flex items-center justify-between h-16 gap-4">
 
-      {# Логотип / название #}
-      <a href="{% url 'core:home' %}"
-         class="flex items-center gap-3 transition-opacity hover:opacity-90 shrink-0">
-        <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
-             alt="{% trans "ШСО ДВФУ" %}"
-             class="h-9 w-auto object-contain hidden sm:block">
-        <img src="{% static 'images/brand/logo_icon_color.webp' %}"
-             alt="{% trans "ШСО ДВФУ" %}"
-             class="h-9 w-9 object-contain sm:hidden">
-        <span class="font-heading text-xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
-      </a>
-
-      {# Навигация (desktop) — полупрозрачные овалы с визуальным выделением #}
-      <nav class="hidden md:flex items-center gap-2 lg:gap-3 text-xs font-semibold tracking-wider">
+      {# Левая часть: логотип + верхнее меню, выровненное по левой стороне #}
+      <div class="flex items-center gap-5 lg:gap-6 min-w-0">
+        {# Логотип / название #}
         <a href="{% url 'core:home' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "Главная" %}
+           class="flex items-center gap-3 transition-opacity hover:opacity-90 shrink-0">
+          <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
+               alt="{% trans "ШСО ДВФУ" %}"
+               class="h-9 w-auto object-contain hidden sm:block">
+          <img src="{% static 'images/brand/logo_icon_color.webp' %}"
+               alt="{% trans "ШСО ДВФУ" %}"
+               class="h-9 w-9 object-contain sm:hidden">
+          <span class="font-heading text-2xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
         </a>
-        <a href="{% url 'squads:list' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "Отряды" %}
-        </a>
-        <a href="{% url 'news:list' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "Новости" %}
-        </a>
-        <a href="{% url 'vacancies:list' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "Вакансии" %}
-        </a>
-        <a href="{% url 'content:knowledge_index' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "База знаний" %}
-        </a>
-        <a href="{% url 'content:contacts' %}"
-           class="px-4 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
-          {% trans "Контакты" %}
-        </a>
-      </nav>
+
+        {# Навигация (desktop) — полупрозрачные овалы, выровненные по левой стороне #}
+        <nav class="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs font-semibold tracking-wider flex-wrap">
+          <a href="{% url 'core:home' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "Главная" %}
+          </a>
+          <a href="{% url 'squads:list' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "Отряды" %}
+          </a>
+          <a href="{% url 'news:list' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "Новости" %}
+          </a>
+          <a href="{% url 'vacancies:list' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "Вакансии" %}
+          </a>
+          <a href="{% url 'content:knowledge_index' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "База знаний" %}
+          </a>
+          <a href="{% url 'content:contacts' %}"
+             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+            {% trans "Контакты" %}
+          </a>
+
+          {# Кнопка перехода в систему заявок/бронирования #}
+          <a href="{% url 'requests:dashboard' %}"
+             class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-blue-800 bg-blue-100/80 hover:bg-blue-600 hover:text-white border border-blue-200 shadow-xs backdrop-blur-xs transition-all font-bold">
+            <span>⚡</span>
+            <span>{% trans "Заявки и бронирование" %}</span>
+          </a>
+        </nav>
+      </div>
 
       {# Действия пользователя (desktop) #}
       <div class="hidden md:flex items-center gap-3">
@@ -194,6 +204,11 @@
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "База знаний" %}</a>
       <a href="{% url 'content:contacts' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Контакты" %}</a>
+      <a href="{% url 'requests:dashboard' %}"
+         class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-blue-800 bg-blue-50 hover:bg-blue-100 transition-colors font-bold">
+        <span>⚡</span>
+        <span>{% trans "Заявки и бронирование" %}</span>
+      </a>
 
       <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
         {% if user.is_authenticated %}

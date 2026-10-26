@@ -8,7 +8,13 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from .models import CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from .models import BookedPremise, CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+
+
+class BookedPremiseInline(admin.TabularInline):
+    model = BookedPremise
+    extra = 1
+    fields = ("custom_room", "room", "start_time", "end_time")
 
 
 class PassVisitorInline(admin.TabularInline):
@@ -43,11 +49,19 @@ class RoomBookingRequestAdmin(admin.ModelAdmin):
     search_fields = ("event_name", "user__email", "user__full_name", "moderator_comment")
     raw_id_fields = ("user", "reviewed_by")
     ordering = ("-event_date", "-start_time")
+    inlines = [BookedPremiseInline]
     actions = ["action_approve", "action_reject"]
 
     @admin.display(description=_("Время"))
     def time_interval(self, obj):
-        return f"{obj.start_time.strftime('%H:%M')} – {obj.end_time.strftime('%H:%M')}"
+        if obj.start_time and obj.end_time:
+            return f"{obj.start_time.strftime('%H:%M')} – {obj.end_time.strftime('%H:%M')}"
+        premises = list(obj.premises.all())
+        if premises:
+            return ", ".join(
+                f"{p.start_time.strftime('%H:%M')}–{p.end_time.strftime('%H:%M')}" for p in premises
+            )
+        return "—"
 
     @admin.display(description=_("Коллизии / Доступность"))
     def collision_status(self, obj):

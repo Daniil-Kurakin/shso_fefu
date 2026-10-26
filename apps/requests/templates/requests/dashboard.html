@@ -102,15 +102,16 @@
 
                         <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600 mt-2">
                           <div>
-                            <strong>{% trans "Аудитория:" %}</strong> {{ booking.room.name }}
-                            {% if booking.room.room_number %}({{ booking.room.room_number }}){% endif %}
+                            <strong>{% trans "Аудитории:" %}</strong> {{ booking.rooms_display }}
                           </div>
                           <div>
                             <strong>{% trans "Дата:" %}</strong> {{ booking.event_date|date:"d.m.Y" }}
                           </div>
-                          <div>
-                            <strong>{% trans "Время:" %}</strong> {{ booking.start_time|time:"H:i" }} – {{ booking.end_time|time:"H:i" }}
-                          </div>
+                          {% if booking.start_time and booking.end_time %}
+                            <div>
+                              <strong>{% trans "Время:" %}</strong> {{ booking.start_time|time:"H:i" }} – {{ booking.end_time|time:"H:i" }}
+                            </div>
+                          {% endif %}
                           <div>
                             <strong>{% trans "Участников:" %}</strong> {{ booking.expected_participants }}
                           </div>

@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, DetailView, TemplateView
@@ -11,8 +14,13 @@ from django.views.generic import CreateView, DetailView, TemplateView
 from apps.accounts.models import Role
 from apps.squads.models import SquadPageRevision
 
-from .forms import PassRequestForm, PassVisitorFormSet, RoomBookingRequestForm
-from .models import PassRequest, RoomBookingRequest
+from .forms import (
+    BookedPremiseFormSet,
+    PassRequestForm,
+    PassVisitorFormSet,
+    RoomBookingRequestForm,
+)
+from .models import BookedPremise, PassRequest, RoomBookingRequest
 
 
 class UserRequestDashboardView(LoginRequiredMixin, TemplateView):
@@ -48,7 +56,7 @@ class UserRequestDashboardView(LoginRequiredMixin, TemplateView):
 
 
 class RoomBookingCreateView(LoginRequiredMixin, CreateView):
-    """Подача заявки на бронирование аудитории / зала."""
+    """Подача заявки на бронирование одной или нескольких аудиторий / залов."""
 
     model = RoomBookingRequest
     form_class = RoomBookingRequestForm
@@ -59,16 +67,61 @@ class RoomBookingCreateView(LoginRequiredMixin, CreateView):
         kwargs["user"] = self.request.user
         return kwargs
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["premise_formset"] = BookedPremiseFormSet(self.request.POST, prefix="premises")
+        else:
+            context["premise_formset"] = BookedPremiseFormSet(prefix="premises")
+        return context
+
     def form_valid(self, form):
-        booking = form.save(commit=False)
-        booking.user = self.request.user
-        booking.status = RoomBookingRequest.Status.SUBMITTED
-        booking.save()
+        context = self.get_context_data()
+        premise_formset = context.get("premise_formset")
+
+        # Проверяем, есть ли данные в формсете нескольких аудиторий
+        has_formset_data = any(key.startswith("premises-") for key in self.request.POST)
+        if has_formset_data and premise_formset and not premise_formset.is_valid():
+            return self.render_to_response(
+                self.get_context_data(form=form, premise_formset=premise_formset)
+            )
+
+        with transaction.atomic():
+            booking = form.save(commit=False)
+            booking.user = self.request.user
+            booking.status = RoomBookingRequest.Status.SUBMITTED
+            booking.save()
+
+            if has_formset_data and premise_formset:
+                premise_formset.instance = booking
+                premise_formset.save()
+
+                # Синхронизируем первое помещение в поля заявки
+                first_premise = booking.premises.first()
+                if first_premise:
+                    if not booking.room and first_premise.room:
+                        booking.room = first_premise.room
+                    if not booking.custom_room and first_premise.custom_room:
+                        booking.custom_room = first_premise.custom_room
+                    if first_premise.start_time:
+                        booking.start_time = first_premise.start_time
+                    if first_premise.end_time:
+                        booking.end_time = first_premise.end_time
+                    booking.save(update_fields=["room", "custom_room", "start_time", "end_time"])
+            elif booking.room or booking.custom_room:
+                # Если заявка пришла без формсета (legacy-запрос/тест), сохраняем BookedPremise
+                BookedPremise.objects.create(
+                    booking=booking,
+                    room=booking.room,
+                    custom_room=booking.custom_room,
+                    start_time=booking.start_time or timezone.now().time(),
+                    end_time=booking.end_time or (timezone.now() + timedelta(hours=1)).time(),
+                )
 
         messages.success(
             self.request,
             _(
-                f"Заявка на бронирование «{booking.room.name}» "
+                f"Заявка на бронирование «{booking.event_name}» "
                 "успешно отправлена на рассмотрение штаба!"
             ),
         )
@@ -276,12 +329,14 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         if action == "approve_room":
             obj = get_object_or_404(RoomBookingRequest, pk=target_id)
             obj.approve(request.user, comment=comment)
-            messages.success(request, _(f"Бронь зала «{obj.room.name}» успешно одобрена."))
+            title = obj.room.name if obj.room else (obj.custom_room or obj.event_name)
+            messages.success(request, _(f"Бронь «{title}» успешно одобрена."))
 
         elif action == "reject_room":
             obj = get_object_or_404(RoomBookingRequest, pk=target_id)
             obj.reject(request.user, comment=comment)
-            messages.warning(request, _(f"Бронь зала «{obj.room.name}» отклонена."))
+            title = obj.room.name if obj.room else (obj.custom_room or obj.event_name)
+            messages.warning(request, _(f"Бронь «{title}» отклонена."))
 
         elif action == "approve_pass":
             obj = get_object_or_404(PassRequest, pk=target_id)

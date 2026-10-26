@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Бронирование аудитории" %} — {% trans "ШСО ДВФУ" %}{% endblock %}
+{% block title %}{% trans "Бронирование аудиторий" %} — {% trans "ШСО ДВФУ" %}{% endblock %}
 
 {% block content %}
 <div class="bg-gray-50 min-h-screen py-10">
@@ -13,45 +13,33 @@
       <span>/</span>
       <a href="{% url 'requests:dashboard' %}" class="hover:text-blue-700 transition-colors">{% trans "Мои заявки" %}</a>
       <span>/</span>
-      <span class="text-gray-900 font-medium">{% trans "Бронирование аудитории" %}</span>
+      <span class="text-gray-900 font-medium">{% trans "Бронирование аудиторий" %}</span>
     </nav>
 
     <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm">
       <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">
-          {% trans "Бронирование помещения кампуса ДВФУ" %}
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+          {% trans "Бронирование помещений кампуса ДВФУ" %}
         </h1>
         <p class="text-sm text-gray-600 mt-1">
-          {% trans "Заявка на проведение сборов, спевок, репетиций и школ комсостава в аудиториях и залах кампуса." %}
+          {% trans "Заявка на проведение сборов, спевок, репетиций и школ комсостава. Можно указать одну или несколько аудиторий с индивидуальным временем бронирования." %}
         </p>
       </div>
 
-      <form method="post" class="space-y-6">
+      <form method="post" class="space-y-6" id="room-booking-form">
         {% csrf_token %}
 
-        {% if form.non_field_errors %}
-          <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-            {% for error in form.non_field_errors %}
-              <p>{{ error }}</p>
+        {% if form.errors %}
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 space-y-1">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
             {% endfor %}
           </div>
         {% endif %}
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-
-          {# Помещение #}
-          <div class="sm:col-span-2">
-            <label for="{{ form.room.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
-              {{ form.room.label }} <span class="text-red-500">*</span>
-            </label>
-            {{ form.room }}
-            {% if form.room.errors %}
-              <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.room.errors.0 }}</p>
-            {% endif %}
-            <p class="mt-1 text-xs text-gray-500">
-              {% trans "В списке доступны А826 (Штаб ШСО), Синий зал, Аякс и профильные аудитории." %}
-            </p>
-          </div>
 
           {# Название мероприятия #}
           <div class="sm:col-span-2">
@@ -74,7 +62,7 @@
               <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.squad.errors.0 }}</p>
             {% endif %}
             <p class="mt-1 text-xs text-gray-500">
-              {% trans "Оставьте пустым, если бронируете для межотрядного или личного мероприятия." %}
+              {% trans "Оставьте пустым, если бронируете для личного или межотрядного мероприятия." %}
             </p>
           </div>
 
@@ -100,39 +88,133 @@
             {% endif %}
           </div>
 
-          {# Время с #}
-          <div>
-            <label for="{{ form.start_time.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
-              {{ form.start_time.label }} <span class="text-red-500">*</span>
-            </label>
-            {{ form.start_time }}
-            {% if form.start_time.errors %}
-              <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.start_time.errors.0 }}</p>
-            {% endif %}
+        </div>
+
+        {# ================= СПИСОК АУДИТОРИЙ И ВРЕМЯ БРОНИРОВАНИЯ ================= #}
+        <div class="pt-6 border-t border-gray-200">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading">
+                {% trans "Аудитории и время бронирования" %}
+              </h2>
+              <p class="text-xs text-gray-500 mt-0.5">
+                {% trans "Укажите одну или несколько аудиторий с нужным временным интервалом (время выбирается через удобный циферблат)." %}
+              </p>
+            </div>
           </div>
 
-          {# Время по #}
-          <div>
-            <label for="{{ form.end_time.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
-              {{ form.end_time.label }} <span class="text-red-500">*</span>
-            </label>
-            {{ form.end_time }}
-            {% if form.end_time.errors %}
-              <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.end_time.errors.0 }}</p>
-            {% endif %}
+          {{ premise_formset.management_form }}
+
+          {% if premise_formset.non_form_errors %}
+            <div class="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 mb-4">
+              {{ premise_formset.non_form_errors }}
+            </div>
+          {% endif %}
+
+          <div id="premises-container" class="space-y-4">
+            {% for p_form in premise_formset %}
+              <div class="premise-item p-4 bg-gray-50/80 rounded-2xl border border-gray-200 relative group transition-all">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <span class="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs premise-index">
+                      {{ forloop.counter }}
+                    </span>
+                    {% trans "Аудитория" %}
+                  </span>
+
+                  {% if p_form.instance.pk %}
+                    <label class="text-xs text-red-600 flex items-center gap-1 cursor-pointer hover:text-red-800">
+                      {{ p_form.DELETE }} {% trans "Удалить" %}
+                    </label>
+                  {% else %}
+                    <button type="button" class="remove-premise-btn text-xs text-gray-400 hover:text-red-600 font-medium" title="{% trans "Удалить строку" %}">
+                      ✕ {% trans "Удалить" %}
+                    </button>
+                  {% endif %}
+                </div>
+
+                {{ p_form.id }}
+
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                  {# Ввод аудитории вручную (основной) #}
+                  <div class="sm:col-span-6">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      {% trans "Номер или название аудитории" %} <span class="text-red-500">*</span>
+                    </label>
+                    {{ p_form.custom_room }}
+                    {% if p_form.custom_room.errors %}
+                      <p class="text-xs text-red-600 mt-1">{{ p_form.custom_room.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+
+                  {# Время с #}
+                  <div class="sm:col-span-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      {% trans "Время с" %} <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative flex items-center">
+                      {{ p_form.start_time }}
+                    </div>
+                    {% if p_form.start_time.errors %}
+                      <p class="text-xs text-red-600 mt-1">{{ p_form.start_time.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+
+                  {# Время по #}
+                  <div class="sm:col-span-3">
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                      {% trans "Время по" %} <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative flex items-center">
+                      {{ p_form.end_time }}
+                    </div>
+                    {% if p_form.end_time.errors %}
+                      <p class="text-xs text-red-600 mt-1">{{ p_form.end_time.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+
+                  {# Выпадающий список (пока пустой, будет доступен позже) #}
+                  <div class="sm:col-span-12">
+                    <details class="text-xs text-gray-500">
+                      <summary class="cursor-pointer hover:text-blue-700 font-medium">
+                        {% trans "Или выбрать из каталога аудиторий кампуса" %}
+                      </summary>
+                      <div class="mt-2">
+                        {{ p_form.room }}
+                        <p class="mt-1 text-gray-400">
+                          {% trans "Список аудиторий будет загружен в ближайшее время." %}
+                        </p>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
           </div>
 
-          {# Оборудование #}
-          <div class="sm:col-span-2">
-            <label for="{{ form.equipment_required.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
-              {{ form.equipment_required.label }}
-            </label>
-            {{ form.equipment_required }}
-            {% if form.equipment_required.errors %}
-              <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.equipment_required.errors.0 }}</p>
-            {% endif %}
+          {# Кнопка добавления аудитории #}
+          <div class="mt-4">
+            <button type="button"
+                    id="add-premise-btn"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-dashed border-blue-400 text-blue-700 text-xs font-semibold hover:bg-blue-50 transition-colors">
+              <span>+</span>
+              <span>{% trans "Добавить еще одну аудиторию" %}</span>
+            </button>
           </div>
+        </div>
 
+        {# Оборудование #}
+        <div class="pt-6 border-t border-gray-200">
+          <label for="{{ form.equipment_required.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-1.5">
+            {{ form.equipment_required.label }}
+          </label>
+          {{ form.equipment_required }}
+          {% if form.equipment_required.errors %}
+            <p class="mt-1.5 text-xs text-red-600 font-medium">{{ form.equipment_required.errors.0 }}</p>
+          {% endif %}
+          <p class="mt-1 text-xs text-gray-500">
+            {% trans "Укажите проектор, микрофоны, экран, кликер или столы." %}
+          </p>
         </div>
 
         {# Памятка #}
@@ -161,4 +243,70 @@
 
   </div>
 </div>
+
+{# Скрипт динамического добавления аудиторий в заявку #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const container = document.getElementById('premises-container');
+  const addBtn = document.getElementById('add-premise-btn');
+  const totalFormsInput = document.getElementById('id_premises-TOTAL_FORMS');
+
+  if (!container || !addBtn || !totalFormsInput) return;
+
+  function updateIndices() {
+    const items = container.querySelectorAll('.premise-item');
+    items.forEach((item, idx) => {
+      const badge = item.querySelector('.premise-index');
+      if (badge) badge.textContent = String(idx + 1);
+    });
+  }
+
+  // Удаление строк
+  container.addEventListener('click', function (e) {
+    if (e.target.closest('.remove-premise-btn')) {
+      const items = container.querySelectorAll('.premise-item');
+      if (items.length > 1) {
+        e.target.closest('.premise-item').remove();
+        totalFormsInput.value = container.querySelectorAll('.premise-item').length;
+        updateIndices();
+      }
+    }
+  });
+
+  // Добавление новой строки
+  addBtn.addEventListener('click', function () {
+    const items = container.querySelectorAll('.premise-item');
+    const formCount = items.length;
+    const lastItem = items[items.length - 1];
+    const clone = lastItem.cloneNode(true);
+
+    // Обновляем id, name и сбрасываем значения
+    const regex = new RegExp(`premises-${formCount - 1}-`, 'g');
+    clone.innerHTML = clone.innerHTML.replace(regex, `premises-${formCount}-`);
+
+    clone.querySelectorAll('input').forEach(input => {
+      if (input.type === 'hidden' && input.name.endsWith('-id')) {
+        input.value = '';
+      } else if (input.type === 'checkbox') {
+        input.checked = false;
+      } else {
+        input.value = '';
+      }
+      delete input.dataset.timepickerBound;
+    });
+
+    // Удаляем клонированную кнопку часов, чтобы timepicker.js создал новую чистую
+    clone.querySelectorAll('.tp-clock-icon-btn').forEach(b => b.remove());
+
+    container.appendChild(clone);
+    totalFormsInput.value = formCount + 1;
+    updateIndices();
+
+    // Переинициализация циферблата для новых полей
+    if (window.radialTimePicker) {
+      window.radialTimePicker.bindInputs();
+    }
+  });
+});
+</script>
 {% endblock %}
