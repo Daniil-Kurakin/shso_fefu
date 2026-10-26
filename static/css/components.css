@@ -275,7 +275,7 @@
   max-width: 320px;
   overflow: hidden;
   display: flex;
-  flex-col: column;
+  flex-direction: column;
   border: 1px solid rgba(226, 232, 240, 0.8);
 }
 
@@ -334,9 +334,12 @@
 }
 
 .tp-clock-wrap {
+  width: 100%;
   padding: 1.25rem 0 0.5rem;
   display: flex;
   justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .tp-clock-face {
@@ -347,6 +350,7 @@
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .tp-hand-svg {
