@@ -46,6 +46,23 @@
 
 body {
   font-family: var(--font-body);
+  text-transform: uppercase;
+}
+
+.font-sans,
+.font-montserrat {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+}
+
+/* Исключения для интерактивного ввода данных и программного кода */
+input,
+textarea,
+select,
+code,
+pre,
+.normal-case {
+  text-transform: none;
 }
 
 h1,

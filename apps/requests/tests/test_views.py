@@ -4,8 +4,9 @@ import pytest
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User
+from apps.accounts.models import Role, User
 from apps.requests.models import CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from apps.squads.models import Direction, Squad, SquadPageRevision
 
 pytestmark = pytest.mark.django_db
 
@@ -22,6 +23,11 @@ def other_user():
     return User.objects.create_user(
         "user2@example.com", "pass-12345", full_name="Другой Пользователь"
     )
+
+
+@pytest.fixture
+def admin_user():
+    return User.objects.create_user("admin_moderator@example.com", "pass-12345", role=Role.ADMIN)
 
 
 @pytest.fixture
@@ -213,3 +219,141 @@ class TestPassRequestViews:
         client.post(cancel_url, follow=True)
         pr.refresh_from_db()
         assert pr.status == PassRequest.Status.CANCELLED
+
+
+class TestAdminModerationView:
+    def test_moderation_requires_admin_or_owner(self, client, user):
+        client.force_login(user)
+        url = reverse("requests:moderation")
+        response = client.get(url)
+        assert response.status_code == 403
+
+    def test_moderation_renders_for_admin(self, client, admin_user):
+        client.force_login(admin_user)
+        url = reverse("requests:moderation")
+        response = client.get(url)
+        assert response.status_code == 200
+
+    def test_approve_and_reject_room_booking(self, client, admin_user, user, room):
+        client.force_login(admin_user)
+        tomorrow = timezone.localdate() + timedelta(days=2)
+        booking = RoomBookingRequest.objects.create(
+            user=user,
+            room=room,
+            event_name="Собрание штаба",
+            event_date=tomorrow,
+            start_time=time(14, 0),
+            end_time=time(16, 0),
+            status=RoomBookingRequest.Status.SUBMITTED,
+        )
+
+        # Одобрение
+        url = reverse("requests:moderation")
+        res = client.post(
+            url,
+            {"action": "approve_room", "target_id": booking.pk, "tab": "rooms"},
+            follow=True,
+        )
+        assert res.status_code == 200
+        booking.refresh_from_db()
+        assert booking.status == RoomBookingRequest.Status.APPROVED
+        assert booking.reviewed_by == admin_user
+
+        # Отклонение
+        client.post(
+            url,
+            {
+                "action": "reject_room",
+                "target_id": booking.pk,
+                "comment": "Мест нет",
+                "tab": "rooms",
+            },
+            follow=True,
+        )
+        booking.refresh_from_db()
+        assert booking.status == RoomBookingRequest.Status.REJECTED
+        assert booking.moderator_comment == "Мест нет"
+
+    def test_approve_and_reject_pass_request(self, client, admin_user, user):
+        client.force_login(admin_user)
+        visit_d = timezone.localdate() + timedelta(days=2)
+        pr = PassRequest.objects.create(
+            user=user,
+            title="Гости",
+            pass_type=PassRequest.PassType.INDIVIDUAL,
+            visit_date=visit_d,
+            status=PassRequest.Status.SUBMITTED,
+        )
+        url = reverse("requests:moderation")
+        client.post(
+            url,
+            {"action": "approve_pass", "target_id": pr.pk, "tab": "passes"},
+            follow=True,
+        )
+        pr.refresh_from_db()
+        assert pr.status == PassRequest.Status.APPROVED
+
+        client.post(
+            url,
+            {
+                "action": "reject_pass",
+                "target_id": pr.pk,
+                "comment": "Отказ СБ",
+                "tab": "passes",
+            },
+            follow=True,
+        )
+        pr.refresh_from_db()
+        assert pr.status == PassRequest.Status.REJECTED
+        assert pr.moderator_comment == "Отказ СБ"
+
+    def test_publish_and_reject_squad_revision(self, client, admin_user, user):
+        client.force_login(admin_user)
+        direction = Direction.objects.create(name="Педагогическое", slug="ped")
+        squad = Squad.objects.create(
+            name="СПО Луч",
+            slug="spo-luch",
+            direction=direction,
+            motto="Старый девиз",
+        )
+        revision = SquadPageRevision.objects.create(
+            squad=squad,
+            author=user,
+            motto="Новый крутой девиз",
+            description="Новое описание",
+            status=SquadPageRevision.Status.PENDING,
+        )
+
+        url = reverse("requests:moderation")
+        # Опубликовать ревизию
+        client.post(
+            url,
+            {"action": "publish_revision", "target_id": revision.pk, "tab": "revisions"},
+            follow=True,
+        )
+        revision.refresh_from_db()
+        squad.refresh_from_db()
+        assert revision.status == SquadPageRevision.Status.PUBLISHED
+        assert squad.motto == "Новый крутой девиз"
+        assert squad.description == "Новое описание"
+
+        # Отклонить другую ревизию
+        rev2 = SquadPageRevision.objects.create(
+            squad=squad,
+            author=user,
+            motto="Плохой девиз",
+            status=SquadPageRevision.Status.PENDING,
+        )
+        client.post(
+            url,
+            {
+                "action": "reject_revision",
+                "target_id": rev2.pk,
+                "comment": "Не соответствует стилю",
+                "tab": "revisions",
+            },
+            follow=True,
+        )
+        rev2.refresh_from_db()
+        assert rev2.status == SquadPageRevision.Status.RETURNED
+        assert rev2.moderator_comment == "Не соответствует стилю"

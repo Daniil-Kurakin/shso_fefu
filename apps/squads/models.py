@@ -301,6 +301,15 @@ class SquadPageRevision(models.Model):
         self.squad.is_recruiting = self.is_recruiting
         self.squad.save()
 
+    def reject(self, moderator, comment=""):
+        """Отклонение / возврат ревизии страницы отряда с комментарием."""
+        self.status = self.Status.RETURNED
+        self.reviewed_by = moderator
+        self.reviewed_at = timezone.now()
+        if comment:
+            self.moderator_comment = comment
+        self.save()
+
 
 class SquadTransferRequest(models.Model):
     """

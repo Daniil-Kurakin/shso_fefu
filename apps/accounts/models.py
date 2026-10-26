@@ -119,6 +119,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower()
+        # Доступ в саму админ-панель Django (is_staff) разрешён только владельцу
+        if not self.is_superuser and self.role != Role.OWNER:
+            self.is_staff = False
         super().save(*args, **kwargs)
 
     def get_full_name(self):
@@ -142,6 +145,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     def is_hq_staff(self) -> bool:
         """Права штаба: владелец, администратор или куратор."""
         return bool(self.is_superuser or self.role in {Role.OWNER, Role.ADMIN, Role.CURATOR})
+
+    @property
+    def is_owner(self) -> bool:
+        """Права владельца сайта: доступ к Django админ-панели."""
+        return bool(self.is_superuser or self.role == Role.OWNER)
 
     def get_managed_squads(self):
         """Возвращает queryset отрядов, которыми пользователь вправе управлять."""

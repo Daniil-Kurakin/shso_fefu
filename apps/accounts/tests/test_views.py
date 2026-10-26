@@ -1,7 +1,7 @@
 import pytest
 from django.urls import reverse
 
-from apps.accounts.models import User, UserPortfolioItem
+from apps.accounts.models import Role, User, UserPortfolioItem
 
 pytestmark = pytest.mark.django_db
 
@@ -450,6 +450,41 @@ class TestLegalPages:
         content = response.content.decode("utf-8")
         assert "152-ФЗ" in content
         assert "ШСО ДВФУ" in content
+
+
+class TestDjangoAdminOwnerAccess:
+    def test_owner_has_admin_permission(self, client, admin_user):
+        """Владелец сайта (Role.OWNER) имеет доступ к Django админ-панели."""
+        from django.contrib import admin
+        from django.test import RequestFactory
+
+        rf = RequestFactory()
+        req = rf.get("/admin/")
+        req.user = admin_user
+        assert admin.site.has_permission(req) is True
+
+    def test_admin_role_cannot_access_django_admin(self, client):
+        """Обычный администратор (Role.ADMIN) НЕ имеет доступа к Django админ-панели."""
+        from django.contrib import admin
+        from django.test import RequestFactory
+
+        admin_role_user = User.objects.create_user(
+            "admin_only@example.com", "pass-12345", role=Role.ADMIN
+        )
+        rf = RequestFactory()
+        req = rf.get("/admin/")
+        req.user = admin_role_user
+        assert admin.site.has_permission(req) is False
+
+    def test_member_cannot_access_django_admin(self, client, user):
+        """Обычный боец не имеет доступа к Django админ-панели."""
+        from django.contrib import admin
+        from django.test import RequestFactory
+
+        rf = RequestFactory()
+        req = rf.get("/admin/")
+        req.user = user
+        assert admin.site.has_permission(req) is False
 
     def test_terms_of_service_page(self, client):
         url = reverse("content:terms")

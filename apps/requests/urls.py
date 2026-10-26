@@ -6,6 +6,8 @@ app_name = "requests"
 
 urlpatterns = [
     path("", views.UserRequestDashboardView.as_view(), name="dashboard"),
+    # Панель модерации для администраторов
+    path("moderation/", views.AdminModerationView.as_view(), name="moderation"),
     # Помещения
     path("rooms/create/", views.RoomBookingCreateView.as_view(), name="room_create"),
     path("rooms/<int:pk>/", views.RoomBookingDetailView.as_view(), name="room_detail"),

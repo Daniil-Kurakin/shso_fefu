@@ -3,7 +3,17 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from .forms import UserChangeForm, UserCreationForm
-from .models import User, UserPortfolioItem
+from .models import Role, User, UserPortfolioItem
+
+
+def owner_only_has_permission(request):
+    """Доступ к Django админ-панели разрешён исключительно владельцу сайта."""
+    if not request.user.is_active:
+        return False
+    return bool(request.user.is_superuser or getattr(request.user, "role", None) == Role.OWNER)
+
+
+admin.site.has_permission = owner_only_has_permission
 
 
 class UserPortfolioItemInline(admin.TabularInline):

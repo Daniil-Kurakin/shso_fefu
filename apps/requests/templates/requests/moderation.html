@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Панель администрирования" %} | {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+
+  {# Заголовок страницы и счетчик #}
+  <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <nav class="flex items-center gap-2 text-xs text-gray-500 mb-2">
+        <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition">{% trans "Главная" %}</a>
+        <span>/</span>
+        <span class="text-gray-800 font-medium">{% trans "Администрирование" %}</span>
+      </nav>
+      <div class="flex flex-wrap items-center gap-3">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+          {% trans "Панель администрирования" %}
+        </h1>
+        {% if total_pending_count > 0 %}
+          <span class="badge badge-warning text-xs font-bold">
+            {% trans "Ожидают решения:" %} {{ total_pending_count }}
+          </span>
+        {% else %}
+          <span class="badge badge-success text-xs font-bold">
+            {% trans "Все заявки рассмотрены" %}
+          </span>
+        {% endif %}
+      </div>
+      <p class="text-xs sm:text-sm text-gray-500 mt-1">
+        {% trans "Согласование бронирований аудиторий, гостевых пропусков и публикация изменений отрядных страниц" %}
+      </p>
+    </div>
+
+    {# Ссылка на Django-админку для владельца #}
+    {% if user.role == 'owner' or user.is_superuser %}
+      <a href="{% url 'admin:index' %}"
+         class="btn btn-outline inline-flex items-center gap-2 text-xs self-start sm:self-center text-purple-700 border-purple-200 hover:bg-purple-50">
+        <span>🛡️</span>
+        {% trans "Панель владельца (Django)" %}
+      </a>
+    {% endif %}
+  </div>
+
+  {# НАВИГАЦИОННЫЕ ВКЛАДКИ #}
+  <div class="border-b border-gray-200 mb-8">
+    <div class="flex flex-wrap items-center gap-2 -mb-px">
+      {# Вкладка 1: Помещения #}
+      <a href="?tab=rooms"
+         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+           {% if tab == 'rooms' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        <span>🏢 {% trans "Бронирование помещений" %}</span>
+        {% if pending_rooms_count > 0 %}
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+            {{ pending_rooms_count }}
+          </span>
+        {% endif %}
+      </a>
+
+      {# Вкладка 2: Пропуска #}
+      <a href="?tab=passes"
+         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+           {% if tab == 'passes' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        <span>🎫 {% trans "Гостевые пропуска" %}</span>
+        {% if pending_passes_count > 0 %}
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+            {{ pending_passes_count }}
+          </span>
+        {% endif %}
+      </a>
+
+      {# Вкладка 3: Ревизии отрядов #}
+      <a href="?tab=revisions"
+         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+           {% if tab == 'revisions' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        <span>🏕️ {% trans "Ревизии страниц отрядов" %}</span>
+        {% if pending_revisions_count > 0 %}
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+            {{ pending_revisions_count }}
+          </span>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  {# ФИЛЬТРЫ СТАТУСА #}
+  <div class="mb-6 flex flex-wrap items-center gap-2 text-xs">
+    <span class="text-gray-400 font-semibold mr-1">{% trans "Фильтр:" %}</span>
+    <a href="?tab={{ tab }}&status=all"
+       class="px-3.5 py-1.5 rounded-full font-semibold transition
+         {% if status_filter == 'all' %}bg-blue-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+      {% trans "Все" %}
+    </a>
+    <a href="?tab={{ tab }}&status=pending"
+       class="px-3.5 py-1.5 rounded-full font-semibold transition
+         {% if status_filter == 'pending' %}bg-amber-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+      {% trans "На рассмотрении" %}
+    </a>
+    <a href="?tab={{ tab }}&status=approved"
+       class="px-3.5 py-1.5 rounded-full font-semibold transition
+         {% if status_filter == 'approved' %}bg-green-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+      {% trans "Одобренные" %}
+    </a>
+    <a href="?tab={{ tab }}&status=rejected"
+       class="px-3.5 py-1.5 rounded-full font-semibold transition
+         {% if status_filter == 'rejected' %}bg-red-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+      {% trans "Отклонённые" %}
+    </a>
+  </div>
+
+  {# ==================== ВКЛАДКА 1: ПОМЕЩЕНИЯ ==================== #}
+  {% if tab == 'rooms' %}
+    {% if room_bookings %}
+      <div class="space-y-4">
+        {% for b in room_bookings %}
+          <div class="card-base p-5 sm:p-6 border border-gray-200/80 bg-white">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span class="font-bold text-gray-900 text-base font-heading">{{ b.event_name }}</span>
+                  <span class="badge
+                    {% if b.status == 'submitted' %}badge-warning
+                    {% elif b.status == 'approved' %}badge-success
+                    {% elif b.status == 'rejected' %}badge-error
+                    {% else %}badge-gray{% endif %}">
+                    {{ b.get_status_display }}
+                  </span>
+                  {% if b.squad %}
+                    <span class="badge badge-primary">{{ b.squad.name }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="text-xs text-gray-500 space-y-1">
+                  <p>
+                    🏢 <strong>{{ b.room.name }}</strong> ({{ b.room.get_building_display }}, комната {{ b.room.room_number }})
+                    • 📅 <strong>{{ b.event_date|date:"d.m.Y" }}</strong> ({{ b.start_time|time:"H:i" }} — {{ b.end_time|time:"H:i" }})
+                    • 👥 {{ b.expected_participants }} {% trans "чел." %}
+                  </p>
+                  <p>
+                    👤 {% trans "Заявитель:" %} <strong>{{ b.user.get_full_name }}</strong> ({{ b.user.email }}{% if b.user.phone %}, {{ b.user.phone }}{% endif %})
+                  </p>
+                  {% if b.equipment_needed %}
+                    <p class="text-gray-600 italic">🎤 {% trans "Оборудование:" %} {{ b.equipment_needed }}</p>
+                  {% endif %}
+                  {% if b.moderator_comment %}
+                    <p class="text-amber-800 bg-amber-50 p-2 rounded-lg mt-2 font-medium">
+                      💬 {% trans "Комментарий штаба:" %} {{ b.moderator_comment }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Кнопки действий для заявок на рассмотрении #}
+              {% if b.status == 'submitted' %}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 self-end lg:self-center"
+                     x-data="{ showReject: false }">
+                  {# Форма одобрения #}
+                  <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve_room">
+                    <input type="hidden" name="target_id" value="{{ b.pk }}">
+                    <input type="hidden" name="tab" value="rooms">
+                    <button type="submit"
+                            class="btn btn-primary px-4 py-2 text-xs font-semibold bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+                      ✓ {% trans "Одобрить" %}
+                    </button>
+                  </form>
+
+                  {# Кнопка и форма отклонения #}
+                  <button type="button"
+                          @click="showReject = !showReject"
+                          class="btn btn-outline text-xs px-4 py-2 font-semibold text-red-600 border-red-200 hover:bg-red-50">
+                    ✗ {% trans "Отклонить" %}
+                  </button>
+
+                  <div x-show="showReject"
+                       x-cloak
+                       class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" @click.outside="showReject = false">
+                      <h4 class="text-sm font-bold text-gray-900 mb-2">{% trans "Причина отклонения бронирования" %}</h4>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject_room">
+                        <input type="hidden" name="target_id" value="{{ b.pk }}">
+                        <input type="hidden" name="tab" value="rooms">
+                        <textarea name="comment" rows="3" required
+                                  placeholder="{% trans "Укажите причину отказа для заявителя..." %}"
+                                  class="form-textarea mb-4"></textarea>
+                        <div class="flex justify-end gap-2">
+                          <button type="button" @click="showReject = false" class="btn btn-outline text-xs px-4 py-2">
+                            {% trans "Отмена" %}
+                          </button>
+                          <button type="submit" class="btn btn-danger text-xs px-4 py-2">
+                            {% trans "Подтвердить отказ" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12 card-base bg-white">
+        <span class="text-3xl block mb-2">🏢</span>
+        <p class="text-sm font-medium text-gray-600">{% trans "Заявок на бронирование помещений в этой категории не найдено." %}</p>
+      </div>
+    {% endif %}
+
+  {# ==================== ВКЛАДКА 2: ГОСТЕВЫЕ ПРОПУСКА ==================== #}
+  {% elif tab == 'passes' %}
+    {% if pass_requests %}
+      <div class="space-y-4">
+        {% for p in pass_requests %}
+          <div class="card-base p-5 sm:p-6 border border-gray-200/80 bg-white">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span class="font-bold text-gray-900 text-base font-heading">{{ p.title }}</span>
+                  <span class="badge
+                    {% if p.status == 'submitted' %}badge-warning
+                    {% elif p.status == 'approved' %}badge-success
+                    {% elif p.status == 'rejected' %}badge-error
+                    {% else %}badge-gray{% endif %}">
+                    {{ p.get_status_display }}
+                  </span>
+                  <span class="badge badge-gray text-xs">
+                    {{ p.get_pass_type_display }}
+                  </span>
+                  {% if p.squad %}
+                    <span class="badge badge-primary">{{ p.squad.name }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="text-xs text-gray-500 space-y-1">
+                  <p>
+                    📅 <strong>{{ p.visit_date|date:"d.m.Y" }}</strong>
+                    {% if p.visit_end_date %}— <strong>{{ p.visit_end_date|date:"d.m.Y" }}</strong>{% endif %}
+                    • 👤 {% trans "Заявитель:" %} <strong>{{ p.user.get_full_name }}</strong> ({{ p.user.email }})
+                  </p>
+                  {% if p.car_number %}
+                    <p class="font-mono text-gray-700">🚗 {% trans "Госномер ТС:" %} {{ p.car_number }} ({{ p.car_model|default:"авто" }})</p>
+                  {% endif %}
+
+                  {# Список гостей #}
+                  <div class="mt-2 pt-2 border-t border-gray-100">
+                    <p class="font-semibold text-gray-700 mb-1">{% trans "Список посетителей:" %} ({{ p.visitors.count }})</p>
+                    <div class="flex flex-wrap gap-1.5">
+                      {% for v in p.visitors.all %}
+                        <span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[11px]">
+                          {{ v.full_name }}
+                        </span>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                  {% if p.security_resolution %}
+                    <p class="text-amber-800 bg-amber-50 p-2 rounded-lg mt-2 font-medium">
+                      💬 {% trans "Резолюция СБ / комментарий:" %} {{ p.security_resolution }}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Действия #}
+              {% if p.status == 'submitted' %}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 self-end lg:self-center"
+                     x-data="{ showReject: false }">
+                  <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="approve_pass">
+                    <input type="hidden" name="target_id" value="{{ p.pk }}">
+                    <input type="hidden" name="tab" value="passes">
+                    <button type="submit"
+                            class="btn btn-primary px-4 py-2 text-xs font-semibold bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+                      ✓ {% trans "Одобрить" %}
+                    </button>
+                  </form>
+
+                  <button type="button"
+                          @click="showReject = !showReject"
+                          class="btn btn-outline text-xs px-4 py-2 font-semibold text-red-600 border-red-200 hover:bg-red-50">
+                    ✗ {% trans "Отклонить" %}
+                  </button>
+
+                  <div x-show="showReject"
+                       x-cloak
+                       class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" @click.outside="showReject = false">
+                      <h4 class="text-sm font-bold text-gray-900 mb-2">{% trans "Причина отклонения пропуска" %}</h4>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject_pass">
+                        <input type="hidden" name="target_id" value="{{ p.pk }}">
+                        <input type="hidden" name="tab" value="passes">
+                        <textarea name="comment" rows="3" required
+                                  placeholder="{% trans "Укажите причину отказа..." %}"
+                                  class="form-textarea mb-4"></textarea>
+                        <div class="flex justify-end gap-2">
+                          <button type="button" @click="showReject = false" class="btn btn-outline text-xs px-4 py-2">
+                            {% trans "Отмена" %}
+                          </button>
+                          <button type="submit" class="btn btn-danger text-xs px-4 py-2">
+                            {% trans "Подтвердить отказ" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12 card-base bg-white">
+        <span class="text-3xl block mb-2">🎫</span>
+        <p class="text-sm font-medium text-gray-600">{% trans "Заявок на пропуска в этой категории не найдено." %}</p>
+      </div>
+    {% endif %}
+
+  {# ==================== ВКЛАДКА 3: РЕВИЗИИ СТРАНИЦ ОТРЯДОВ ==================== #}
+  {% elif tab == 'revisions' %}
+    {% if squad_revisions %}
+      <div class="space-y-6">
+        {% for r in squad_revisions %}
+          <div class="card-base p-6 sm:p-7 border border-gray-200/80 bg-white">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100 mb-4">
+              <div>
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <h3 class="text-lg font-bold text-gray-900 font-heading">
+                    {{ r.squad.name }}
+                  </h3>
+                  <span class="badge
+                    {% if r.status == 'pending' %}badge-warning
+                    {% elif r.status == 'published' %}badge-success
+                    {% elif r.status == 'returned' %}badge-error
+                    {% else %}badge-gray{% endif %}">
+                    {{ r.get_status_display }}
+                  </span>
+                  <span class="badge badge-primary text-xs">
+                    {{ r.squad.direction.name }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500">
+                  👤 {% trans "Автор ревизии:" %} <strong>{{ r.author.get_full_name }}</strong> • 📅 {{ r.created_at|date:"d.m.Y H:i" }}
+                </p>
+              </div>
+
+              {# Действия #}
+              {% if r.status == 'pending' %}
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0"
+                     x-data="{ showReject: false }">
+                  {# Опубликовать изменения #}
+                  <form method="post" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="publish_revision">
+                    <input type="hidden" name="target_id" value="{{ r.pk }}">
+                    <input type="hidden" name="tab" value="revisions">
+                    <button type="submit"
+                            class="btn btn-primary px-4 py-2 text-xs font-semibold bg-green-600 hover:bg-green-700 shadow-sm w-full sm:w-auto">
+                      ✓ {% trans "Опубликовать изменения" %}
+                    </button>
+                  </form>
+
+                  {# Отклонить #}
+                  <button type="button"
+                          @click="showReject = !showReject"
+                          class="btn btn-outline text-xs px-4 py-2 font-semibold text-red-600 border-red-200 hover:bg-red-50">
+                    ✗ {% trans "Отклонить" %}
+                  </button>
+
+                  <div x-show="showReject"
+                       x-cloak
+                       class="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl" @click.outside="showReject = false">
+                      <h4 class="text-sm font-bold text-gray-900 mb-2">{% trans "Причина отклонения ревизии" %}</h4>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject_revision">
+                        <input type="hidden" name="target_id" value="{{ r.pk }}">
+                        <input type="hidden" name="tab" value="revisions">
+                        <textarea name="comment" rows="3" required
+                                  placeholder="{% trans "Что необходимо доработать комсоставу отряда..." %}"
+                                  class="form-textarea mb-4"></textarea>
+                        <div class="flex justify-end gap-2">
+                          <button type="button" @click="showReject = false" class="btn btn-outline text-xs px-4 py-2">
+                            {% trans "Отмена" %}
+                          </button>
+                          <button type="submit" class="btn btn-danger text-xs px-4 py-2">
+                            {% trans "Отклонить" %}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            {# Содержимое предложенных изменений #}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              {% if r.motto %}
+                <div class="bg-gray-50 p-3 rounded-xl">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider block mb-1">{% trans "Предложенный девиз:" %}</span>
+                  <p class="italic text-gray-900">«{{ r.motto }}»</p>
+                </div>
+              {% endif %}
+
+              <div class="bg-gray-50 p-3 rounded-xl">
+                <span class="font-bold text-gray-500 uppercase tracking-wider block mb-1">{% trans "Статус набора:" %}</span>
+                {% if r.is_recruiting %}
+                  <span class="text-green-700 font-bold">🟢 {% trans "Набор открыт" %}</span>
+                {% else %}
+                  <span class="text-gray-500">⚪ {% trans "Набор закрыт" %}</span>
+                {% endif %}
+              </div>
+
+              {% if r.description %}
+                <div class="bg-gray-50 p-3 rounded-xl md:col-span-2">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider block mb-1">{% trans "Описание отряда:" %}</span>
+                  <p class="text-gray-800 whitespace-pre-line">{{ r.description }}</p>
+                </div>
+              {% endif %}
+
+              {% if r.achievements %}
+                <div class="bg-gray-50 p-3 rounded-xl md:col-span-2">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider block mb-1">{% trans "Достижения:" %}</span>
+                  <p class="text-gray-800 whitespace-pre-line">{{ r.achievements }}</p>
+                </div>
+              {% endif %}
+
+              {% if r.contact_url %}
+                <div class="bg-gray-50 p-3 rounded-xl md:col-span-2">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider block mb-1">{% trans "Ссылка на сообщество:" %}</span>
+                  <a href="{{ r.contact_url }}" target="_blank" rel="noopener noreferrer" class="text-blue-700 hover:underline">
+                    {{ r.contact_url }}
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+
+            {% if r.moderator_comment %}
+              <div class="mt-4 pt-3 border-t border-gray-100 text-xs">
+                <p class="text-amber-800 bg-amber-50 p-2.5 rounded-lg font-medium">
+                  💬 {% trans "Комментарий модератора:" %} {{ r.moderator_comment }}
+                </p>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-12 card-base bg-white">
+        <span class="text-3xl block mb-2">🏕️</span>
+        <p class="text-sm font-medium text-gray-600">{% trans "Ревизий страниц отрядов в этой категории не найдено." %}</p>
+      </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+{% endblock %}
