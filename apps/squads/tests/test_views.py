@@ -172,3 +172,28 @@ class TestSquadTransferView:
             },
         )
         assert post_response.status_code == 302
+
+
+class TestSquadAdmin:
+    def test_admin_add_squad_without_memberships(self, client, direction):
+        admin = User.objects.create_superuser("admin_squad@example.com", "pass-admin123")
+        client.force_login(admin)
+        url = reverse("admin:squads_squad_add")
+
+        response = client.get(url)
+        assert response.status_code == 200
+
+        data = {
+            "name": "Новый Отряд Тест",
+            "slug": "noviy-otryad-test",
+            "direction": direction.id,
+            "motto": "Девиз отряда",
+            "description": "Описание",
+            "memberships-TOTAL_FORMS": "0",
+            "memberships-INITIAL_FORMS": "0",
+            "memberships-MIN_NUM_FORMS": "0",
+            "memberships-MAX_NUM_FORMS": "1000",
+        }
+        post_response = client.post(url, data=data, follow=True)
+        assert post_response.status_code == 200
+        assert Squad.objects.filter(name="Новый Отряд Тест").exists()

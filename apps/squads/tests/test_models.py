@@ -199,3 +199,10 @@ def test_squad_transfer_reject_flow(
     transfer.refresh_from_db()
     assert transfer.status == SquadTransferRequest.Status.REJECTED
     assert transfer.decision_comment == "Недостаточно документов"
+
+
+def test_membership_str_and_clean_without_user():
+    membership = Membership()
+    # __str__ и clean не должны падать с RelatedObjectDoesNotExist
+    assert "—" in str(membership)
+    membership.clean()

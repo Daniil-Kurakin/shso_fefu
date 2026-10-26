@@ -182,13 +182,21 @@ class Membership(models.Model):
 
     def __str__(self):
         status = _("активен") if self.is_active else _("в архиве")
-        return f"{self.user.get_full_name()} — {self.squad.name} ({self.position.name}, {status})"
+        user_name = self.user.get_full_name() if self.user_id else "—"
+        squad_name = self.squad.name if self.squad_id else "—"
+        pos_name = self.position.name if self.position_id else "—"
+        return f"{user_name} — {squad_name} ({pos_name}, {status})"
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
         # Автоматическая синхронизация системной роли пользователя
-        if self.is_active and self.user.role not in {Role.OWNER, Role.ADMIN}:
+        if (
+            self.user_id
+            and self.position_id
+            and self.is_active
+            and self.user.role not in {Role.OWNER, Role.ADMIN}
+        ):
             if self.position.is_staff:
                 self.user.role = Role.SQUAD_STAFF
             else:
@@ -197,9 +205,11 @@ class Membership(models.Model):
 
     def clean(self):
         super().clean()
+        if not self.user_id:
+            return
         if self.is_active:
             existing = (
-                Membership.objects.filter(user=self.user, is_active=True)
+                Membership.objects.filter(user_id=self.user_id, is_active=True)
                 .exclude(pk=self.pk)
                 .first()
             )
@@ -272,7 +282,8 @@ class SquadPageRevision(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.squad.name} (ревизия #{self.pk or 'новая'} — {self.get_status_display()})"
+        squad_name = self.squad.name if self.squad_id else "—"
+        return f"{squad_name} (ревизия #{self.pk or 'новая'} — {self.get_status_display()})"
 
     @transaction.atomic
     def publish(self, moderator):
@@ -360,8 +371,10 @@ class SquadTransferRequest(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        user_name = self.user.get_full_name()
-        return f"Переход: {user_name} из «{self.from_squad.name}» в «{self.to_squad.name}»"
+        user_name = self.user.get_full_name() if self.user_id else "—"
+        from_name = self.from_squad.name if self.from_squad_id else "—"
+        to_name = self.to_squad.name if self.to_squad_id else "—"
+        return f"Переход: {user_name} из «{from_name}» в «{to_name}»"
 
     @transaction.atomic
     def approve(self, admin_user, comment=""):

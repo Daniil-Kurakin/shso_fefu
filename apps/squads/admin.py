@@ -6,7 +6,7 @@ from .models import Direction, Membership, Position, Squad, SquadPageRevision, S
 
 class MembershipInline(admin.TabularInline):
     model = Membership
-    extra = 1
+    extra = 0
     fields = ("user", "position", "start_date", "end_date", "is_active")
     raw_id_fields = ("user",)
 
