@@ -1,0 +1,13 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": { "source.organizeImports.ruff": "explicit" }
+  },
+  "files.eol": "\n",
+  "files.associations": { "**/templates/**/*.html": "django-html" },
+  "emmet.includeLanguages": {
+    "django-html": "html"
+  },
+  "python.terminal.useEnvFile": true
+}
