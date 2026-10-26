@@ -123,7 +123,10 @@ Q_CLUSTER = {
 
 # Пользователи
 AUTH_USER_MODEL = "accounts.User"
-LOGIN_URL = "/ru/accounts/login/"
+AUTHENTICATION_BACKENDS = ["apps.accounts.backends.EmailCIBackend"]
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "accounts:profile"
+LOGOUT_REDIRECT_URL = "core:home"
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",

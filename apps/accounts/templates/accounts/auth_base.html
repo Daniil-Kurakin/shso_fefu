@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{# Общий layout для всех страниц авторизации: центрированная карточка #}
+{% block content %}
+  <div class="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-12 bg-gray-50">
+    <div class="w-full max-w-md">
+
+      {# Логотип / заголовок #}
+      <div class="text-center mb-8">
+        <a href="{% url 'core:home' %}" class="inline-block text-3xl mb-3">🏕️</a>
+        <h1 class="text-2xl font-bold text-gray-900">{% block auth_title %}{% endblock %}</h1>
+        {% block auth_subtitle %}{% endblock %}
+      </div>
+
+      {# Карточка с формой #}
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+        {% block auth_body %}{% endblock %}
+      </div>
+
+      {# Ссылки под карточкой #}
+      {% block auth_footer %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Профиль — ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+  <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+    {# Заголовок #}
+    <div class="mb-8 flex items-center gap-4">
+      <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-2xl font-bold">
+        {{ user.get_short_name|first|upper }}
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name }}</h1>
+        <p class="text-sm text-gray-500">{{ user.email }}</p>
+        <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+          {{ user.get_role_display }}
+        </span>
+      </div>
+    </div>
+
+    {# Форма редактирования #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-6">{% trans "Личные данные" %}</h2>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        {# ФИО #}
+        <div class="mb-5">
+          <label for="{{ form.full_name.id_for_label }}"
+                 class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.full_name.label }}
+          </label>
+          <input
+            id="{{ form.full_name.id_for_label }}"
+            type="text"
+            name="{{ form.full_name.html_name }}"
+            value="{{ form.full_name.value|default:'' }}"
+            autocomplete="name"
+            placeholder="{% trans "Иванов Иван Иванович" %}"
+            class="block w-full px-4 py-2.5 rounded-xl border text-sm
+                   {% if form.full_name.errors %}border-red-400 bg-red-50{% else %}border-gray-300{% endif %}
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          >
+          {% for error in form.full_name.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        {# Подпись #}
+        <div class="mb-5">
+          <label for="{{ form.signature.id_for_label }}"
+                 class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.signature.label }}
+          </label>
+          <input
+            id="{{ form.signature.id_for_label }}"
+            type="text"
+            name="{{ form.signature.html_name }}"
+            value="{{ form.signature.value|default:'' }}"
+            placeholder="{% trans "Командир СПО «Меридиан»" %}"
+            class="block w-full px-4 py-2.5 rounded-xl border text-sm border-gray-300
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          >
+          {% if form.signature.help_text %}
+            <p class="mt-1 text-xs text-gray-400">{{ form.signature.help_text }}</p>
+          {% endif %}
+        </div>
+
+        {# Язык #}
+        <div class="mb-8">
+          <label for="{{ form.language.id_for_label }}"
+                 class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.language.label }}
+          </label>
+          <select
+            id="{{ form.language.id_for_label }}"
+            name="{{ form.language.html_name }}"
+            class="block w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm bg-white
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          >
+            {% for value, label in form.language.field.choices %}
+              <option value="{{ value }}" {% if form.language.value == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button type="submit"
+                  class="px-6 py-2.5 rounded-xl bg-blue-700 text-white font-semibold text-sm
+                         hover:bg-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            {% trans "Сохранить" %}
+          </button>
+          <a href="{% url 'core:home' %}"
+             class="px-6 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-semibold text-sm
+                    hover:bg-gray-50 transition-colors">
+            {% trans "Отмена" %}
+          </a>
+        </div>
+      </form>
+    </div>
+
+    {# Безопасность #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-8">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Безопасность" %}</h2>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-700">{% trans "Пароль" %}</p>
+          <p class="text-xs text-gray-400">{% trans "Изменить пароль от вашего аккаунта" %}</p>
+        </div>
+        <a href="{% url 'accounts:password_change' %}"
+           class="px-4 py-2 rounded-xl border border-gray-300 text-sm font-medium text-gray-700
+                  hover:bg-gray-50 transition-colors">
+          {% trans "Изменить" %}
+        </a>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-gray-700">{% trans "Выйти из системы" %}</p>
+          <p class="text-xs text-gray-400">{% trans "Завершить текущую сессию" %}</p>
+        </div>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button type="submit"
+                  class="px-4 py-2 rounded-xl border border-red-200 text-sm font-medium text-red-600
+                         hover:bg-red-50 transition-colors">
+            {% trans "Выйти" %}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

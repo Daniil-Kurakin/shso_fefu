@@ -53,12 +53,17 @@
                 <a href="{% url 'admin:index' %}"
                    class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Админка" %}</a>
               {% endif %}
-              <a href="{% url 'core:home' %}"
-                 class="px-4 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
-                {% trans "Выйти" %}
-              </a>
+              <a href="{% url 'accounts:profile' %}"
+                 class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Профиль" %}</a>
+              <form method="post" action="{% url 'accounts:logout' %}" class="inline">
+                {% csrf_token %}
+                <button type="submit"
+                        class="px-4 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
+                  {% trans "Выйти" %}
+                </button>
+              </form>
             {% else %}
-              <a href="#"
+              <a href="{% url 'accounts:login' %}"
                  class="px-4 py-1.5 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">
                 {% trans "Войти" %}
               </a>
@@ -107,12 +112,19 @@
           <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
             {% if user.is_authenticated %}
               <span class="px-3 py-1 text-sm text-gray-500">{{ user.get_short_name }}</span>
-              <a href="#"
-                 class="px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
-                {% trans "Выйти" %}
+              <a href="{% url 'accounts:profile' %}"
+                 class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
+                {% trans "Профиль" %}
               </a>
+              <form method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit"
+                        class="w-full px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
+                  {% trans "Выйти" %}
+                </button>
+              </form>
             {% else %}
-              <a href="#"
+              <a href="{% url 'accounts:login' %}"
                  class="px-3 py-2 rounded-lg text-center border border-gray-300 hover:bg-gray-50 transition-colors">
                 {% trans "Войти" %}
               </a>

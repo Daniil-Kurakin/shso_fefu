@@ -14,6 +14,7 @@ urlpatterns = [
 # Адреса вида /ru/... и /en/...; корень «/» перенаправляется на язык пользователя.
 urlpatterns += i18n_patterns(
     path("admin/", admin.site.urls),
+    path("accounts/", include("apps.accounts.urls")),
     path("", include("apps.core.urls")),
     prefix_default_language=True,
 )
