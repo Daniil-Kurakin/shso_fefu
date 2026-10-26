@@ -18,6 +18,7 @@ urlpatterns += i18n_patterns(
     path("news/", include("apps.news.urls")),
     path("squads/", include("apps.squads.urls")),
     path("vacancies/", include("apps.vacancies.urls")),
+    path("requests/", include("apps.requests.urls")),
     path("", include("apps.content.urls")),
     path("", include("apps.core.urls")),
     prefix_default_language=True,

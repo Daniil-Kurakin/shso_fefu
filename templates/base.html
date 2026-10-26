@@ -53,6 +53,8 @@
                 <a href="{% url 'admin:index' %}"
                    class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Админка" %}</a>
               {% endif %}
+              <a href="{% url 'requests:dashboard' %}"
+                 class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Мои заявки" %}</a>
               <a href="{% url 'accounts:profile' %}"
                  class="text-sm text-gray-600 hover:text-blue-700 transition-colors">{% trans "Профиль" %}</a>
               <form method="post" action="{% url 'accounts:logout' %}" class="inline">
@@ -113,6 +115,10 @@
           <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
             {% if user.is_authenticated %}
               <span class="px-3 py-1 text-sm text-gray-500">{{ user.get_short_name }}</span>
+              <a href="{% url 'requests:dashboard' %}"
+                 class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
+                {% trans "Мои заявки" %}
+              </a>
               <a href="{% url 'accounts:profile' %}"
                  class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-center">
                 {% trans "Профиль" %}

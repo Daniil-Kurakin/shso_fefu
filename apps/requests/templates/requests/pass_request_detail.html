@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ pass_request.title }} — {% trans "Заявка на пропуск" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-10">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Хлебные крошки #}
+    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
+      <span>/</span>
+      <a href="{% url 'requests:dashboard' %}" class="hover:text-blue-700 transition-colors">{% trans "Мои заявки" %}</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium truncate">{{ pass_request.title }}</span>
+    </nav>
+
+    <div class="bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-gray-100">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            {% if pass_request.status == "submitted" %}
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-800 border border-yellow-200">
+                ⏳ {% trans "На согласовании штаба" %}
+              </span>
+            {% elif pass_request.status == "approved" %}
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-800 border border-green-200">
+                ✓ {% trans "Пропуск согласован" %}
+              </span>
+            {% elif pass_request.status == "rejected" %}
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-800 border border-red-200">
+                ✕ {% trans "Заявка отклонена" %}
+              </span>
+            {% elif pass_request.status == "cancelled" %}
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200">
+                {% trans "Отменено заявителем" %}
+              </span>
+            {% endif %}
+
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+              {{ pass_request.get_pass_type_display }}
+            </span>
+          </div>
+
+          <h1 class="text-2xl font-extrabold text-gray-900">
+            {{ pass_request.title }}
+          </h1>
+        </div>
+
+        {% if pass_request.status == "submitted" or pass_request.status == "approved" %}
+          <form method="post" action="{% url 'requests:pass_cancel' pass_request.pk %}"
+                onsubmit="return confirm('{% trans "Вы точно хотите отменить заявку на пропуск?" %}');">
+            {% csrf_token %}
+            <button type="submit"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 border border-red-200 transition-colors">
+              {% trans "Отменить заявку" %}
+            </button>
+          </form>
+        {% endif %}
+      </div>
+
+      {# Детали визита #}
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <div class="text-xs text-gray-500 font-medium">{% trans "Дата и период визита" %}</div>
+          <div class="text-sm font-bold text-gray-900 mt-1">
+            {{ pass_request.visit_date|date:"d E Y" }}
+            {% if pass_request.visit_end_date and pass_request.visit_end_date != pass_request.visit_date %}
+              – {{ pass_request.visit_end_date|date:"d E Y" }}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <div class="text-xs text-gray-500 font-medium">{% trans "КПП кампуса" %}</div>
+          <div class="text-sm font-bold text-gray-900 mt-1">
+            {{ pass_request.entry_point }}
+          </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <div class="text-xs text-gray-500 font-medium">{% trans "Заявитель" %}</div>
+          <div class="text-sm font-bold text-gray-900 mt-1">
+            {{ pass_request.user.get_full_name }}
+          </div>
+          <div class="text-xs text-gray-600 mt-0.5">
+            {{ pass_request.squad.name|default:"ШСО ДВФУ" }}
+          </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 rounded-xl">
+          <div class="text-xs text-gray-500 font-medium">{% trans "Автотранспорт" %}</div>
+          <div class="text-sm font-bold text-gray-900 mt-1">
+            {% if pass_request.car_number %}
+              {{ pass_request.car_model|default:"" }} ({{ pass_request.car_number }})
+            {% else %}
+              {% trans "Пеший проход (без авто)" %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if pass_request.moderator_comment %}
+        <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 mb-6">
+          <div class="font-bold mb-1">{% trans "Ответ штаба:" %}</div>
+          <p>{{ pass_request.moderator_comment }}</p>
+          {% if pass_request.reviewed_by %}
+            <div class="mt-2 text-[11px] text-blue-700">
+              {% trans "Проверил:" %} {{ pass_request.reviewed_by.get_full_name }} ({{ pass_request.reviewed_at|date:"d.m.Y H:i" }})
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# Список посетителей #}
+      <div class="mb-6">
+        <h2 class="text-base font-bold text-gray-900 mb-3">
+          {% trans "Список персон на пропуск" %} ({{ visitors.count }})
+        </h2>
+
+        {% if visitors %}
+          <div class="overflow-x-auto border border-gray-200 rounded-xl">
+            <table class="w-full text-left text-xs text-gray-700">
+              <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 font-medium">
+                <tr>
+                  <th class="px-4 py-3">#</th>
+                  <th class="px-4 py-3">{% trans "ФИО" %}</th>
+                  <th class="px-4 py-3">{% trans "Документ" %}</th>
+                  <th class="px-4 py-3">{% trans "Данные документа" %}</th>
+                  <th class="px-4 py-3">{% trans "Организация / Вуз" %}</th>
+                  <th class="px-4 py-3">{% trans "Телефон" %}</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                {% for v in visitors %}
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-gray-400">{{ forloop.counter }}</td>
+                    <td class="px-4 py-3 font-semibold text-gray-900">{{ v.full_name }}</td>
+                    <td class="px-4 py-3">{{ v.get_document_type_display }}</td>
+                    <td class="px-4 py-3 font-mono text-xs">
+                      {% if pass_request.is_data_purged %}
+                        <span class="text-gray-400">*** Очищено ***</span>
+                      {% else %}
+                        {{ v.document_data }}
+                      {% endif %}
+                    </td>
+                    <td class="px-4 py-3">{{ v.organization|default:"—" }}</td>
+                    <td class="px-4 py-3">{{ v.phone|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="p-4 bg-gray-50 rounded-xl text-xs text-gray-500 text-center">
+            {% trans "В списке пока нет добавленных персон." %}
+          </div>
+        {% endif %}
+      </div>
+
+      {# 152-ФЗ уведомление #}
+      <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-600 flex items-center justify-between">
+        <div>
+          🔒 <strong>{% trans "152-ФЗ:" %}</strong>
+          {% if pass_request.is_data_purged %}
+            <span class="text-green-700">{% trans "Персональные данные гостей удалены по регламенту." %}</span>
+          {% else %}
+            {% trans "Плановое удаление данных:" %} {{ pass_request.data_deletion_scheduled_at|date:"d.m.Y" }}
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+        <div>{% trans "Подано:" %} {{ pass_request.created_at|date:"d.m.Y H:i" }}</div>
+        <a href="{% url 'requests:dashboard' %}" class="text-blue-700 hover:underline font-medium">
+          ← {% trans "Назад к списку заявок" %}
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
