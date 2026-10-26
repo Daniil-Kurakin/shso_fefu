@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Отряды — ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+  {# ===== ЗАГОЛОВОК КАТАЛОГА ===== #}
+  <div class="bg-gray-50 border-b border-gray-200 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+          {% trans "Студенческие отряды ДВФУ" %}
+        </h1>
+        <p class="text-base text-gray-600 leading-relaxed">
+          {% trans "Каталог всех отрядов штаба: выбирай своё направление, знакомься с комсоставом и традициями и вступай в отрядное движение." %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    {# ===== ФИЛЬТРЫ И ПОИСК ===== #}
+    <div class="mb-10 space-y-6">
+
+      {# Поиск и тумблер набора #}
+      <form method="get" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+        {% if current_direction %}
+          <input type="hidden" name="direction" value="{{ current_direction }}">
+        {% endif %}
+
+        {# Поле поиска #}
+        <div class="relative flex-1">
+          <input
+            type="text"
+            name="q"
+            value="{{ current_q }}"
+            placeholder="{% trans "Поиск по названию или девизу отряда..." %}"
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+          >
+          <span class="absolute left-3.5 top-3 text-gray-400">🔍</span>
+        </div>
+
+        {# Чекбокс открытого набора #}
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-4 py-2.5 rounded-xl border border-gray-300 cursor-pointer hover:bg-gray-50 transition-colors">
+          <input
+            type="checkbox"
+            name="recruiting"
+            value="1"
+            {% if current_recruiting == "1" %}checked{% endif %}
+            onchange="this.form.submit()"
+            class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
+          >
+          <span>{% trans "Только открыт набор" %}</span>
+        </label>
+
+        <button type="submit" class="px-5 py-2.5 bg-blue-700 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition-colors">
+          {% trans "Найти" %}
+        </button>
+
+        {% if current_q or current_recruiting or current_direction %}
+          <a href="{% url 'squads:list' %}" class="px-4 py-2.5 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors text-center">
+            {% trans "Сбросить" %} ✕
+          </a>
+        {% endif %}
+      </form>
+
+      {# Табы направлений #}
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <a href="{% url 'squads:list' %}{% if current_recruiting %}?recruiting=1{% endif %}"
+           class="shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors
+                  {% if not current_direction %}bg-blue-700 text-white shadow-sm{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+          {% trans "Все направления" %}
+        </a>
+        {% for direction in directions %}
+          <a href="{% url 'squads:list' %}?direction={{ direction.slug }}{% if current_recruiting %}&recruiting=1{% endif %}"
+             class="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-colors
+                    {% if current_direction == direction.slug %}bg-blue-700 text-white shadow-sm{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+            <span>{{ direction.icon }}</span>
+            <span>{{ direction.name }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# ===== СЕТКА ОТРЯДОВ ===== #}
+    {% if squads %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for squad in squads %}
+          <div class="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col group overflow-hidden">
+
+            <div class="p-6 flex-1 flex flex-col">
+              {# Верхняя строка: направление и статус набора #}
+              <div class="flex items-center justify-between gap-2 mb-4">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold">
+                  <span>{{ squad.direction.icon }}</span>
+                  <span>{{ squad.direction.name }}</span>
+                </span>
+                {% if squad.is_recruiting %}
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {% trans "Набор открыт" %}
+                  </span>
+                {% else %}
+                  <span class="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 text-xs">
+                    {% trans "Набор закрыт" %}
+                  </span>
+                {% endif %}
+              </div>
+
+              {# Логотип и Название #}
+              <div class="flex items-center gap-4 mb-3">
+                {% if squad.logo %}
+                  <img src="{{ squad.logo.url }}" alt="{{ squad.name }}" class="w-14 h-14 rounded-xl object-contain border border-gray-100 p-1">
+                {% else %}
+                  <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 text-white flex items-center justify-center text-xl font-bold">
+                    {{ squad.name|first|upper }}
+                  </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-blue-700 transition-colors leading-tight truncate">
+                    <a href="{{ squad.get_absolute_url }}">{{ squad.name }}</a>
+                  </h3>
+                  {% if squad.founding_year %}
+                    <p class="text-xs text-gray-400 mt-0.5">
+                      {% blocktrans with year=squad.founding_year %}Основан в {{ year }} г.{% endblocktrans %}
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Девиз #}
+              {% if squad.motto %}
+                <p class="text-xs italic text-gray-600 mb-3 line-clamp-2">
+                  «{{ squad.motto }}»
+                </p>
+              {% endif %}
+
+              {# Краткое описание #}
+              {% if squad.description %}
+                <p class="text-xs text-gray-500 line-clamp-3 mb-4 flex-1">
+                  {{ squad.description }}
+                </p>
+              {% endif %}
+
+              {# Нижняя строка: бойцы и переход #}
+              <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 mt-auto">
+                <div class="flex items-center gap-1 font-medium">
+                  <span>👥</span>
+                  <span>{{ squad.active_members_count }} {% trans "бойцов" %}</span>
+                </div>
+                <a href="{{ squad.get_absolute_url }}" class="font-semibold text-blue-700 hover:text-blue-900 transition-colors">
+                  {% trans "Страница отряда" %} →
+                </a>
+              </div>
+            </div>
+
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-300">
+        <span class="text-4xl block mb-2">🏕️</span>
+        <h3 class="text-base font-semibold text-gray-700 mb-1">
+          {% trans "Отряды не найдены" %}
+        </h3>
+        <p class="text-xs text-gray-500 max-w-sm mx-auto mb-4">
+          {% trans "Попробуйте изменить параметры поиска или фильтр по направлению." %}
+        </p>
+        <a href="{% url 'squads:list' %}" class="inline-block px-4 py-2 bg-blue-700 text-white text-xs font-semibold rounded-xl hover:bg-blue-800 transition-colors">
+          {% trans "Сбросить фильтры" %}
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Редактирование страницы отряда" %} — {{ squad.name }}{% endblock %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    {# Заголовок #}
+    <div class="mb-8">
+      <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-1 rounded-full mb-3">
+        ✏️ {% trans "Редактирование страницы" %}
+      </div>
+      <h1 class="text-3xl font-extrabold text-gray-900 mb-2">
+        {{ squad.name }}
+      </h1>
+      <p class="text-sm text-gray-500 leading-relaxed">
+        {% trans "Внесите изменения в информацию об отряде. После отправки ревизия поступит на проверку руководству штаба. Пока правки не согласованы, посетители будут видеть текущую версию страницы." %}
+      </p>
+    </div>
+
+    {# Форма #}
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {# Девиз #}
+        <div>
+          <label for="{{ form.motto.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.motto.label }}
+          </label>
+          {{ form.motto }}
+          {% for error in form.motto.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        {# Описание #}
+        <div>
+          <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.description.label }}
+          </label>
+          {{ form.description }}
+          {% for error in form.description.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        {# Достижения #}
+        <div>
+          <label for="{{ form.achievements.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.achievements.label }}
+          </label>
+          {{ form.achievements }}
+          <p class="text-xs text-gray-400 mt-1">
+            {% trans "Указывайте год для каждой награды или победы (требование ТЗ)." %}
+          </p>
+          {% for error in form.achievements.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        {# Ссылка на сообщество #}
+        <div>
+          <label for="{{ form.contact_url.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            {{ form.contact_url.label }}
+          </label>
+          {{ form.contact_url }}
+          {% for error in form.contact_url.errors %}
+            <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        {# Набор открыт #}
+        <div class="pt-2">
+          <label class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+            {{ form.is_recruiting }}
+            <div>
+              <div class="text-sm font-semibold text-gray-900">
+                {% trans "Ведётся набор в отряд" %}
+              </div>
+              <div class="text-xs text-gray-500">
+                {% trans "В каталоге и на странице отряда появится зелёный бейдж «Набор открыт»" %}
+              </div>
+            </div>
+          </label>
+        </div>
+
+        {# Кнопки #}
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+          <a href="{{ squad.get_absolute_url }}"
+             class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors">
+            {% trans "Отмена" %}
+          </a>
+          <button type="submit"
+                  class="px-6 py-2.5 rounded-xl bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800 transition-colors shadow">
+            {% trans "Отправить на согласование" %}
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+{% endblock %}

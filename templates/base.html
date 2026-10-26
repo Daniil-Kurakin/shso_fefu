@@ -39,7 +39,7 @@
           <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             <a href="{% url 'core:home' %}"
                class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
-            <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
+            <a href="{% url 'squads:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Отряды" %}</a>
             <a href="{% url 'news:list' %}" class="hover:text-blue-700 transition-colors">{% trans "Новости" %}</a>
             <a href="#" class="hover:text-blue-700 transition-colors">{% trans "Вакансии" %}</a>
             <a href="{% url 'content:contacts' %}" class="hover:text-blue-700 transition-colors">{% trans "Контакты" %}</a>
@@ -102,7 +102,7 @@
         <nav class="max-w-7xl mx-auto px-4 py-3 flex flex-col gap-1 text-sm font-medium">
           <a href="{% url 'core:home' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Главная" %}</a>
-          <a href="#"
+          <a href="{% url 'squads:list' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Отряды" %}</a>
           <a href="{% url 'news:list' %}"
              class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
@@ -185,7 +185,7 @@
           <div>
             <div class="text-white font-semibold text-base mb-3">{% trans "Разделы" %}</div>
             <ul class="space-y-2 text-sm">
-              <li><a href="#" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
+              <li><a href="{% url 'squads:list' %}" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
               <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
               <li><a href="#" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
               <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
