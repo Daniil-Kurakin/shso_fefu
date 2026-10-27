@@ -224,6 +224,89 @@
       </div>
     </div>
 
+    {# КАРТОЧКА: Telegram-уведомления #}
+    <div class="card-base p-6 sm:p-8">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+        <span class="p-1.5 rounded-lg bg-sky-50 text-sky-600">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+          </svg>
+        </span>
+        <span>{% trans "Telegram-уведомления" %}</span>
+      </h2>
+
+      {% if user.telegram_profile and user.telegram_profile.chat_id %}
+        {# Подключено #}
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                {% trans "Уведомления подключены" %}
+              </span>
+              {% if user.telegram_profile.username %}
+                <span class="text-xs text-gray-500">@{{ user.telegram_profile.username }}</span>
+              {% endif %}
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              {% trans "ID чата" %}: <span class="font-mono text-gray-700 font-bold">{{ user.telegram_profile.chat_id }}</span>.
+              {% trans "Вы получаете мгновенные оповещения об одобрении и статусах ваших заявок." %}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <a href="{% url 'bot:test_send' %}"
+               class="btn btn-outline text-xs px-3.5 py-2 font-semibold text-blue-700 border-blue-300 hover:bg-blue-50">
+              🔔 {% trans "Тест связи" %}
+            </a>
+            <form method="post" action="{% url 'bot:disconnect' %}" onsubmit="return confirm('Отключить Telegram-уведомления?');">
+              {% csrf_token %}
+              <button type="submit" class="btn text-xs px-3.5 py-2 font-semibold text-red-600 border border-red-200 hover:bg-red-50 rounded-xl">
+                {% trans "Отключить" %}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        {# Не подключено #}
+        <div class="py-2">
+          <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+            {% trans "Подключите Telegram, чтобы мгновенно узнавать об одобрении или отклонении заявок на бронь аудиторий кампуса и оформление пропусков." %}
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <a href="{% url 'bot:connect' %}"
+               target="_blank"
+               class="btn btn-primary text-xs px-4 py-2.5 font-semibold inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white shadow-xs">
+              <span>✈️</span>
+              <span>{% trans "Подключить через Telegram" %}</span>
+            </a>
+          </div>
+
+          {# Ручной ввод Chat ID (удобно для локальной разработки) #}
+          <div class="mt-4 pt-4 border-t border-gray-100" x-data="{ showManual: false }">
+            <button type="button" @click="showManual = !showManual" class="text-xs text-gray-500 hover:text-blue-700 underline">
+              {% trans "Или привязать вручную по Chat ID (для локальной разработки)" %}
+            </button>
+
+            <form x-show="showManual" method="post" action="{% url 'bot:bind_manual' %}" class="mt-3 flex flex-wrap items-center gap-2" x-cloak>
+              {% csrf_token %}
+              <input type="number" name="chat_id" placeholder="Ваш Telegram Chat ID (цифры)" required
+                     class="form-input text-xs py-1.5 px-3 w-64 rounded-xl border-gray-300">
+              <input type="text" name="username" placeholder="@username (необязательно)"
+                     class="form-input text-xs py-1.5 px-3 w-48 rounded-xl border-gray-300">
+              <button type="submit" class="btn btn-outline text-xs px-3 py-1.5 font-semibold">
+                {% trans "Сохранить" %}
+              </button>
+            </form>
+            <p x-show="showManual" class="text-[11px] text-gray-400 mt-1" x-cloak>
+              💡 Узнать свой Chat ID можно в Telegram у бота <a href="https://t.me/userinfobot" target="_blank" class="underline text-blue-600">@userinfobot</a>. Перед сохранением обязательно нажмите <b>/start</b> в вашем боте!
+            </p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
     {# КАРТОЧКА: Аудит согласия на ОПД (152-ФЗ РФ) #}
     <div class="card-base p-6 sm:p-8 bg-gray-50/50">
       <h2 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading mb-3 flex items-center gap-2">

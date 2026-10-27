@@ -232,9 +232,18 @@ class RoomBookingRequest(models.Model):
             self.moderator_comment = comment
         self.clean()
         self.save()
-        
-        # Уведомление заявителя
-        message = f"✅ Ваша бронь аудитории {self.room.name} на {self.event_date.strftime('%d.%m')} одобрена!"
+
+        # Уведомление заявителя через Telegram
+        room_title = self.rooms_display
+        date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
+        message = (
+            f"✅ <b>Ваша бронь одобрена!</b>\n\n"
+            f"📍 <b>Помещение:</b> {room_title}\n"
+            f"📅 <b>Дата:</b> {date_str}\n"
+            f"🎯 <b>Событие:</b> {self.event_name}\n"
+        )
+        if comment:
+            message += f"💬 <b>Комментарий штаба:</b> {comment}\n"
         notify_user_async(self.user_id, message)
 
     def reject(self, moderator, comment=""):
@@ -244,9 +253,18 @@ class RoomBookingRequest(models.Model):
         if comment:
             self.moderator_comment = comment
         self.save()
-        
-        # Уведомление заявителя
-        message = f"🔴 Ваша бронь аудитории {self.room.name} на {self.event_date.strftime('%d.%m')} отклонена.\nПричина: {comment}"
+
+        # Уведомление заявителя через Telegram
+        room_title = self.rooms_display
+        date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
+        message = (
+            f"🔴 <b>Ваша бронь отклонена</b>\n\n"
+            f"📍 <b>Помещение:</b> {room_title}\n"
+            f"📅 <b>Дата:</b> {date_str}\n"
+            f"🎯 <b>Событие:</b> {self.event_name}\n"
+        )
+        if comment:
+            message += f"💬 <b>Причина отказа:</b> {comment}\n"
         notify_user_async(self.user_id, message)
 
     def cancel(self):
@@ -472,6 +490,18 @@ class PassRequest(models.Model):
             self.moderator_comment = comment
         self.save()
 
+        # Уведомление заявителя через Telegram
+        date_str = self.visit_date.strftime("%d.%m.%Y") if self.visit_date else "—"
+        message = (
+            f"✅ <b>Заявка на пропуск одобрена!</b>\n\n"
+            f"🎯 <b>Цель / мероприятие:</b> {self.title}\n"
+            f"📅 <b>Дата:</b> {date_str}\n"
+            f"🚪 <b>КПП:</b> {self.entry_point}\n"
+        )
+        if comment:
+            message += f"💬 <b>Резолюция / СЭД:</b> {comment}\n"
+        notify_user_async(self.user_id, message)
+
     def reject(self, moderator, comment=""):
         self.status = self.Status.REJECTED
         self.reviewed_by = moderator
@@ -479,6 +509,17 @@ class PassRequest(models.Model):
         if comment:
             self.moderator_comment = comment
         self.save()
+
+        # Уведомление заявителя через Telegram
+        date_str = self.visit_date.strftime("%d.%m.%Y") if self.visit_date else "—"
+        message = (
+            f"🔴 <b>Заявка на пропуск отклонена</b>\n\n"
+            f"🎯 <b>Цель:</b> {self.title}\n"
+            f"📅 <b>Дата:</b> {date_str}\n"
+        )
+        if comment:
+            message += f"💬 <b>Причина отказа:</b> {comment}\n"
+        notify_user_async(self.user_id, message)
 
     def cancel(self):
         self.status = self.Status.CANCELLED

@@ -7,19 +7,34 @@ from apps.bot.models import TelegramProfile
 logger = logging.getLogger(__name__)
 
 
-def send_telegram_raw(chat_id: int, text: str) -> bool:
+def send_telegram_raw(chat_id: int | str, text: str) -> bool:
+    """Прямая отправка сообщения через Telegram Bot API."""
     token = getattr(settings, "TELEGRAM_BOT_TOKEN", None)
     if not token or not chat_id:
+        logger.warning("Telegram send skipped: token=%s, chat_id=%s", bool(token), chat_id)
         return False
+
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    payload = json.dumps({"chat_id": chat_id, "text": text, "parse_mode": "HTML"}).encode("utf-8")
+    payload = json.dumps({
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+    }).encode("utf-8")
+
+    handlers = []
+    proxy = getattr(settings, "TELEGRAM_API_PROXY", "").strip()
+    if proxy:
+        handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+
+    opener = urllib.request.build_opener(*handlers)
     req = urllib.request.Request(
         url,
         data=payload,
         headers={"Content-Type": "application/json"},
     )
+
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with opener.open(req, timeout=10) as resp:
             return resp.status == 200
     except Exception as e:
         logger.warning("Ошибка отправки Telegram-сообщения (chat_id=%s): %s", chat_id, e)
@@ -29,8 +44,16 @@ def send_telegram_raw(chat_id: int, text: str) -> bool:
 def notify_user_async(user_id: int, text: str):
     """
     Отправка уведомления пользователю.
-    Вызывается синхронно или через очередь django-q2.
+    Если доступен django-q, выполняется в фоновом воркере, иначе синхронно.
     """
+    try:
+        from django_q.tasks import async_task
+        async_task("apps.bot.services.notifier._deliver_notification", user_id, text)
+    except Exception:
+        _deliver_notification(user_id, text)
+
+
+def _deliver_notification(user_id: int, text: str):
     try:
         profile = TelegramProfile.objects.filter(
             user_id=user_id,
@@ -38,5 +61,7 @@ def notify_user_async(user_id: int, text: str):
         ).first()
         if profile and profile.chat_id:
             send_telegram_raw(profile.chat_id, text)
+        else:
+            logger.info("У пользователя %s нет привязанного Telegram-профиля", user_id)
     except Exception as e:
-        logger.warning("Не удалось отправить уведомление пользователю %s: %s", user_id, e)
+        logger.warning("Не удалось доставить уведомление пользователю %s: %s", user_id, e)
