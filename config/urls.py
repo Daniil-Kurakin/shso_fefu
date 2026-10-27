@@ -5,9 +5,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 from apps.core.views import healthz
+from apps.bot.views import telegram_webhook
 
 urlpatterns = [
     path("healthz", healthz, name="healthz"),
+    path("api/telegram/webhook/", telegram_webhook, name="telegram_webhook"),
     path("i18n/", include("django.conf.urls.i18n")),
 ]
 

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.news",
     "apps.vacancies",
     "apps.requests",
+    "apps.bot",
     "apps.content",
 ]
 
@@ -176,3 +177,7 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
     "root": {"handlers": ["console"], "level": "INFO"},
 }
+# Telegram Bot Config
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN")
+TELEGRAM_BOT_USERNAME = env("TELEGRAM_BOT_USERNAME")
+TELEGRAM_HQ_CHAT_ID = env("TELEGRAM_HQ_CHAT_ID")

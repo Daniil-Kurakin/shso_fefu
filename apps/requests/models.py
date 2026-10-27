@@ -7,6 +7,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from apps.bot.services.notifier import notify_user_async
 
 
 class CampusPremise(models.Model):
@@ -231,6 +232,10 @@ class RoomBookingRequest(models.Model):
             self.moderator_comment = comment
         self.clean()
         self.save()
+        
+        # Уведомление заявителя
+        message = f"✅ Ваша бронь аудитории {self.room.name} на {self.event_date.strftime('%d.%m')} одобрена!"
+        notify_user_async(self.user_id, message)
 
     def reject(self, moderator, comment=""):
         self.status = self.Status.REJECTED
@@ -239,6 +244,10 @@ class RoomBookingRequest(models.Model):
         if comment:
             self.moderator_comment = comment
         self.save()
+        
+        # Уведомление заявителя
+        message = f"🔴 Ваша бронь аудитории {self.room.name} на {self.event_date.strftime('%d.%m')} отклонена.\nПричина: {comment}"
+        notify_user_async(self.user_id, message)
 
     def cancel(self):
         """Отмена заявки заявителем."""
