@@ -47,7 +47,10 @@ class Command(BaseCommand):
 
         self.stdout.write("Удаляем активный Webhook для переключения в режим Polling...")
         try:
-            req = urllib.request.Request(f"{api_base}/bot{token}/deleteWebhook")
+            req = urllib.request.Request(
+                f"{api_base}/bot{token}/deleteWebhook",
+                headers={"User-Agent": "SHSO-FEFU-Notification-Bot/1.0"},
+            )
             opener.open(req, timeout=10)
         except Exception as e:
             self.stdout.write(f"Предупреждение при удалении Webhook: {e}")
@@ -59,7 +62,10 @@ class Command(BaseCommand):
         while True:
             try:
                 url = f"{api_base}/bot{token}/getUpdates?offset={offset}&timeout=10"
-                req = urllib.request.Request(url)
+                req = urllib.request.Request(
+                    url,
+                    headers={"User-Agent": "SHSO-FEFU-Notification-Bot/1.0"},
+                )
                 with opener.open(req, timeout=15) as resp:
                     data = json.loads(resp.read().decode())
 

@@ -25,7 +25,10 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
     }).encode("utf-8")
 
     handlers = []
-    headers = {"Content-Type": "application/json"}
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "SHSO-FEFU-Notification-Bot/1.0 (Windows; Python 3.12)",
+    }
     proxy = getattr(settings, "TELEGRAM_API_PROXY", "").strip()
     if proxy:
         parsed = urllib.parse.urlsplit(proxy)

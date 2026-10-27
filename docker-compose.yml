@@ -58,5 +58,12 @@ services:
       redis:
         condition: service_healthy
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://web:8000
+    depends_on:
+      - web
+    restart: unless-stopped
+
 volumes:
   pgdata:
