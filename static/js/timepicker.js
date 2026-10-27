@@ -3,6 +3,7 @@
  * Режим часов:
  *   - Внешний слой: первая половина дня (00:00 - 11:00)
  *   - Внутренний слой: вторая половина дня (12:00 - 23:00)
+ * Поддержка ручного перетаскивания стрелочки зажатием (drag & drop) на тач-устройствах и мышью.
  * Автоматический переход к выбору минут после выбора часа.
  */
 
@@ -16,6 +17,8 @@
       this.selectedMinute = 0;
       this.mode = 'hours'; // 'hours' | 'minutes'
       this.modal = null;
+      this.isDragging = false;
+      this.modeSwitchTimeout = null;
       this.init();
     }
 
@@ -95,14 +98,130 @@
         btn.addEventListener('click', (e) => {
           this.selectedMinute = parseInt(e.currentTarget.getAttribute('data-min'), 10);
           this.updateDisplay();
-          this.renderClock();
+          this.updateSelectionClasses();
+          this.positionHandForMinute(this.selectedMinute);
         });
       });
+
+      // Перетаскивание стрелки зажатием мыши / пальца на циферблате
+      const clockFace = this.modal.querySelector('#tp-clock-face');
+
+      clockFace.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        this.isDragging = true;
+        if (this.modeSwitchTimeout) {
+          clearTimeout(this.modeSwitchTimeout);
+          this.modeSwitchTimeout = null;
+        }
+        clockFace.classList.add('tp-dragging');
+        clockFace.setPointerCapture(e.pointerId);
+        this.handlePointer(e);
+      });
+
+      clockFace.addEventListener('pointermove', (e) => {
+        if (!this.isDragging) return;
+        this.handlePointer(e);
+      });
+
+      const onPointerEnd = (e) => {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        clockFace.classList.remove('tp-dragging');
+        if (clockFace.hasPointerCapture(e.pointerId)) {
+          clockFace.releasePointerCapture(e.pointerId);
+        }
+        this.handlePointer(e);
+        if (this.mode === 'hours') {
+          this.modeSwitchTimeout = setTimeout(() => this.switchMode('minutes'), 180);
+        }
+      };
+
+      clockFace.addEventListener('pointerup', onPointerEnd);
+      clockFace.addEventListener('pointercancel', onPointerEnd);
 
       // ESC закрывает окно
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && this.modal.style.display !== 'none') {
           this.close();
+        }
+      });
+    }
+
+    handlePointer(e) {
+      const clockFace = this.modal.querySelector('#tp-clock-face');
+      const rect = clockFace.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+
+      const scale = 260 / (rect.width || 260);
+      const dist = Math.hypot(dx, dy) * scale;
+
+      let deg = (Math.atan2(dy, dx) * 180 / Math.PI) + 90;
+      if (deg < 0) deg += 360;
+
+      if (this.mode === 'hours') {
+        const sector = Math.round(deg / 30) % 12;
+        // Внутренний круг: 12..23 (dist < 78), внешний круг: 00..11 (dist >= 78)
+        const hourVal = dist < 78 ? sector + 12 : sector;
+        this.selectedHour = hourVal;
+        this.updateDisplay();
+        this.updateSelectionClasses();
+        this.positionHandForHour(hourVal);
+      } else {
+        // Минуты: с шагом в 1 минуту (0..59)
+        const minVal = Math.round(deg / 6) % 60;
+        this.selectedMinute = minVal;
+        this.updateDisplay();
+        this.updateSelectionClasses();
+        this.positionHandForMinute(minVal);
+      }
+    }
+
+    positionHandForHour(hour) {
+      const isInner = hour >= 12;
+      const sector = isInner ? hour - 12 : hour;
+      const radius = isInner ? 60 : 96;
+      const angleDeg = (sector * 30) - 90;
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const x = 130 + radius * Math.cos(angleRad);
+      const y = 130 + radius * Math.sin(angleRad);
+      this.moveHand(x, y);
+    }
+
+    positionHandForMinute(minute) {
+      const radius = 96;
+      const angleDeg = (minute * 6) - 90;
+      const angleRad = (angleDeg * Math.PI) / 180;
+      const x = 130 + radius * Math.cos(angleRad);
+      const y = 130 + radius * Math.sin(angleRad);
+      this.moveHand(x, y);
+    }
+
+    moveHand(x, y) {
+      const line = this.modal.querySelector('#tp-hand-line');
+      const head = this.modal.querySelector('#tp-hand-head');
+      if (line && head) {
+        line.setAttribute('x2', String(x));
+        line.setAttribute('y2', String(y));
+        head.setAttribute('cx', String(x));
+        head.setAttribute('cy', String(y));
+      }
+    }
+
+    updateSelectionClasses() {
+      const container = this.modal.querySelector('#tp-numbers-container');
+      if (!container) return;
+      const buttons = container.querySelectorAll('.tp-num-btn');
+      buttons.forEach((btn) => {
+        if (this.mode === 'hours') {
+          const val = parseInt(btn.dataset.hour, 10);
+          btn.classList.toggle('tp-selected', val === this.selectedHour);
+        } else {
+          const val = parseInt(btn.dataset.min, 10);
+          btn.classList.toggle('tp-selected', val === this.selectedMinute);
         }
       });
     }
@@ -166,7 +285,14 @@
     }
 
     close() {
+      if (this.modeSwitchTimeout) {
+        clearTimeout(this.modeSwitchTimeout);
+        this.modeSwitchTimeout = null;
+      }
+      this.isDragging = false;
       if (this.modal) {
+        const clockFace = this.modal.querySelector('#tp-clock-face');
+        if (clockFace) clockFace.classList.remove('tp-dragging');
         this.modal.style.display = 'none';
       }
       document.body.style.overflow = '';
@@ -188,6 +314,10 @@
     }
 
     switchMode(mode) {
+      if (this.modeSwitchTimeout) {
+        clearTimeout(this.modeSwitchTimeout);
+        this.modeSwitchTimeout = null;
+      }
       this.mode = mode;
       this.updateDisplay();
       this.renderClock();
@@ -218,8 +348,6 @@
 
       const cx = 130;
       const cy = 130;
-      let activeX = cx;
-      let activeY = cy;
 
       if (this.mode === 'hours') {
         // --- РЕЖИМ ЧАСОВ: ДВА СЛОЯ ---
@@ -230,7 +358,7 @@
 
         // Внешний слой: 00..11
         for (let i = 0; i < 12; i++) {
-          const hourVal = i; // 0..11
+          const hourVal = i;
           const angleDeg = (i * 30) - 90;
           const angleRad = (angleDeg * Math.PI) / 180;
           const x = cx + outerR * Math.cos(angleRad);
@@ -239,23 +367,24 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'tp-num-btn tp-num-outer';
+          btn.dataset.hour = String(hourVal);
           btn.style.left = `${x - 16}px`;
           btn.style.top = `${y - 16}px`;
           btn.textContent = String(hourVal).padStart(2, '0');
 
           if (this.selectedHour === hourVal) {
             btn.classList.add('tp-selected');
-            activeX = x;
-            activeY = y;
           }
 
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (this.isDragging) return;
             this.selectedHour = hourVal;
             this.updateDisplay();
-            this.renderClock();
-            // Плавный переход к выбору минут через 150мс
-            setTimeout(() => this.switchMode('minutes'), 160);
+            this.updateSelectionClasses();
+            this.positionHandForHour(hourVal);
+            if (this.modeSwitchTimeout) clearTimeout(this.modeSwitchTimeout);
+            this.modeSwitchTimeout = setTimeout(() => this.switchMode('minutes'), 180);
           });
 
           container.appendChild(btn);
@@ -263,7 +392,7 @@
 
         // Внутренний слой: 12..23
         for (let i = 0; i < 12; i++) {
-          const hourVal = i + 12; // 12..23
+          const hourVal = i + 12;
           const angleDeg = (i * 30) - 90;
           const angleRad = (angleDeg * Math.PI) / 180;
           const x = cx + innerR * Math.cos(angleRad);
@@ -272,27 +401,30 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'tp-num-btn tp-num-inner';
+          btn.dataset.hour = String(hourVal);
           btn.style.left = `${x - 16}px`;
           btn.style.top = `${y - 16}px`;
           btn.textContent = String(hourVal);
 
           if (this.selectedHour === hourVal) {
             btn.classList.add('tp-selected');
-            activeX = x;
-            activeY = y;
           }
 
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (this.isDragging) return;
             this.selectedHour = hourVal;
             this.updateDisplay();
-            this.renderClock();
-            // Плавный переход к выбору минут через 150мс
-            setTimeout(() => this.switchMode('minutes'), 160);
+            this.updateSelectionClasses();
+            this.positionHandForHour(hourVal);
+            if (this.modeSwitchTimeout) clearTimeout(this.modeSwitchTimeout);
+            this.modeSwitchTimeout = setTimeout(() => this.switchMode('minutes'), 180);
           });
 
           container.appendChild(btn);
         }
+
+        this.positionHandForHour(this.selectedHour);
 
       } else {
         // --- РЕЖИМ МИНУТ ---
@@ -308,43 +440,28 @@
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'tp-num-btn tp-num-minute';
+          btn.dataset.min = String(minVal);
           btn.style.left = `${x - 16}px`;
           btn.style.top = `${y - 16}px`;
           btn.textContent = String(minVal).padStart(2, '0');
 
           if (this.selectedMinute === minVal) {
             btn.classList.add('tp-selected');
-            activeX = x;
-            activeY = y;
           }
 
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (this.isDragging) return;
             this.selectedMinute = minVal;
             this.updateDisplay();
-            this.renderClock();
+            this.updateSelectionClasses();
+            this.positionHandForMinute(minVal);
           });
 
           container.appendChild(btn);
         }
 
-        // Если выбрана минута не кратная 5, позиционируем стрелку точно
-        if (this.selectedMinute % 5 !== 0) {
-          const angleDeg = (this.selectedMinute * 6) - 90;
-          const angleRad = (angleDeg * Math.PI) / 180;
-          activeX = cx + r * Math.cos(angleRad);
-          activeY = cy + r * Math.sin(angleRad);
-        }
-      }
-
-      // Обновляем линию и наконечник стрелки
-      const line = this.modal.querySelector('#tp-hand-line');
-      const head = this.modal.querySelector('#tp-hand-head');
-      if (line && head) {
-        line.setAttribute('x2', String(activeX));
-        line.setAttribute('y2', String(activeY));
-        head.setAttribute('cx', String(activeX));
-        head.setAttribute('cy', String(activeY));
+        this.positionHandForMinute(this.selectedMinute);
       }
     }
   }

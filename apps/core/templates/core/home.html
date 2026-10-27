@@ -14,16 +14,25 @@
          class="absolute -right-16 -bottom-16 w-96 h-96 opacity-10 pointer-events-none select-none hidden lg:block"
          aria-hidden="true">
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-      <div class="max-w-2xl">
-        <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/15 backdrop-blur-sm text-sm font-medium mb-6 border border-white/20">
-          <img src="{% static 'images/brand/logo_icon_white.webp' %}" alt="" class="w-4 h-4 object-contain">
-          <span>{% trans "Студенческие отряды ДВФУ" %}</span>
+      <div class="max-w-4xl">
+        {# Элемент с логотипом и "Студенческие отряды ДВФУ" (занимает чуть больше 50% ширины окна) #}
+        <div class="w-full md:w-[54vw] max-w-4xl mb-8">
+          <div class="inline-flex items-center gap-3.5 sm:gap-4 px-6 py-3.5 sm:px-8 sm:py-4 rounded-full bg-white/15 backdrop-blur-md border border-white/25 shadow-lg w-full">
+            <img src="{% static 'images/brand/logo_icon_white.webp' %}"
+                 alt=""
+                 class="w-8 h-8 sm:w-11 sm:h-11 object-contain shrink-0">
+            <span class="text-base sm:text-xl md:text-2xl font-bold tracking-wide text-white drop-shadow-xs">
+              {% trans "Студенческие отряды ДВФУ" %}
+            </span>
+          </div>
         </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 font-heading tracking-wide">
+
+        {# Увеличенный заголовок шрифтом Coolvetica Crammed #}
+        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-8 font-heading tracking-wide">
           {% trans "Штаб студенческих отрядов" %}
           <span class="block text-sky-200">{% trans "ДВФУ" %}</span>
         </h1>
-        <p class="text-lg sm:text-xl text-blue-100 leading-relaxed mb-8">
+        <p class="text-xl sm:text-2xl text-blue-100 leading-relaxed mb-8 max-w-2xl">
           {% trans "Присоединяйся к движению студенческих отрядов Дальневосточного федерального университета. Строй, трудись, дружи." %}
         </p>
         <div class="flex flex-wrap gap-4">
@@ -217,7 +226,7 @@
   <section class="bg-gradient-to-r from-[#00257D] via-[#0055B8] to-[#0078F2] text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col sm:flex-row items-center justify-between gap-8">
       <div>
-        <h2 class="text-2xl sm:text-3xl font-bold mb-2 font-heading tracking-wide">{% trans "Готов вступить?" %}</h2>
+        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 font-heading tracking-wide">{% trans "Готов вступить?" %}</h2>
         <p class="text-blue-100">{% trans "Оставь заявку — комсостав подходящего отряда свяжется с тобой." %}</p>
       </div>
       <a href="{% url 'vacancies:list' %}"

@@ -2,6 +2,11 @@
    Компоненты интерфейса (формы, кнопки, карточки, бейджи, уведомления)
    ========================================================================== */
 
+/* Alpine.js сокрытие скрытых элементов до инициализации */
+[x-cloak] {
+  display: none !important;
+}
+
 /* ===== Элементы форм ===== */
 .form-input,
 .form-select,
@@ -350,7 +355,14 @@
   background-color: #f8fafc;
   border: 1px solid #e2e8f0;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  cursor: grab;
   flex-shrink: 0;
+}
+
+.tp-clock-face.tp-dragging {
+  cursor: grabbing;
 }
 
 .tp-hand-svg {

@@ -15,7 +15,7 @@
         <span class="text-gray-800 font-medium">{% trans "Администрирование" %}</span>
       </nav>
       <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 font-heading">
           {% trans "Панель администрирования" %}
         </h1>
         {% if total_pending_count > 0 %}
@@ -118,7 +118,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                  <span class="font-bold text-gray-900 text-xl font-heading">{{ b.event_name }}</span>
+                  <span class="font-bold text-gray-900 text-2xl font-heading">{{ b.event_name }}</span>
                   <span class="badge
                     {% if b.status == 'submitted' %}badge-warning
                     {% elif b.status == 'approved' %}badge-success
@@ -220,7 +220,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div>
                 <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                  <span class="font-bold text-gray-900 text-xl font-heading">{{ p.title }}</span>
+                  <span class="font-bold text-gray-900 text-2xl font-heading">{{ p.title }}</span>
                   <span class="badge
                     {% if p.status == 'submitted' %}badge-warning
                     {% elif p.status == 'approved' %}badge-success
@@ -333,7 +333,7 @@
             <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-100 mb-4">
               <div>
                 <div class="flex flex-wrap items-center gap-2 mb-1">
-                  <h3 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading">
+                  <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
                     {{ r.squad.name }}
                   </h3>
                   <span class="badge
