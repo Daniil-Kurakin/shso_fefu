@@ -14,7 +14,8 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
         logger.warning("Telegram send skipped: token=%s, chat_id=%s", bool(token), chat_id)
         return False
 
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    api_base = getattr(settings, "TELEGRAM_API_URL", "").strip() or "https://api.telegram.org"
+    url = f"{api_base.rstrip('/')}/bot{token}/sendMessage"
     payload = json.dumps({
         "chat_id": chat_id,
         "text": text,

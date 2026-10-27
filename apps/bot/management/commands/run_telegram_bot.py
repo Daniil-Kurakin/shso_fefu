@@ -27,9 +27,12 @@ class Command(BaseCommand):
 
         opener = urllib.request.build_opener(*handlers)
 
+        api_base = getattr(settings, "TELEGRAM_API_URL", "").strip() or "https://api.telegram.org"
+        api_base = api_base.rstrip("/")
+
         self.stdout.write("Удаляем активный Webhook для переключения в режим Polling...")
         try:
-            req = urllib.request.Request(f"https://api.telegram.org/bot{token}/deleteWebhook")
+            req = urllib.request.Request(f"{api_base}/bot{token}/deleteWebhook")
             opener.open(req, timeout=10)
         except Exception as e:
             self.stdout.write(f"Предупреждение при удалении Webhook: {e}")
@@ -40,7 +43,7 @@ class Command(BaseCommand):
         offset = 0
         while True:
             try:
-                url = f"https://api.telegram.org/bot{token}/getUpdates?offset={offset}&timeout=10"
+                url = f"{api_base}/bot{token}/getUpdates?offset={offset}&timeout=10"
                 req = urllib.request.Request(url)
                 with opener.open(req, timeout=15) as resp:
                     data = json.loads(resp.read().decode())
