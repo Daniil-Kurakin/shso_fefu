@@ -1,5 +1,7 @@
+import base64
 import json
 import logging
+import urllib.parse
 import urllib.request
 from django.conf import settings
 from apps.bot.models import TelegramProfile
@@ -23,19 +25,32 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
     }).encode("utf-8")
 
     handlers = []
+    headers = {"Content-Type": "application/json"}
     proxy = getattr(settings, "TELEGRAM_API_PROXY", "").strip()
     if proxy:
-        handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
+        parsed = urllib.parse.urlsplit(proxy)
+        if parsed.username and parsed.password:
+            user_pass = f"{parsed.username}:{parsed.password}".encode("utf-8")
+            auth_b64 = base64.b64encode(user_pass).decode("ascii")
+            headers["Proxy-Authorization"] = f"Basic {auth_b64}"
+            clean_proxy = (
+                f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"
+                if parsed.port
+                else f"{parsed.scheme}://{parsed.hostname}"
+            )
+        else:
+            clean_proxy = proxy
+        handlers.append(urllib.request.ProxyHandler({"http": clean_proxy, "https": clean_proxy}))
 
     opener = urllib.request.build_opener(*handlers)
     req = urllib.request.Request(
         url,
         data=payload,
-        headers={"Content-Type": "application/json"},
+        headers=headers,
     )
 
     try:
-        with opener.open(req, timeout=10) as resp:
+        with opener.open(req, timeout=12) as resp:
             return resp.status == 200
     except Exception as e:
         logger.warning("Ошибка отправки Telegram-сообщения (chat_id=%s): %s", chat_id, e)
