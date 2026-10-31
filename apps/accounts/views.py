@@ -222,10 +222,14 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         context["vacancy_applications"] = user.vacancy_applications.select_related(
             "vacancy"
         ).order_by("-id")[:5]
-        context["room_bookings"] = user.room_bookings.select_related("room").order_by(
-            "-event_date"
-        )[:5]
-        context["pass_requests"] = user.pass_requests.order_by("-visit_date")[:5]
+        if user.is_squad_command_staff:
+            context["room_bookings"] = user.room_bookings.select_related("room").order_by(
+                "-event_date"
+            )[:5]
+            context["pass_requests"] = user.pass_requests.order_by("-visit_date")[:5]
+        else:
+            context["room_bookings"] = []
+            context["pass_requests"] = []
         context["managed_squads"] = user.get_managed_squads()
         return context
 

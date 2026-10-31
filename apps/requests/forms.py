@@ -81,6 +81,21 @@ class RoomBookingRequestForm(forms.ModelForm):
         if user and not user.is_staff:
             user_squads = user.memberships.filter(is_active=True).values_list("squad_id", flat=True)
             self.fields["squad"].queryset = self.fields["squad"].queryset.filter(id__in=user_squads)
+
+        # Предзаполнение отряда заявителя
+        if user:
+            user_squad = None
+            if hasattr(user, "get_managed_squads"):
+                managed = user.get_managed_squads()
+                if managed.exists():
+                    user_squad = managed.first()
+            if not user_squad and hasattr(user, "memberships"):
+                m = user.memberships.filter(is_active=True).first()
+                if m:
+                    user_squad = m.squad
+            if user_squad and not self.initial.get("squad"):
+                self.initial["squad"] = user_squad.pk
+
         self.fields["squad"].required = False
 
     def clean(self):
@@ -256,6 +271,21 @@ class PassRequestForm(forms.ModelForm):
         if user and not user.is_staff:
             user_squads = user.memberships.filter(is_active=True).values_list("squad_id", flat=True)
             self.fields["squad"].queryset = self.fields["squad"].queryset.filter(id__in=user_squads)
+
+        # Предзаполнение отряда заявителя
+        if user:
+            user_squad = None
+            if hasattr(user, "get_managed_squads"):
+                managed = user.get_managed_squads()
+                if managed.exists():
+                    user_squad = managed.first()
+            if not user_squad and hasattr(user, "memberships"):
+                m = user.memberships.filter(is_active=True).first()
+                if m:
+                    user_squad = m.squad
+            if user_squad and not self.initial.get("squad"):
+                self.initial["squad"] = user_squad.pk
+
         self.fields["squad"].required = False
 
     def clean(self):

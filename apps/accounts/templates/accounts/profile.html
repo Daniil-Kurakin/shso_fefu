@@ -20,7 +20,7 @@
                  alt="{{ user.get_full_name }}"
                  class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover ring-4 ring-white shadow-md">
           {% else %}
-            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white font-heading text-3xl font-bold flex items-center justify-center ring-4 ring-white shadow-md">
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 text-white text-3xl font-bold flex items-center justify-center ring-4 ring-white shadow-md">
               {{ user.get_initials }}
             </div>
           {% endif %}
@@ -36,7 +36,7 @@
 
         <div>
           <div class="flex flex-wrap items-center gap-2 mb-1">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 font-heading">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
               {{ user.get_full_name }}
             </h1>
             <span class="badge badge-primary">
@@ -149,7 +149,7 @@
               </svg>
             </span>
             <div>
-              <h2 class="text-2xl font-bold text-gray-900 font-heading">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
                 {% trans "Портфолио и достижения" %}
               </h2>
               <p class="text-xs text-gray-500">
@@ -272,7 +272,7 @@
               </svg>
             </span>
             <div>
-              <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+              <h2 class="text-xl sm:text-2xl font-bold text-gray-900">
                 {% trans "Мои заявки и бронирования" %}
               </h2>
               <p class="text-xs text-gray-500">
@@ -334,7 +334,7 @@
 
       {# КАРТОЧКА: Студенческий отряд #}
       <div class="card-base p-6 sm:p-7">
-        <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center justify-between">
           <span>{% trans "Студенческий отряд" %}</span>
           {% if active_membership %}
             <span class="badge badge-primary text-xs">{{ active_membership.squad.direction.name }}</span>
@@ -418,7 +418,7 @@
       {# КАРТОЧКА: Быстрый доступ и конструкторы (для комсостава и штаба) #}
       {% if managed_squads or user.is_hq_staff %}
         <div class="card-base p-6 sm:p-7">
-          <h3 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
+          <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 pb-3 border-b border-gray-100 flex items-center gap-2">
             <span class="p-1 rounded bg-amber-100 text-amber-800 text-xs">⚡</span>
             <span>{% trans "Управление и конструкторы" %}</span>
           </h3>

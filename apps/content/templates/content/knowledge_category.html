@@ -71,8 +71,7 @@
               {{ article.summary }}
             </p>
 
-            <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
-              <span>👁️ {{ article.views_count }}</span>
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-end text-xs text-gray-400">
               <a href="{{ article.get_absolute_url }}" class="font-semibold text-blue-700 hover:underline">
                 {% trans "Читать статью" %} →
               </a>

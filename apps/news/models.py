@@ -127,6 +127,40 @@ class News(models.Model):
     def get_absolute_url(self):
         return reverse("news:detail", kwargs={"slug": self.slug})
 
+    def publish(self, moderator=None):
+        """Публикация новости штабом / модератором."""
+        self.status = self.Status.PUBLISHED
+        if not self.published_at:
+            self.published_at = timezone.now()
+        self.save()
+
+        # Оповещение автора новости в Telegram
+        if self.author_id:
+            from apps.bot.services.notifier import notify_user_async
+
+            msg = (
+                f"📰 <b>Ваша новость опубликована!</b>\n\n"
+                f"✨ <b>Заголовок:</b> {self.title}\n"
+                f"Публикация уже доступна в ленте событий на сайте ШСО ДВФУ."
+            )
+            notify_user_async(self.author_id, msg)
+
+    def reject(self, moderator=None, comment=""):
+        """Возврат новости на доработку с комментарием."""
+        self.status = self.Status.RETURNED
+        if comment:
+            self.moderator_comment = comment
+        self.save()
+
+        # Оповещение автора новости в Telegram
+        if self.author_id:
+            from apps.bot.services.notifier import notify_user_async
+
+            msg = f"⚠️ <b>Новость возвращена на доработку</b>\n\n📝 <b>Заголовок:</b> {self.title}\n"
+            if comment:
+                msg += f"💬 <b>Комментарий штаба:</b> {comment}\n"
+            notify_user_async(self.author_id, msg)
+
 
 class NewsImage(models.Model):
     """Изображение в галерее новости."""

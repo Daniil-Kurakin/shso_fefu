@@ -53,28 +53,20 @@ body {
   font-family: var(--font-body);
 }
 
-/* Заголовки шрифтом Coolvetica */
+/* Все базовые элементы и стандартные заголовки по умолчанию пишутся шрифтом Montserrat */
 h1,
 h2,
 h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-body);
+}
+
+/* Шрифт Coolvetica используется ТОЛЬКО для крупных заголовков исключительно заглавными буквами и крупным кеглем */
 .font-heading {
   font-family: var(--font-heading);
-  letter-spacing: 0.02em;
-}
-
-/* Увеличенные размеры шрифта Coolvetica по всему сайту */
-.font-heading {
-  font-size: max(1.875rem, 1em); /* Минимум 30px */
-}
-
-h1 {
-  font-size: max(2.5rem, 1.25em); /* 40px+ для h1 */
-}
-
-h2 {
-  font-size: max(2.125rem, 1.15em); /* 34px+ для h2 */
-}
-
-h3 {
-  font-size: max(1.875rem, 1em); /* 30px+ для h3 */
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: max(2rem, 1.25em);
 }

@@ -1,5 +1,6 @@
 import json
 import logging
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from apps.bot.models import TelegramLinkToken, TelegramProfile
-from apps.bot.services.notifier import notify_user_async, send_telegram_raw
+from apps.bot.services.notifier import send_telegram_raw
 
 logger = logging.getLogger(__name__)
 
@@ -53,18 +54,20 @@ def telegram_webhook(request):
                 send_telegram_raw(
                     chat_id,
                     f"✅ Аккаунт <b>{user_name}</b> успешно привязан!\n\n"
-                    "Теперь вы будете мгновенно получать уведомления об изменении статуса ваших заявок на помещения и пропуска.",
+                    "Теперь вы будете получать уведомления об изменении статуса ваших заявок.",
                 )
             else:
                 send_telegram_raw(
                     chat_id,
-                    "❌ Ссылка для привязки устарела или недействительна. Пожалуйста, сгенерируйте новую в личном кабинете на сайте.",
+                    "❌ Ссылка для привязки устарела или недействительна. "
+                    "Пожалуйста, сгенерируйте новую в личном кабинете на сайте.",
                 )
         else:
             send_telegram_raw(
                 chat_id,
                 "👋 Привет! Это бот уведомлений Штаба студенческих отрядов ДВФУ.\n\n"
-                "Чтобы привязать аккаунт, перейдите в личный кабинет на сайте и нажмите «Подключить Telegram».",
+                "Чтобы привязать аккаунт, перейдите в личный кабинет на сайте "
+                "и нажмите «Подключить Telegram».",
             )
 
     return HttpResponse("OK")
@@ -108,7 +111,7 @@ def bind_telegram_manual(request):
         messages.error(request, _("Chat ID должен состоять только из цифр."))
         return redirect("accounts:settings")
 
-    profile, _ = TelegramProfile.objects.update_or_create(
+    profile, _created = TelegramProfile.objects.update_or_create(
         user=request.user,
         defaults={
             "chat_id": chat_id,
@@ -126,7 +129,9 @@ def bind_telegram_manual(request):
     )
 
     if sent:
-        messages.success(request, _("Telegram успешно привязан! Вам отправлено тестовое сообщение в бота."))
+        messages.success(
+            request, _("Telegram успешно привязан! Вам отправлено тестовое сообщение в бота.")
+        )
     else:
         messages.warning(
             request,
@@ -147,10 +152,11 @@ def test_send_telegram(request):
         messages.error(request, _("Сначала привяжите Telegram-аккаунт."))
         return redirect("accounts:settings")
 
+    name = request.user.get_short_name()
     sent = send_telegram_raw(
         profile.chat_id,
         f"🔔 <b>Тестовое уведомление ШСО ДВФУ</b>\n\n"
-        f"Привет, {request.user.get_short_name()}! Бот успешно подключен и готов присылать уведомления.",
+        f"Привет, {name}! Бот успешно подключен и готов присылать уведомления.",
     )
     if sent:
         messages.success(request, _("Тестовое сообщение успешно отправлено в Telegram!"))

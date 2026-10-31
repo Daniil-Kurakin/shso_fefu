@@ -9,7 +9,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div class="max-w-3xl">
-          <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3 font-heading">
             {% trans "Студенческие отряды ДВФУ" %}
           </h1>
           <p class="text-base text-gray-600 leading-relaxed">
@@ -62,7 +62,7 @@
             onchange="this.form.submit()"
             class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
           >
-          <span>{% trans "Только открыт набор" %}</span>
+          <span>{% trans "Открыт набор" %}</span>
         </label>
 
         <button type="submit" class="px-5 py-2.5 bg-blue-700 text-white rounded-xl text-sm font-semibold hover:bg-blue-800 transition-colors">
@@ -159,7 +159,7 @@
               <div class="pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 mt-auto">
                 <div class="flex items-center gap-1 font-medium">
                   <span>👥</span>
-                  <span>{{ squad.active_members_count }} {% trans "бойцов" %}</span>
+                  <span>{% trans "Количество бойцов :" %} {{ squad.active_members_count }}</span>
                 </div>
                 <a href="{{ squad.get_absolute_url }}" class="inline-flex items-center gap-1 font-semibold text-blue-700 hover:text-blue-900 transition-colors">
                   <span>{% trans "Страница отряда" %}</span>

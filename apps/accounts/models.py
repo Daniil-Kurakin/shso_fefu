@@ -147,6 +147,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         return bool(self.is_superuser or self.role in {Role.OWNER, Role.ADMIN, Role.CURATOR})
 
     @property
+    def is_squad_command_staff(self) -> bool:
+        """Права комсостава отряда или штаба."""
+        if not self.is_authenticated:
+            return False
+        if self.is_hq_staff or self.role == Role.SQUAD_STAFF:
+            return True
+        from apps.squads.models import Membership
+
+        return Membership.objects.filter(
+            user=self,
+            is_active=True,
+            position__is_staff=True,
+        ).exists()
+
+    @property
     def is_owner(self) -> bool:
         """Права владельца сайта: доступ к Django админ-панели."""
         return bool(self.is_superuser or self.role == Role.OWNER)

@@ -7,6 +7,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from apps.bot.services.notifier import notify_user_async
 
 
@@ -232,19 +233,11 @@ class RoomBookingRequest(models.Model):
             self.moderator_comment = comment
         self.clean()
         self.save()
-
-        # Уведомление заявителя через Telegram
-        room_title = self.rooms_display
-        date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
-        message = (
-            f"✅ <b>Ваша бронь одобрена!</b>\n\n"
-            f"📍 <b>Помещение:</b> {room_title}\n"
-            f"📅 <b>Дата:</b> {date_str}\n"
-            f"🎯 <b>Событие:</b> {self.event_name}\n"
+        # Одобряем связанные помещения, если они еще на рассмотрении
+        self.premises.filter(status=BookedPremise.Status.PENDING).update(
+            status=BookedPremise.Status.APPROVED
         )
-        if comment:
-            message += f"💬 <b>Комментарий штаба:</b> {comment}\n"
-        notify_user_async(self.user_id, message)
+        self.send_premises_notification(comment=comment)
 
     def reject(self, moderator, comment=""):
         self.status = self.Status.REJECTED
@@ -253,19 +246,61 @@ class RoomBookingRequest(models.Model):
         if comment:
             self.moderator_comment = comment
         self.save()
-
-        # Уведомление заявителя через Telegram
-        room_title = self.rooms_display
-        date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
-        message = (
-            f"🔴 <b>Ваша бронь отклонена</b>\n\n"
-            f"📍 <b>Помещение:</b> {room_title}\n"
-            f"📅 <b>Дата:</b> {date_str}\n"
-            f"🎯 <b>Событие:</b> {self.event_name}\n"
+        # Отклоняем связанные помещения, если они еще на рассмотрении
+        self.premises.filter(status=BookedPremise.Status.PENDING).update(
+            status=BookedPremise.Status.REJECTED
         )
+        self.send_premises_notification(comment=comment)
+
+    def send_premises_notification(self, comment=""):
+        """Уведомление в Telegram-бот с раздельным выводом одобренных и отклоненных аудиторий."""
+        date_str = self.event_date.strftime("%d.%m.%Y") if self.event_date else "—"
+        approved = list(self.premises.filter(status=BookedPremise.Status.APPROVED))
+        rejected = list(self.premises.filter(status=BookedPremise.Status.REJECTED))
+
+        lines = [
+            "📋 <b>Результат рассмотрения бронирования помещений</b>",
+            f"🎯 <b>Событие:</b> {self.event_name}",
+            f"📅 <b>Дата:</b> {date_str}",
+            "",
+        ]
+        if approved:
+            lines.append("✅ <b>Одобренные аудитории:</b>")
+            for p in approved:
+                lines.append(f"  • {p.room_name} ({p.start_time:%H:%M}–{p.end_time:%H:%M})")
+            lines.append("")
+        if rejected:
+            lines.append("❌ <b>Отклоненные аудитории:</b>")
+            for p in rejected:
+                lines.append(f"  • {p.room_name} ({p.start_time:%H:%M}–{p.end_time:%H:%M})")
+            lines.append("")
+
+        if not approved and not rejected:
+            if self.status == self.Status.APPROVED:
+                lines.append(f"✅ <b>Помещение:</b> {self.rooms_display} — одобрено")
+            else:
+                lines.append(f"❌ <b>Помещение:</b> {self.rooms_display} — отклонено")
+            lines.append("")
+
         if comment:
-            message += f"💬 <b>Причина отказа:</b> {comment}\n"
-        notify_user_async(self.user_id, message)
+            lines.append(f"💬 <b>Комментарий штаба:</b> {comment}")
+
+        notify_user_async(self.user_id, "\n".join(lines))
+
+    def sync_status(self):
+        """Синхронизирует общий статус заявки на основе статусов ее аудиторий."""
+        premises = list(self.premises.all())
+        if not premises:
+            return
+        if any(p.status == BookedPremise.Status.PENDING for p in premises):
+            return
+        if any(p.status == BookedPremise.Status.APPROVED for p in premises):
+            self.status = self.Status.APPROVED
+        else:
+            self.status = self.Status.REJECTED
+        if not self.reviewed_at:
+            self.reviewed_at = timezone.now()
+        self.save(update_fields=["status", "reviewed_at"])
 
     def cancel(self):
         """Отмена заявки заявителем."""
@@ -278,6 +313,11 @@ class BookedPremise(models.Model):
     Отдельная аудитория / помещение в заявке на бронирование.
     Позволяет добавлять несколько аудиторий в одну заявку с разным временем.
     """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("На рассмотрении")
+        APPROVED = "approved", _("Одобрено")
+        REJECTED = "rejected", _("Отклонено")
 
     booking = models.ForeignKey(
         RoomBookingRequest,
@@ -301,6 +341,12 @@ class BookedPremise(models.Model):
     )
     start_time = models.TimeField(_("время начала"))
     end_time = models.TimeField(_("время окончания"))
+    status = models.CharField(
+        _("статус согласования"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
 
     class Meta:
         verbose_name = _("забронированная аудитория")
@@ -311,7 +357,19 @@ class BookedPremise(models.Model):
         name = self.room_name
         start = self.start_time.strftime("%H:%M") if self.start_time else "—"
         end = self.end_time.strftime("%H:%M") if self.end_time else "—"
-        return f"{name} ({start} – {end})"
+        return f"{name} ({start} – {end}) [{self.get_status_display()}]"
+
+    def approve(self):
+        """Одобрение отдельной аудитории."""
+        self.status = self.Status.APPROVED
+        self.save(update_fields=["status"])
+        self.booking.sync_status()
+
+    def reject(self):
+        """Отклонение отдельной аудитории."""
+        self.status = self.Status.REJECTED
+        self.save(update_fields=["status"])
+        self.booking.sync_status()
 
     @property
     def room_name(self) -> str:

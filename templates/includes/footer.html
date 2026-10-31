@@ -1,54 +1,66 @@
 {% load i18n static %}
-{# ======================= ПОДВАЛ САЙТА ======================= #}
+{# ======================= ПОДВАЛ САЙТА (КОМПАКТНЫЙ АДАПТИВНЫЙ) ======================= #}
 <footer class="bg-[#00257D] text-blue-100/80 mt-auto border-t border-blue-900">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 text-xs">
 
-      {# Колонка 1: О штабе #}
-      <div>
-        <a href="{% url 'core:home' %}" class="inline-block mb-4">
+      {# Колонка 1: О штабе и логотип #}
+      <div class="sm:col-span-2 lg:col-span-1">
+        <a href="{% url 'core:home' %}" class="inline-block mb-2.5">
           <img src="{% static 'images/brand/logo_horizontal_white.webp' %}"
                alt="{% trans "ШСО ДВФУ" %}"
-               class="h-10 w-auto object-contain">
+               class="h-7 w-auto object-contain">
         </a>
-        <p class="text-sm leading-relaxed text-blue-100/90">
-          {% trans "Штаб студенческих отрядов Дальневосточного федерального университета." %}
+        <p class="text-xs leading-relaxed text-blue-100/90">
+          {% trans "Штаб студенческих отрядов ДВФУ. Объединяем активных студентов, строим будущее, развиваем лидерство." %}
         </p>
-        <p class="text-xs text-blue-200/70 mt-3">
-          {% trans "Объединяем активных студентов, строим будущее, развиваем лидерство." %}
+        <p class="text-[11px] text-blue-200/60 mt-2">
+          {% trans "Труд крут!" %}
         </p>
       </div>
 
-      {# Колонка 2: Разделы #}
+      {# Колонка 2: Навигация по разделам #}
       <div>
-        <div class="text-white font-heading text-xl sm:text-2xl mb-3 tracking-wide">{% trans "Разделы" %}</div>
-        <ul class="space-y-2 text-sm">
+        <div class="text-white text-xs font-bold uppercase tracking-wider mb-2.5">
+          {% trans "Разделы" %}
+        </div>
+        <ul class="space-y-1.5">
           <li><a href="{% url 'squads:list' %}" class="hover:text-white transition-colors">{% trans "Отряды" %}</a></li>
           <li><a href="{% url 'news:list' %}" class="hover:text-white transition-colors">{% trans "Новости" %}</a></li>
           <li><a href="{% url 'vacancies:list' %}" class="hover:text-white transition-colors">{% trans "Вакансии" %}</a></li>
           <li><a href="{% url 'content:knowledge_index' %}" class="hover:text-white transition-colors">{% trans "База знаний" %}</a></li>
+        </ul>
+      </div>
+
+      {# Колонка 3: Полезное и правовая информация #}
+      <div>
+        <div class="text-white text-xs font-bold uppercase tracking-wider mb-2.5">
+          {% trans "Информация" %}
+        </div>
+        <ul class="space-y-1.5">
           <li><a href="{% url 'content:faq' %}" class="hover:text-white transition-colors">{% trans "Вопросы и ответы (FAQ)" %}</a></li>
           <li><a href="{% url 'content:glossary' %}" class="hover:text-white transition-colors">{% trans "Глоссарий" %}</a></li>
-          <li><a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a></li>
-          <li><a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Политика конфиденциальности (152-ФЗ)" %}</a></li>
+          <li><a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Политика конфиденциальности" %}</a></li>
           <li><a href="{% url 'content:terms' %}" class="hover:text-white transition-colors text-blue-200">{% trans "Пользовательское соглашение" %}</a></li>
         </ul>
       </div>
 
-      {# Колонка 3: Контакты #}
+      {# Колонка 4: Контакты #}
       <div>
-        <div class="text-white font-heading text-xl sm:text-2xl mb-3 tracking-wide">{% trans "Контакты" %}</div>
-        <ul class="space-y-2.5 text-sm">
+        <div class="text-white text-xs font-bold uppercase tracking-wider mb-2.5">
+          {% trans "Контакты" %}
+        </div>
+        <ul class="space-y-2">
           <li class="flex items-start gap-2">
             <span class="shrink-0 text-blue-300">🏛️</span>
-            <span>{{ site_settings.hq_office|default:"Владивосток, о. Русский, ДВФУ, ауд. А826" }}</span>
+            <span>{{ site_settings.hq_office|default:"о. Русский, кампус ДВФУ, ауд. А826" }}</span>
           </li>
           <li class="flex items-center gap-2">
             <span class="shrink-0 text-blue-300">💬</span>
             <a href="{{ site_settings.hq_vk|default:'https://vk.com/shso_fefu' }}"
-               class="hover:text-white transition-colors font-medium"
+               class="hover:text-white transition-colors font-medium text-blue-200"
                target="_blank" rel="noopener noreferrer">
-              VK — shso_fefu
+              VK: shso_fefu
             </a>
           </li>
           {% if site_settings.hq_email %}
@@ -63,14 +75,16 @@
       </div>
     </div>
 
-    <div class="mt-10 pt-6 border-t border-white/10 text-xs text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+    {# Нижняя плашка с копирайтом #}
+    <div class="mt-6 pt-4 border-t border-white/10 text-[11px] text-blue-200/60 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
       <div>© {% now "Y" %} {% trans "ШСО ДВФУ. Все права защищены." %}</div>
       <div class="flex items-center gap-3">
         <a href="{% url 'content:privacy' %}" class="hover:text-white transition-colors">{% trans "152-ФЗ" %}</a>
         <span>•</span>
-        <a href="{% url 'content:terms' %}" class="hover:text-white transition-colors">{% trans "Пользовательское соглашение" %}</a>
+        <a href="{% url 'content:terms' %}" class="hover:text-white transition-colors">{% trans "Соглашение" %}</a>
+        <span>•</span>
+        <a href="{% url 'content:contacts' %}" class="hover:text-white transition-colors">{% trans "Контакты" %}</a>
       </div>
-      <div class="text-blue-200/50">{% trans "Студенческие отряды ДВФУ — Труд крут!" %}</div>
     </div>
   </div>
 </footer>

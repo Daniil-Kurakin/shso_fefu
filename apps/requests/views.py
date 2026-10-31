@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, TemplateView
 
 from apps.accounts.models import Role
+from apps.news.models import News
 from apps.squads.models import SquadPageRevision
 
 from .forms import (
@@ -23,7 +24,25 @@ from .forms import (
 from .models import BookedPremise, PassRequest, RoomBookingRequest
 
 
-class UserRequestDashboardView(LoginRequiredMixin, TemplateView):
+class CommandStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Подача и просмотр заявок доступны только комсоставу отрядов и штабу."""
+
+    def test_func(self):
+        user = self.request.user
+        return bool(user.is_authenticated and user.is_squad_command_staff)
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        raise PermissionDenied(
+            _(
+                "Подача и просмотр заявок на бронирование и пропуски "
+                "доступны только комсоставу отрядов."
+            )
+        )
+
+
+class UserRequestDashboardView(CommandStaffRequiredMixin, TemplateView):
     """Личный кабинет заявителя со всеми поданными заявками."""
 
     template_name = "requests/dashboard.html"
@@ -55,7 +74,7 @@ class UserRequestDashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class RoomBookingCreateView(LoginRequiredMixin, CreateView):
+class RoomBookingCreateView(CommandStaffRequiredMixin, CreateView):
     """Подача заявки на бронирование одной или нескольких аудиторий / залов."""
 
     model = RoomBookingRequest
@@ -162,7 +181,7 @@ class RoomBookingCancelView(LoginRequiredMixin, View):
         return redirect("requests:dashboard")
 
 
-class PassRequestCreateView(LoginRequiredMixin, CreateView):
+class PassRequestCreateView(CommandStaffRequiredMixin, CreateView):
     """Подача заявки на пропуск с добавлением посетителей."""
 
     model = PassRequest
@@ -263,8 +282,10 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         status_filter = self.request.GET.get("status", "all")
 
         # 1. Заявки на помещения
-        room_qs = RoomBookingRequest.objects.select_related("room", "user", "squad").order_by(
-            "-event_date", "-start_time"
+        room_qs = (
+            RoomBookingRequest.objects.select_related("room", "user", "squad")
+            .prefetch_related("premises")
+            .order_by("-event_date", "-start_time")
         )
         if status_filter == "pending":
             room_qs = room_qs.filter(status=RoomBookingRequest.Status.SUBMITTED)
@@ -297,11 +318,21 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         elif status_filter == "rejected":
             rev_qs = rev_qs.filter(status=SquadPageRevision.Status.RETURNED)
 
+        # 4. Новости на согласовании
+        news_qs = News.objects.select_related("author", "squad").order_by("-created_at")
+        if status_filter == "pending":
+            news_qs = news_qs.filter(status=News.Status.PENDING)
+        elif status_filter == "approved":
+            news_qs = news_qs.filter(status=News.Status.PUBLISHED)
+        elif status_filter == "rejected":
+            news_qs = news_qs.filter(status=News.Status.RETURNED)
+
         context["tab"] = tab
         context["status_filter"] = status_filter
         context["room_bookings"] = room_qs
         context["pass_requests"] = pass_qs
         context["squad_revisions"] = rev_qs
+        context["news_list"] = news_qs
 
         # Бейджи количества ожидающих согласования
         context["pending_rooms_count"] = RoomBookingRequest.objects.filter(
@@ -313,10 +344,12 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         context["pending_revisions_count"] = SquadPageRevision.objects.filter(
             status=SquadPageRevision.Status.PENDING
         ).count()
+        context["pending_news_count"] = News.objects.filter(status=News.Status.PENDING).count()
         context["total_pending_count"] = (
             context["pending_rooms_count"]
             + context["pending_passes_count"]
             + context["pending_revisions_count"]
+            + context["pending_news_count"]
         )
         return context
 
@@ -337,6 +370,32 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             obj.reject(request.user, comment=comment)
             title = obj.room.name if obj.room else (obj.custom_room or obj.event_name)
             messages.warning(request, _(f"Бронь «{title}» отклонена."))
+
+        elif action == "approve_premise":
+            premise = get_object_or_404(BookedPremise, pk=target_id)
+            premise.approve()
+            booking = premise.booking
+            if not booking.premises.filter(status=BookedPremise.Status.PENDING).exists():
+                booking.reviewed_by = request.user
+                booking.reviewed_at = timezone.now()
+                if comment:
+                    booking.moderator_comment = comment
+                booking.save(update_fields=["reviewed_by", "reviewed_at", "moderator_comment"])
+                booking.send_premises_notification(comment=comment)
+            messages.success(request, _(f"Аудитория «{premise.room_name}» одобрена."))
+
+        elif action == "reject_premise":
+            premise = get_object_or_404(BookedPremise, pk=target_id)
+            premise.reject()
+            booking = premise.booking
+            if not booking.premises.filter(status=BookedPremise.Status.PENDING).exists():
+                booking.reviewed_by = request.user
+                booking.reviewed_at = timezone.now()
+                if comment:
+                    booking.moderator_comment = comment
+                booking.save(update_fields=["reviewed_by", "reviewed_at", "moderator_comment"])
+                booking.send_premises_notification(comment=comment)
+            messages.warning(request, _(f"Аудитория «{premise.room_name}» отклонена."))
 
         elif action == "approve_pass":
             obj = get_object_or_404(PassRequest, pk=target_id)
@@ -361,6 +420,18 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             obj.reject(request.user, comment=comment)
             messages.warning(
                 request, _(f"Ревизия изменений страницы отряда «{obj.squad.name}» отклонена.")
+            )
+
+        elif action == "publish_news":
+            news_item = get_object_or_404(News, pk=target_id)
+            news_item.publish(request.user)
+            messages.success(request, _(f"Новость «{news_item.title}» опубликована на сайте!"))
+
+        elif action == "reject_news":
+            news_item = get_object_or_404(News, pk=target_id)
+            news_item.reject(request.user, comment=comment)
+            messages.warning(
+                request, _(f"Новость «{news_item.title}» возвращена автору на доработку.")
             )
 
         return redirect(f"{reverse('requests:moderation')}?tab={tab}")

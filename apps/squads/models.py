@@ -301,6 +301,17 @@ class SquadPageRevision(models.Model):
         self.squad.is_recruiting = self.is_recruiting
         self.squad.save()
 
+        # Оповещение автора ревизии в Telegram
+        if self.author_id:
+            from apps.bot.services.notifier import notify_user_async
+
+            msg = (
+                f"🎉 <b>Изменения страницы отряда одобрены!</b>\n\n"
+                f"🏕️ <b>Отряд:</b> {self.squad.name}\n"
+                f"✅ Обновленная информация опубликована на официальном сайте ШСО ДВФУ."
+            )
+            notify_user_async(self.author_id, msg)
+
     def reject(self, moderator, comment=""):
         """Отклонение / возврат ревизии страницы отряда с комментарием."""
         self.status = self.Status.RETURNED
@@ -309,6 +320,18 @@ class SquadPageRevision(models.Model):
         if comment:
             self.moderator_comment = comment
         self.save()
+
+        # Оповещение автора ревизии в Telegram
+        if self.author_id:
+            from apps.bot.services.notifier import notify_user_async
+
+            msg = (
+                f"⚠️ <b>Изменения страницы отряда возвращены на доработку</b>\n\n"
+                f"🏕️ <b>Отряд:</b> {self.squad.name}\n"
+            )
+            if comment:
+                msg += f"💬 <b>Комментарий штаба:</b> {comment}\n"
+            notify_user_async(self.author_id, msg)
 
 
 class SquadTransferRequest(models.Model):

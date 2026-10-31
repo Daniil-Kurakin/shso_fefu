@@ -14,7 +14,14 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def user():
     return User.objects.create_user(
-        "user1@example.com", "pass-12345", full_name="Алексей Заявитель"
+        "user1@example.com", "pass-12345", full_name="Алексей Заявитель", role=Role.SQUAD_STAFF
+    )
+
+
+@pytest.fixture
+def regular_member():
+    return User.objects.create_user(
+        "member@example.com", "pass-12345", full_name="Рядовой Боец", role=Role.MEMBER
     )
 
 
@@ -62,6 +69,15 @@ class TestDashboardView:
         response = client.get(url)
         assert response.status_code == 200
         assert "Моя встреча".encode() in response.content
+
+    def test_regular_member_forbidden(self, client, regular_member):
+        client.force_login(regular_member)
+        url = reverse("requests:dashboard")
+        response = client.get(url)
+        assert response.status_code == 403
+
+        assert client.get(reverse("requests:room_create")).status_code == 403
+        assert client.get(reverse("requests:pass_create")).status_code == 403
 
 
 class TestRoomBookingViews:
@@ -387,3 +403,94 @@ class TestAdminModerationView:
         rev2.refresh_from_db()
         assert rev2.status == SquadPageRevision.Status.RETURNED
         assert rev2.moderator_comment == "Не соответствует стилю"
+
+    def test_individual_premise_approval_and_rejection(self, client, admin_user, user, room):
+        from apps.requests.models import BookedPremise
+
+        client.force_login(admin_user)
+        tomorrow = timezone.localdate() + timedelta(days=2)
+        booking = RoomBookingRequest.objects.create(
+            user=user,
+            event_name="Мульти-аудитория встреча",
+            event_date=tomorrow,
+            status=RoomBookingRequest.Status.SUBMITTED,
+        )
+        p1 = BookedPremise.objects.create(
+            booking=booking,
+            room=room,
+            start_time=time(10, 0),
+            end_time=time(12, 0),
+        )
+        p2 = BookedPremise.objects.create(
+            booking=booking,
+            custom_room="А826",
+            start_time=time(14, 0),
+            end_time=time(16, 0),
+        )
+
+        url = reverse("requests:moderation")
+        # Одобряем первое помещение
+        client.post(
+            url,
+            {"action": "approve_premise", "target_id": p1.pk, "tab": "rooms"},
+            follow=True,
+        )
+        p1.refresh_from_db()
+        assert p1.status == BookedPremise.Status.APPROVED
+
+        # Отклоняем второе помещение
+        client.post(
+            url,
+            {"action": "reject_premise", "target_id": p2.pk, "tab": "rooms"},
+            follow=True,
+        )
+        p2.refresh_from_db()
+        assert p2.status == BookedPremise.Status.REJECTED
+
+        booking.refresh_from_db()
+        # Поскольку хотя бы одна аудитория одобрена, статус брони APPROVED
+        assert booking.status == RoomBookingRequest.Status.APPROVED
+
+    def test_publish_and_reject_news_in_moderation(self, client, admin_user, user):
+        from apps.news.models import News
+
+        client.force_login(admin_user)
+        news1 = News.objects.create(
+            title="Новость на согласование",
+            lead="Анонс",
+            content="Полный текст",
+            author=user,
+            status=News.Status.PENDING,
+        )
+
+        url = reverse("requests:moderation")
+        # Опубликовать новость
+        client.post(
+            url,
+            {"action": "publish_news", "target_id": news1.pk, "tab": "news"},
+            follow=True,
+        )
+        news1.refresh_from_db()
+        assert news1.status == News.Status.PUBLISHED
+
+        # Отклонить новость
+        news2 = News.objects.create(
+            title="Сырая новость",
+            lead="Анонс",
+            content="Черновик текста",
+            author=user,
+            status=News.Status.PENDING,
+        )
+        client.post(
+            url,
+            {
+                "action": "reject_news",
+                "target_id": news2.pk,
+                "comment": "Добавьте фотографии",
+                "tab": "news",
+            },
+            follow=True,
+        )
+        news2.refresh_from_db()
+        assert news2.status == News.Status.RETURNED
+        assert news2.moderator_comment == "Добавьте фотографии"

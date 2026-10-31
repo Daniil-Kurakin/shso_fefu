@@ -3,60 +3,62 @@
 <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200/80 shadow-xs"
         x-data="{ mobileOpen: false }">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16 gap-4">
+    <div class="flex items-center justify-between h-16 gap-3 sm:gap-4">
 
-      {# Левая часть: логотип + верхнее меню, выровненное по левой стороне #}
-      <div class="flex items-center gap-5 lg:gap-6 min-w-0">
-        {# Логотип / название #}
+      {# Левая часть: увеличенный логотип + верхнее меню в одну строку #}
+      <div class="flex items-center gap-3 lg:gap-5 min-w-0 flex-1">
+        {# Логотип / название (в мобильной версии логотип увеличен) #}
         <a href="{% url 'core:home' %}"
-           class="flex items-center gap-3 transition-opacity hover:opacity-90 shrink-0">
+           class="flex items-center gap-2 sm:gap-3 transition-opacity hover:opacity-90 shrink-0">
           <img src="{% static 'images/brand/logo_horizontal_color.webp' %}"
                alt="{% trans "ШСО ДВФУ" %}"
                class="h-9 w-auto object-contain hidden sm:block">
           <img src="{% static 'images/brand/logo_icon_color.webp' %}"
                alt="{% trans "ШСО ДВФУ" %}"
-               class="h-9 w-9 object-contain sm:hidden">
-          <span class="font-heading text-2xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
+               class="h-12 w-12 object-contain sm:hidden shrink-0">
+          <span class="text-xl sm:text-2xl font-bold tracking-tight text-blue-700 sm:hidden">{% trans "ШСО ДВФУ" %}</span>
         </a>
 
-        {# Навигация (desktop) — полупрозрачные овалы, выровненные по левой стороне #}
-        <nav class="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs font-semibold tracking-wider flex-wrap">
+        {# Навигация (desktop) — строгий один слой без переноса (flex-nowrap) #}
+        <nav class="hidden md:flex items-center gap-1 lg:gap-1.5 xl:gap-2 text-xs font-semibold tracking-wider flex-nowrap shrink-0">
           <a href="{% url 'core:home' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Главная" %}
           </a>
           <a href="{% url 'squads:list' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Отряды" %}
           </a>
           <a href="{% url 'news:list' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Новости" %}
           </a>
           <a href="{% url 'vacancies:list' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Вакансии" %}
           </a>
           <a href="{% url 'content:knowledge_index' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "База знаний" %}
           </a>
           <a href="{% url 'content:contacts' %}"
-             class="px-3.5 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Контакты" %}
           </a>
 
-          {# Кнопка перехода в систему заявок/бронирования #}
-          <a href="{% url 'requests:dashboard' %}"
-             class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-blue-800 bg-blue-100/80 hover:bg-blue-600 hover:text-white border border-blue-200 shadow-xs backdrop-blur-xs transition-all font-bold">
-            <span>⚡</span>
-            <span>{% trans "Заявки и бронирование" %}</span>
-          </a>
+          {# Кнопка заявок и бронирования доступна ТОЛЬКО комсоставу отрядов и штабу #}
+          {% if user.is_authenticated and user.is_squad_command_staff %}
+            <a href="{% url 'requests:dashboard' %}"
+               class="inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 rounded-full text-blue-800 bg-blue-100/80 hover:bg-blue-600 hover:text-white border border-blue-200 shadow-xs backdrop-blur-xs transition-all font-bold whitespace-nowrap">
+              <span>⚡</span>
+              <span>{% trans "Заявки" %}</span>
+            </a>
+          {% endif %}
         </nav>
       </div>
 
       {# Действия пользователя (desktop) #}
-      <div class="hidden md:flex items-center gap-3">
+      <div class="hidden md:flex items-center gap-3 shrink-0">
         {% if user.is_authenticated %}
           {# Выпадающее меню аккаунта: только аватарка без подписи фамилии #}
           <div class="relative" x-data="{ menuOpen: false }" @click.outside="menuOpen = false" @keydown.escape.window="menuOpen = false">
@@ -78,7 +80,7 @@
               {% endif %}
             </button>
 
-            {# Выпадающий список: Профиль, мои заявки, админка, выйти #}
+            {# Выпадающий список: Профиль, мои заявки (для комсостава), админка, выйти #}
             <div x-show="menuOpen"
                  x-transition:enter="transition ease-out duration-150"
                  x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
@@ -100,16 +102,18 @@
                 </a>
               </div>
 
-              {# 2. Мои заявки #}
-              <div class="py-1">
-                <a href="{% url 'requests:dashboard' %}"
-                   class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
-                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                  </svg>
-                  <span>{% trans "Мои заявки" %}</span>
-                </a>
-              </div>
+              {# 2. Мои заявки (только для комсостава и штаба) #}
+              {% if user.is_squad_command_staff %}
+                <div class="py-1">
+                  <a href="{% url 'requests:dashboard' %}"
+                     class="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    <span>{% trans "Мои заявки" %}</span>
+                  </a>
+                </div>
+              {% endif %}
 
               {# 3. Админка (для тех, у кого есть к ней доступ) #}
               {% if user.is_hq_staff or user.role == 'admin' or user.role == 'owner' %}
@@ -148,17 +152,10 @@
             </div>
           </div>
         {% else %}
+          {# Для неавторизованных пользователей одна кнопка «Войти» #}
           <a href="{% url 'accounts:login' %}"
-             class="px-4 py-1.5 rounded-full text-xs font-semibold border border-gray-300 hover:bg-gray-50 transition-colors">
+             class="px-5 py-2 rounded-full text-xs font-bold bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-xs whitespace-nowrap">
             {% trans "Войти" %}
-          </a>
-          <a href="{% url 'accounts:register' %}"
-             class="px-4 py-1.5 rounded-full text-xs font-semibold border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors">
-            {% trans "Регистрация" %}
-          </a>
-          <a href="{% url 'vacancies:list' %}"
-             class="px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-xs">
-            {% trans "Вступить" %}
           </a>
         {% endif %}
       </div>
@@ -204,23 +201,29 @@
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "База знаний" %}</a>
       <a href="{% url 'content:contacts' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Контакты" %}</a>
-      <a href="{% url 'requests:dashboard' %}"
-         class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-blue-800 bg-blue-50 hover:bg-blue-100 transition-colors font-bold">
-        <span>⚡</span>
-        <span>{% trans "Заявки и бронирование" %}</span>
-      </a>
+
+      {% if user.is_authenticated and user.is_squad_command_staff %}
+        <a href="{% url 'requests:dashboard' %}"
+           class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-blue-800 bg-blue-50 hover:bg-blue-100 transition-colors font-bold">
+          <span>⚡</span>
+          <span>{% trans "Заявки и бронирование" %}</span>
+        </a>
+      {% endif %}
 
       <div class="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-2">
         {% if user.is_authenticated %}
-          {# Пункты в порядке: Профиль, мои заявки, админка, выйти #}
+          {# Пункты в порядке: Профиль, мои заявки (для комсостава), админка, выйти #}
           <a href="{% url 'accounts:profile' %}"
              class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-blue-50 hover:text-blue-700 transition-colors">
             {% trans "Профиль" %}
           </a>
-          <a href="{% url 'requests:dashboard' %}"
-             class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-            {% trans "Мои заявки" %}
-          </a>
+
+          {% if user.is_squad_command_staff %}
+            <a href="{% url 'requests:dashboard' %}"
+               class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+              {% trans "Мои заявки" %}
+            </a>
+          {% endif %}
 
           {% if user.is_hq_staff or user.role == 'admin' or user.role == 'owner' %}
             <a href="{% url 'requests:moderation' %}"
@@ -243,19 +246,9 @@
             </button>
           </form>
         {% else %}
-          <div class="grid grid-cols-2 gap-2">
-            <a href="{% url 'accounts:login' %}"
-               class="px-3.5 py-2 rounded-xl text-center border border-gray-300 hover:bg-gray-50 transition-colors">
-              {% trans "Войти" %}
-            </a>
-            <a href="{% url 'accounts:register' %}"
-               class="px-3.5 py-2 rounded-xl text-center border border-blue-600 text-blue-700 hover:bg-blue-50 transition-colors">
-              {% trans "Регистрация" %}
-            </a>
-          </div>
-          <a href="{% url 'vacancies:list' %}"
-             class="px-3.5 py-2 rounded-xl text-center bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-xs">
-            {% trans "Вступить" %}
+          <a href="{% url 'accounts:login' %}"
+             class="px-3.5 py-2.5 rounded-xl text-center bg-blue-700 text-white font-semibold hover:bg-blue-800 transition-colors shadow-xs">
+            {% trans "Войти" %}
           </a>
         {% endif %}
       </div>

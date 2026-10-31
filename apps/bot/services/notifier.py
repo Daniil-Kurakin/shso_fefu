@@ -3,7 +3,9 @@ import json
 import logging
 import urllib.parse
 import urllib.request
+
 from django.conf import settings
+
 from apps.bot.models import TelegramProfile
 
 logger = logging.getLogger(__name__)
@@ -18,11 +20,13 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
 
     api_base = getattr(settings, "TELEGRAM_API_URL", "").strip() or "https://api.telegram.org"
     url = f"{api_base.rstrip('/')}/bot{token}/sendMessage"
-    payload = json.dumps({
-        "chat_id": chat_id,
-        "text": text,
-        "parse_mode": "HTML",
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+        }
+    ).encode("utf-8")
 
     handlers = []
     headers = {
@@ -33,7 +37,7 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
     if proxy:
         parsed = urllib.parse.urlsplit(proxy)
         if parsed.username and parsed.password:
-            user_pass = f"{parsed.username}:{parsed.password}".encode("utf-8")
+            user_pass = f"{parsed.username}:{parsed.password}".encode()
             auth_b64 = base64.b64encode(user_pass).decode("ascii")
             headers["Proxy-Authorization"] = f"Basic {auth_b64}"
             clean_proxy = (
@@ -46,7 +50,7 @@ def send_telegram_raw(chat_id: int | str, text: str) -> bool:
         handlers.append(urllib.request.ProxyHandler({"http": clean_proxy, "https": clean_proxy}))
 
     opener = urllib.request.build_opener(*handlers)
-    req = urllib.request.Request(
+    req = urllib.request.Request(  # noqa: S310
         url,
         data=payload,
         headers=headers,
@@ -67,6 +71,7 @@ def notify_user_async(user_id: int, text: str):
     """
     try:
         from django_q.tasks import async_task
+
         async_task("apps.bot.services.notifier._deliver_notification", user_id, text)
     except Exception:
         _deliver_notification(user_id, text)
