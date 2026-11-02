@@ -94,15 +94,17 @@
         {% endif %}
       </a>
 
-      {# Вкладка 5: Конструктор страниц #}
-      <a href="?tab=pages"
-         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
-           {% if tab == 'pages' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
-        <span>📄 {% trans "Конструктор страниц" %}</span>
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
-          {{ pages_count }}
-        </span>
-      </a>
+      {# Вкладка 5: Конструктор страниц (только для владельца) #}
+      {% if user.is_owner %}
+        <a href="?tab=pages"
+           class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+             {% if tab == 'pages' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+          <span>📄 {% trans "Конструктор страниц" %}</span>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+            {{ pages_count }}
+          </span>
+        </a>
+      {% endif %}
     </div>
   </div>
 
@@ -655,7 +657,7 @@
     {% endif %}
 
   {# ==================== ВКЛАДКА 5: КОНСТРУКТОР СТРАНИЦ ==================== #}
-  {% elif tab == 'pages' %}
+  {% elif tab == 'pages' and user.is_owner %}
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200">
       <div>
         <h2 class="text-lg font-bold text-gray-900">

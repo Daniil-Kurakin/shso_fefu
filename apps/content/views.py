@@ -10,8 +10,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
-from apps.accounts.models import Role
-
 from .forms import (
     CustomPageForm,
     FAQItemForm,
@@ -283,9 +281,8 @@ class PageBuilderCreateView(LoginRequiredMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
-        user_role = getattr(request.user, "role", "")
-        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
-            raise PermissionDenied(_("У вас нет прав на создание страниц сайта."))
+        if not getattr(request.user, "is_owner", False):
+            raise PermissionDenied(_("Доступ к созданию страниц разрешён только владельцу сайта."))
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -330,9 +327,10 @@ class PageBuilderUpdateView(LoginRequiredMixin, UpdateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             return self.handle_no_permission()
-        user_role = getattr(request.user, "role", "")
-        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
-            raise PermissionDenied(_("У вас нет прав на редактирование страниц сайта."))
+        if not getattr(request.user, "is_owner", False):
+            raise PermissionDenied(
+                _("Доступ к редактированию страниц разрешён только владельцу сайта.")
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -366,9 +364,8 @@ class PageBuilderDeleteView(LoginRequiredMixin, View):
     """Удаление сконструированной страницы."""
 
     def post(self, request, slug):
-        user_role = getattr(request.user, "role", "")
-        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
-            raise PermissionDenied(_("У вас нет прав на удаление страниц."))
+        if not getattr(request.user, "is_owner", False):
+            raise PermissionDenied(_("Доступ к удалению страниц разрешён только владельцу сайта."))
         page = get_object_or_404(CustomPage, slug=slug)
         title = page.title
         page.delete()
@@ -390,10 +387,8 @@ class CustomPageDetailView(DetailView):
             CustomPage.objects.prefetch_related("blocks"), slug=self.kwargs["slug"]
         )
         user = self.request.user
-        is_staff = user.is_authenticated and (
-            user.is_hq_staff or getattr(user, "role", "") in {Role.OWNER, Role.ADMIN}
-        )
-        if not page.is_published and not is_staff:
+        is_owner = user.is_authenticated and getattr(user, "is_owner", False)
+        if not page.is_published and not is_owner:
             raise Http404(_("Страница не найдена или снята с публикации."))
         return page
 

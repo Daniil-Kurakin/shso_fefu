@@ -13,13 +13,13 @@
 <div class="bg-gray-50 min-h-screen py-8 lg:py-12">
   <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-    {# Панель быстрого действия для администратора / штаба #}
-    {% if user.is_hq_staff or user.role == 'owner' or user.role == 'admin' %}
+    {# Панель быстрого действия для владельца сайта #}
+    {% if user.is_authenticated and user.is_owner %}
       <div class="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
         <div class="flex items-center gap-2.5 text-xs text-amber-900">
           <span class="text-base">⚡</span>
           <div>
-            <strong>{% trans "Режим администратора" %}</strong>:
+            <strong>{% trans "Режим владельца" %}</strong>:
             {% if page.is_published %}
               <span class="text-emerald-700 font-bold">{% trans "Страница опубликована" %}</span>
             {% else %}

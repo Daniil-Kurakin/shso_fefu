@@ -27,6 +27,11 @@ def regular_user():
 
 
 @pytest.fixture()
+def non_owner_admin():
+    return User.objects.create_user("staff_admin@shso.ru", "pass123", role=Role.ADMIN)
+
+
+@pytest.fixture()
 def squad_staff_user():
     direction = Direction.objects.create(name="Медицинское", icon="🩺")
     squad = Squad.objects.create(name="СМО Феникс", direction=direction)
@@ -133,11 +138,17 @@ class TestContentConstructors:
         res = client.get(url)
         assert res.status_code == 403
 
-    def test_page_builder_permissions(self, client, regular_user, admin_user):
+    def test_page_builder_permissions(self, client, regular_user, non_owner_admin, admin_user):
+        # Обычный пользователь не имеет доступа
         client.force_login(regular_user)
         url = reverse("content:page_create")
         assert client.get(url).status_code == 403
 
+        # Обычный админ (не владелец) также НЕ имеет доступа
+        client.force_login(non_owner_admin)
+        assert client.get(url).status_code == 403
+
+        # Только владелец (is_owner) имеет доступ
         client.force_login(admin_user)
         assert client.get(url).status_code == 200
 
@@ -178,7 +189,7 @@ class TestContentConstructors:
         assert detail_res.status_code == 200
         assert "Более полувека традиций" in detail_res.content.decode("utf-8")
 
-    def test_page_builder_update_and_draft_status(self, client, admin_user):
+    def test_page_builder_update_and_draft_status(self, client, admin_user, non_owner_admin):
         page = CustomPage.objects.create(
             title="Черновик страницы",
             slug="draft-page",
@@ -193,16 +204,20 @@ class TestContentConstructors:
             order=0,
         )
 
-        # Неопубликованная страница скрыта от гостей
+        # Неопубликованная страница скрыта от гостей и обычных админов
         detail_url = reverse("content:page_detail", kwargs={"slug": "draft-page"})
         assert client.get(detail_url).status_code == 404
 
-        # Доступна администратору
+        client.force_login(non_owner_admin)
+        assert client.get(detail_url).status_code == 404
+        edit_url = reverse("content:page_edit", kwargs={"slug": "draft-page"})
+        assert client.get(edit_url).status_code == 403
+
+        # Доступна владельцу
         client.force_login(admin_user)
         assert client.get(detail_url).status_code == 200
 
-        # Редактирование через конструктор
-        edit_url = reverse("content:page_edit", kwargs={"slug": "draft-page"})
+        # Редактирование через конструктор владельцем
         edit_page = client.get(edit_url)
         assert edit_page.status_code == 200
 
@@ -235,21 +250,36 @@ class TestContentConstructors:
         assert cards[0]["title"] == "Опыт"
         assert cards[0]["url"] == "/jobs"
 
-    def test_page_delete(self, client, admin_user):
+    def test_page_delete(self, client, admin_user, non_owner_admin):
         page = CustomPage.objects.create(
             title="Удаляемая страница",
             slug="to-delete",
         )
-        client.force_login(admin_user)
         del_url = reverse("content:page_delete", kwargs={"slug": page.slug})
+
+        # Не-владельцу удаление запрещено
+        client.force_login(non_owner_admin)
+        assert client.post(del_url).status_code == 403
+        assert CustomPage.objects.filter(slug="to-delete").exists()
+
+        # Владелец может удалить
+        client.force_login(admin_user)
         res = client.post(del_url)
         assert res.status_code == 302
         assert not CustomPage.objects.filter(slug="to-delete").exists()
 
-    def test_moderation_pages_tab(self, client, admin_user):
+    def test_moderation_pages_tab(self, client, admin_user, non_owner_admin):
         CustomPage.objects.create(title="Страница для админки", slug="admin-page")
-        client.force_login(admin_user)
         url = reverse("requests:moderation") + "?tab=pages"
+
+        # Не-владелец не видит вкладку конструктора страниц
+        client.force_login(non_owner_admin)
+        non_owner_res = client.get(url)
+        assert non_owner_res.status_code == 200
+        assert "Страница для админки" not in non_owner_res.content.decode("utf-8")
+
+        # Владелец видит страницу в списке
+        client.force_login(admin_user)
         res = client.get(url)
         assert res.status_code == 200
         assert "Страница для админки" in res.content.decode("utf-8")

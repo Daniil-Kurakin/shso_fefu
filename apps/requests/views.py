@@ -335,10 +335,14 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         context["squad_revisions"] = rev_qs
         context["news_list"] = news_qs
 
-        # 5. Страницы сайта (конструктор)
-        custom_pages = CustomPage.objects.prefetch_related("blocks").order_by("-updated_at")
-        context["custom_pages"] = custom_pages
-        context["pages_count"] = custom_pages.count()
+        # 5. Страницы сайта (конструктор - доступ только у владельца)
+        if getattr(self.request.user, "is_owner", False):
+            custom_pages = CustomPage.objects.prefetch_related("blocks").order_by("-updated_at")
+            context["custom_pages"] = custom_pages
+            context["pages_count"] = custom_pages.count()
+        else:
+            context["custom_pages"] = CustomPage.objects.none()
+            context["pages_count"] = 0
 
         # Бейджи количества ожидающих согласования
         context["pending_rooms_count"] = RoomBookingRequest.objects.filter(
@@ -441,6 +445,8 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             )
 
         elif action == "delete_page":
+            if not getattr(request.user, "is_owner", False):
+                raise PermissionDenied(_("Удаление страниц доступно только владельцу сайта."))
             page = get_object_or_404(CustomPage, pk=target_id)
             title = page.title
             page.delete()
