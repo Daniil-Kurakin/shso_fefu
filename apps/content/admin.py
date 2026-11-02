@@ -2,11 +2,13 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
+    CustomPage,
     FAQCategory,
     FAQItem,
     GlossaryTerm,
     KnowledgeArticle,
     KnowledgeCategory,
+    PageBlock,
     Quote,
     SiteSetting,
     StaffMember,
@@ -119,3 +121,28 @@ class GlossaryTermAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("term",)}
     list_editable = ("order",)
     ordering = ("letter", "term")
+
+
+class PageBlockInline(admin.StackedInline):
+    model = PageBlock
+    extra = 1
+    fields = (
+        ("block_type", "order", "is_active"),
+        ("title", "subtitle"),
+        "content",
+        ("button_text", "button_url"),
+        "image",
+    )
+
+
+@admin.register(CustomPage)
+class CustomPageAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug", "is_published", "blocks_count", "updated_at")
+    list_filter = ("is_published",)
+    search_fields = ("title", "slug", "summary")
+    prepopulated_fields = {"slug": ("title",)}
+    inlines = [PageBlockInline]
+
+    @admin.display(description=_("Блоков"))
+    def blocks_count(self, obj):
+        return obj.blocks.count()

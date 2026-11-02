@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}
+  {% if object.pk %}
+    {% trans "Редактирование страницы" %}: {{ object.title }}
+  {% else %}
+    {% trans "Создание страницы" %}
+  {% endif %} | {% trans "Конструктор" %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8 lg:py-12">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Навигационные хлебные крошки #}
+    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition">{% trans "Главная" %}</a>
+      <span>/</span>
+      <a href="{% url 'requests:moderation' %}?tab=pages" class="hover:text-blue-700 transition">{% trans "Конструктор страниц" %}</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">
+        {% if object.pk %}{{ object.title }}{% else %}{% trans "Новая страница" %}{% endif %}
+      </span>
+    </nav>
+
+    {# Шапка редактора #}
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-heading">
+          {% if object.pk %}
+            {% trans "Конструктор страницы" %}: {{ object.title }}
+          {% else %}
+            {% trans "Создание новой страницы" %}
+          {% endif %}
+        </h1>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">
+          {% trans "Настройте метаданные и соберите страницу из модульных блоков: баннеров, статей, карточек или FAQ." %}
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        {% if object.pk %}
+          <a href="{{ object.get_absolute_url }}" target="_blank"
+             class="btn btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl">
+            <span>↗</span> {% trans "Предпросмотр" %}
+          </a>
+        {% endif %}
+        <a href="{% url 'requests:moderation' %}?tab=pages"
+           class="btn btn-outline inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl text-gray-600">
+          ← {% trans "К списку страниц" %}
+        </a>
+      </div>
+    </div>
+
+    {# ФОРМА КОНСТРУКТОРА #}
+    <form method="post" enctype="multipart/form-data" class="space-y-8" id="page-builder-form">
+      {% csrf_token %}
+
+      {% if form.errors or block_formset.errors %}
+        <div class="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs sm:text-sm text-red-700 space-y-1">
+          <p class="font-bold">{% trans "Пожалуйста, исправьте следующие ошибки:" %}</p>
+          {% for field, errors in form.errors.items %}
+            <p><strong>{{ field }}:</strong> {{ errors|join:", " }}</p>
+          {% endfor %}
+          {% for b_errors in block_formset.errors %}
+            {% for b_field, errs in b_errors.items %}
+              <p><strong>{{ b_field }}:</strong> {{ errs|join:", " }}</p>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {# СЕКЦИЯ 1: МЕТАДАННЫЕ И НАСТРОЙКИ СТРАНИЦЫ #}
+      <div class="card-base p-6 sm:p-8 bg-white border border-gray-200/80 space-y-6">
+        <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+            <span>⚙️</span> {% trans "Основные настройки страницы" %}
+          </h2>
+          <div class="flex items-center gap-2">
+            {{ form.is_published }}
+            <label for="{{ form.is_published.id_for_label }}" class="text-xs font-semibold text-gray-700 cursor-pointer">
+              {{ form.is_published.label }}
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {# Заголовок #}
+          <div class="sm:col-span-2">
+            <label for="{{ form.title.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+              {{ form.title.label }} <span class="text-red-500">*</span>
+            </label>
+            {{ form.title }}
+            {% if form.title.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.title.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          {# Slug #}
+          <div class="sm:col-span-1">
+            <label for="{{ form.slug.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+              {{ form.slug.label }} <span class="text-red-500">*</span>
+            </label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3 text-xs text-gray-400 font-mono">/pages/</span>
+              <input type="text" name="{{ form.slug.name }}" id="{{ form.slug.id_for_label }}"
+                     value="{{ form.slug.value|default:'' }}"
+                     class="form-input pl-18 font-mono text-xs"
+                     placeholder="history">
+            </div>
+            {% if form.slug.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.slug.errors.0 }}</p>
+            {% endif %}
+            <p class="text-[11px] text-gray-400 mt-1">{% trans "Адрес страницы на сайте (только латиница, цифры и дефис)" %}</p>
+          </div>
+
+          {# Краткое описание #}
+          <div class="sm:col-span-2">
+            <label for="{{ form.summary.id_for_label }}" class="block text-xs font-semibold text-gray-700 mb-1">
+              {{ form.summary.label }}
+            </label>
+            {{ form.summary }}
+            {% if form.summary.errors %}
+              <p class="text-xs text-red-600 mt-1">{{ form.summary.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# СЕКЦИЯ 2: БЛОКИ СТРАНИЦЫ (КОНСТРУКТОР) #}
+      <div class="space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-gray-200">
+          <div>
+            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <span>🧱</span> {% trans "Смысловые блоки страницы" %}
+            </h2>
+            <p class="text-xs text-gray-500">
+              {% trans "Блоки отображаются на странице сверху вниз в соответствии с их порядковым номером." %}
+            </p>
+          </div>
+          <button type="button" id="add-block-btn"
+                  class="btn btn-primary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl shadow-xs">
+            + {% trans "Добавить блок" %}
+          </button>
+        </div>
+
+        {# Управление формсетом #}
+        {{ block_formset.management_form }}
+
+        {# Контейнер карточек блоков #}
+        <div id="blocks-container" class="space-y-5">
+          {% for b_form in block_formset %}
+            <div class="block-card card-base p-5 sm:p-6 bg-white border border-gray-200/90 rounded-2xl shadow-xs transition hover:border-blue-200"
+                 data-block-index="{{ forloop.counter0 }}">
+              {{ b_form.id }}
+
+              {# Шапка блока #}
+              <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-100 mb-4 bg-gray-50/70 -mx-5 sm:-mx-6 -mt-5 sm:-mt-6 p-4 rounded-t-2xl">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex items-center justify-center block-number-badge">
+                    {{ forloop.counter }}
+                  </span>
+                  <span class="text-xs font-bold text-gray-800">
+                    {% trans "Блок страницы" %}
+                  </span>
+                  <div class="flex items-center gap-1.5 text-xs">
+                    <label class="text-[11px] text-gray-500">{% trans "Порядок:" %}</label>
+                    <input type="number" name="{{ b_form.order.html_name }}" value="{{ b_form.order.value|default:forloop.counter0 }}"
+                           class="w-16 px-2 py-1 text-xs border border-gray-300 rounded-lg text-center font-bold">
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                  {# Чекбокс активности #}
+                  <label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                    {{ b_form.is_active }}
+                    <span>{% trans "Активен" %}</span>
+                  </label>
+
+                  {# Удаление блока #}
+                  {% if b_form.instance.pk %}
+                    <label class="flex items-center gap-1.5 text-xs text-red-600 hover:text-red-800 cursor-pointer font-medium">
+                      {{ b_form.DELETE }}
+                      <span>{% trans "Удалить" %}</span>
+                    </label>
+                  {% else %}
+                    <button type="button" class="remove-block-btn text-xs text-gray-400 hover:text-red-600 font-semibold" title="{% trans "Удалить" %}">
+                      ✕ {% trans "Удалить" %}
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Поля блока #}
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 text-xs">
+                {# Тип блока #}
+                <div class="sm:col-span-4">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.block_type.label }} <span class="text-red-500">*</span>
+                  </label>
+                  {{ b_form.block_type }}
+                </div>
+
+                {# Заголовок #}
+                <div class="sm:col-span-8">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.title.label }}
+                  </label>
+                  {{ b_form.title }}
+                </div>
+
+                {# Подзаголовок #}
+                <div class="sm:col-span-12">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.subtitle.label }}
+                  </label>
+                  {{ b_form.subtitle }}
+                </div>
+
+                {# Основное содержимое #}
+                <div class="sm:col-span-12">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.content.label }}
+                  </label>
+                  {{ b_form.content }}
+                  <p class="text-[11px] text-gray-400 mt-1">
+                    {% trans "Подсказка: Для карточек вводите по строке «Заголовок | Текст | Ссылка». Для FAQ: «Вопрос | Ответ»." %}
+                  </p>
+                </div>
+
+                {# Изображение #}
+                <div class="sm:col-span-6">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.image.label }}
+                  </label>
+                  {% if b_form.instance.image %}
+                    <div class="mb-2 flex items-center gap-2">
+                      <img src="{{ b_form.instance.image.url }}" alt="" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
+                      <span class="text-[11px] text-gray-500 truncate max-w-xs">{{ b_form.instance.image.name }}</span>
+                    </div>
+                  {% endif %}
+                  {{ b_form.image }}
+                </div>
+
+                {# Кнопка: текст и ссылка #}
+                <div class="sm:col-span-3">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.button_text.label }}
+                  </label>
+                  {{ b_form.button_text }}
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="block font-semibold text-gray-700 mb-1">
+                    {{ b_form.button_url.label }}
+                  </label>
+                  {{ b_form.button_url }}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# КНОПКИ ДЕЙСТВИЙ #}
+      <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+        <a href="{% url 'requests:moderation' %}?tab=pages" class="btn btn-secondary text-xs sm:text-sm px-5 py-2.5 rounded-xl">
+          {% trans "Отмена" %}
+        </a>
+        <div class="flex items-center gap-3">
+          <button type="submit" class="btn btn-primary text-xs sm:text-sm px-6 py-2.5 rounded-xl font-bold shadow-sm">
+            💾 {% trans "Сохранить страницу" %}
+          </button>
+        </div>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+{# ШАБЛОН ПУСТОГО БЛОКА ДЛЯ JS-ДОБАВЛЕНИЯ #}
+<template id="empty-block-template">
+  <div class="block-card card-base p-5 sm:p-6 bg-white border border-gray-200/90 rounded-2xl shadow-xs transition hover:border-blue-200"
+       data-block-index="__prefix__">
+    {{ block_formset.empty_form.id }}
+
+    {# Шапка блока #}
+    <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-100 mb-4 bg-gray-50/70 -mx-5 sm:-mx-6 -mt-5 sm:-mt-6 p-4 rounded-t-2xl">
+      <div class="flex items-center gap-2.5">
+        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-bold flex items-center justify-center block-number-badge">
+          #
+        </span>
+        <span class="text-xs font-bold text-gray-800">
+          {% trans "Новый блок страницы" %}
+        </span>
+        <div class="flex items-center gap-1.5 text-xs">
+          <label class="text-[11px] text-gray-500">{% trans "Порядок:" %}</label>
+          <input type="number" name="{{ block_formset.empty_form.order.html_name }}" value="0"
+                 class="w-16 px-2 py-1 text-xs border border-gray-300 rounded-lg text-center font-bold">
+        </div>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <label class="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+          {{ block_formset.empty_form.is_active }}
+          <span>{% trans "Активен" %}</span>
+        </label>
+        <button type="button" class="remove-block-btn text-xs text-gray-400 hover:text-red-600 font-semibold" title="{% trans "Удалить" %}">
+          ✕ {% trans "Удалить" %}
+        </button>
+      </div>
+    </div>
+
+    {# Поля блока #}
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 text-xs">
+      <div class="sm:col-span-4">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.block_type.label }} <span class="text-red-500">*</span>
+        </label>
+        {{ block_formset.empty_form.block_type }}
+      </div>
+      <div class="sm:col-span-8">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.title.label }}
+        </label>
+        {{ block_formset.empty_form.title }}
+      </div>
+      <div class="sm:col-span-12">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.subtitle.label }}
+        </label>
+        {{ block_formset.empty_form.subtitle }}
+      </div>
+      <div class="sm:col-span-12">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.content.label }}
+        </label>
+        {{ block_formset.empty_form.content }}
+        <p class="text-[11px] text-gray-400 mt-1">
+          {% trans "Подсказка: Для карточек вводите по строке «Заголовок | Текст | Ссылка». Для FAQ: «Вопрос | Ответ»." %}
+        </p>
+      </div>
+      <div class="sm:col-span-6">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.image.label }}
+        </label>
+        {{ block_formset.empty_form.image }}
+      </div>
+      <div class="sm:col-span-3">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.button_text.label }}
+        </label>
+        {{ block_formset.empty_form.button_text }}
+      </div>
+      <div class="sm:col-span-3">
+        <label class="block font-semibold text-gray-700 mb-1">
+          {{ block_formset.empty_form.button_url.label }}
+        </label>
+        {{ block_formset.empty_form.button_url }}
+      </div>
+    </div>
+  </div>
+</template>
+
+{# СКРИПТ УПРАВЛЕНИЯ БЛОКАМИ КОНСТРУКТОРА #}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const totalFormsInput = document.getElementById("id_blocks-TOTAL_FORMS");
+    const container = document.getElementById("blocks-container");
+    const addBtn = document.getElementById("add-block-btn");
+    const template = document.getElementById("empty-block-template");
+
+    function updateBlockBadges() {
+      const cards = container.querySelectorAll(".block-card");
+      cards.forEach((card, index) => {
+        const badge = card.querySelector(".block-number-badge");
+        if (badge) {
+          badge.textContent = index + 1;
+        }
+      });
+    }
+
+    if (addBtn && template && totalFormsInput && container) {
+      addBtn.addEventListener("click", function () {
+        const count = parseInt(totalFormsInput.value, 10);
+        let html = template.innerHTML.replace(/__prefix__/g, count);
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = html;
+        const newCard = tempDiv.firstElementChild;
+
+        // Авто-проставляем порядок
+        const orderInput = newCard.querySelector('input[name$="-order"]');
+        if (orderInput) {
+          orderInput.value = count;
+        }
+
+        container.appendChild(newCard);
+        totalFormsInput.value = count + 1;
+        updateBlockBadges();
+      });
+    }
+
+    // Делегирование удаления для свежесозданных блоков
+    if (container) {
+      container.addEventListener("click", function (e) {
+        if (e.target && e.target.classList.contains("remove-block-btn")) {
+          const card = e.target.closest(".block-card");
+          if (card) {
+            card.remove();
+            updateBlockBadges();
+          }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

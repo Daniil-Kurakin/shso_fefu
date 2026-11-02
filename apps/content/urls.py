@@ -32,4 +32,9 @@ urlpatterns = [
     # Правовые документы (152-ФЗ, 149-ФЗ)
     path("privacy/", views.PrivacyPolicyView.as_view(), name="privacy"),
     path("terms/", views.TermsOfServiceView.as_view(), name="terms"),
+    # Конструктор страниц и страницы сайта
+    path("pages/create/", views.PageBuilderCreateView.as_view(), name="page_create"),
+    path("pages/<slug:slug>/edit/", views.PageBuilderUpdateView.as_view(), name="page_edit"),
+    path("pages/<slug:slug>/delete/", views.PageBuilderDeleteView.as_view(), name="page_delete"),
+    path("pages/<slug:slug>/", views.CustomPageDetailView.as_view(), name="page_detail"),
 ]

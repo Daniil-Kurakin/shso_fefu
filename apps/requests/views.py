@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, TemplateView
 
 from apps.accounts.models import Role
+from apps.content.models import CustomPage
 from apps.news.models import News
 from apps.squads.models import SquadPageRevision
 
@@ -334,6 +335,11 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
         context["squad_revisions"] = rev_qs
         context["news_list"] = news_qs
 
+        # 5. Страницы сайта (конструктор)
+        custom_pages = CustomPage.objects.prefetch_related("blocks").order_by("-updated_at")
+        context["custom_pages"] = custom_pages
+        context["pages_count"] = custom_pages.count()
+
         # Бейджи количества ожидающих согласования
         context["pending_rooms_count"] = RoomBookingRequest.objects.filter(
             status=RoomBookingRequest.Status.SUBMITTED
@@ -433,5 +439,11 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             messages.warning(
                 request, _(f"Новость «{news_item.title}» возвращена автору на доработку.")
             )
+
+        elif action == "delete_page":
+            page = get_object_or_404(CustomPage, pk=target_id)
+            title = page.title
+            page.delete()
+            messages.success(request, _(f"Страница «{title}» удалена."))
 
         return redirect(f"{reverse('requests:moderation')}?tab={tab}")

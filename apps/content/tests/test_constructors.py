@@ -3,11 +3,13 @@ from django.urls import reverse
 
 from apps.accounts.models import Role, User
 from apps.content.models import (
+    CustomPage,
     FAQCategory,
     FAQItem,
     GlossaryTerm,
     KnowledgeArticle,
     KnowledgeCategory,
+    PageBlock,
 )
 from apps.squads.models import Direction, Membership, Position, Squad
 
@@ -130,3 +132,124 @@ class TestContentConstructors:
         url = reverse("content:glossary_create")
         res = client.get(url)
         assert res.status_code == 403
+
+    def test_page_builder_permissions(self, client, regular_user, admin_user):
+        client.force_login(regular_user)
+        url = reverse("content:page_create")
+        assert client.get(url).status_code == 403
+
+        client.force_login(admin_user)
+        assert client.get(url).status_code == 200
+
+    def test_page_builder_create_and_detail(self, client, admin_user):
+        client.force_login(admin_user)
+        url = reverse("content:page_create")
+        data = {
+            "title": "История студотрядов ДВФУ",
+            "slug": "history-fefu",
+            "summary": "Летопись трудовых семестров Дальневосточного университета",
+            "is_published": True,
+            "blocks-TOTAL_FORMS": "1",
+            "blocks-INITIAL_FORMS": "0",
+            "blocks-MIN_NUM_FORMS": "0",
+            "blocks-MAX_NUM_FORMS": "1000",
+            "blocks-0-block_type": "hero",
+            "blocks-0-title": "Более полувека традиций",
+            "blocks-0-subtitle": "От первых студенческих строек до космодрома Восточный",
+            "blocks-0-content": "Подробный исторический очерк...",
+            "blocks-0-button_text": "Узнать больше",
+            "blocks-0-button_url": "/squads/",
+            "blocks-0-order": "0",
+            "blocks-0-is_active": "on",
+        }
+        res = client.post(url, data)
+        assert res.status_code == 302
+        page = CustomPage.objects.get(slug="history-fefu")
+        assert page.title == "История студотрядов ДВФУ"
+        assert page.blocks.count() == 1
+        block = page.blocks.first()
+        assert block.block_type == "hero"
+        assert block.button_text == "Узнать больше"
+
+        # Публичный просмотр
+        client.logout()
+        detail_url = reverse("content:page_detail", kwargs={"slug": "history-fefu"})
+        detail_res = client.get(detail_url)
+        assert detail_res.status_code == 200
+        assert "Более полувека традиций" in detail_res.content.decode("utf-8")
+
+    def test_page_builder_update_and_draft_status(self, client, admin_user):
+        page = CustomPage.objects.create(
+            title="Черновик страницы",
+            slug="draft-page",
+            is_published=False,
+            author=admin_user,
+        )
+        PageBlock.objects.create(
+            page=page,
+            block_type="text",
+            title="Секция 1",
+            content="Содержимое черновика",
+            order=0,
+        )
+
+        # Неопубликованная страница скрыта от гостей
+        detail_url = reverse("content:page_detail", kwargs={"slug": "draft-page"})
+        assert client.get(detail_url).status_code == 404
+
+        # Доступна администратору
+        client.force_login(admin_user)
+        assert client.get(detail_url).status_code == 200
+
+        # Редактирование через конструктор
+        edit_url = reverse("content:page_edit", kwargs={"slug": "draft-page"})
+        edit_page = client.get(edit_url)
+        assert edit_page.status_code == 200
+
+        block = page.blocks.first()
+        update_data = {
+            "title": "Опубликованная страница",
+            "slug": "draft-page",
+            "summary": "Теперь доступна всем",
+            "is_published": True,
+            "blocks-TOTAL_FORMS": "1",
+            "blocks-INITIAL_FORMS": "1",
+            "blocks-MIN_NUM_FORMS": "0",
+            "blocks-MAX_NUM_FORMS": "1000",
+            "blocks-0-id": block.id,
+            "blocks-0-block_type": "cards",
+            "blocks-0-title": "Преимущества",
+            "blocks-0-content": "Опыт | Первая работа | /jobs\nДружба | Верные товарищи",
+            "blocks-0-order": "0",
+            "blocks-0-is_active": "on",
+        }
+        res = client.post(edit_url, update_data)
+        assert res.status_code == 302
+        page.refresh_from_db()
+        assert page.title == "Опубликованная страница"
+        assert page.is_published is True
+        block.refresh_from_db()
+        assert block.block_type == "cards"
+        cards = block.parsed_cards()
+        assert len(cards) == 2
+        assert cards[0]["title"] == "Опыт"
+        assert cards[0]["url"] == "/jobs"
+
+    def test_page_delete(self, client, admin_user):
+        page = CustomPage.objects.create(
+            title="Удаляемая страница",
+            slug="to-delete",
+        )
+        client.force_login(admin_user)
+        del_url = reverse("content:page_delete", kwargs={"slug": page.slug})
+        res = client.post(del_url)
+        assert res.status_code == 302
+        assert not CustomPage.objects.filter(slug="to-delete").exists()
+
+    def test_moderation_pages_tab(self, client, admin_user):
+        CustomPage.objects.create(title="Страница для админки", slug="admin-page")
+        client.force_login(admin_user)
+        url = reverse("requests:moderation") + "?tab=pages"
+        res = client.get(url)
+        assert res.status_code == 200
+        assert "Страница для админки" in res.content.decode("utf-8")

@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{{ page.title }} | {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block meta_description %}
+  {% if page.summary %}
+    <meta name="description" content="{{ page.summary }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8 lg:py-12">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Панель быстрого действия для администратора / штаба #}
+    {% if user.is_hq_staff or user.role == 'owner' or user.role == 'admin' %}
+      <div class="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5 text-xs text-amber-900">
+          <span class="text-base">⚡</span>
+          <div>
+            <strong>{% trans "Режим администратора" %}</strong>:
+            {% if page.is_published %}
+              <span class="text-emerald-700 font-bold">{% trans "Страница опубликована" %}</span>
+            {% else %}
+              <span class="text-amber-800 font-bold">{% trans "Черновик (скрыта от гостей)" %}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url 'content:page_edit' slug=page.slug %}"
+             class="btn btn-primary inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold">
+            <span>✏️</span>
+            {% trans "Редактировать в конструкторе" %}
+          </a>
+          <a href="{% url 'requests:moderation' %}?tab=pages"
+             class="btn btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold">
+            {% trans "Все страницы" %}
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    {# Хлебные крошки #}
+    <nav class="flex items-center gap-2 text-xs text-gray-500 mb-6" aria-label="Breadcrumb">
+      <a href="{% url 'core:home' %}" class="hover:text-blue-700 transition-colors">{% trans "Главная" %}</a>
+      <span>/</span>
+      <span class="text-gray-900 font-medium">{{ page.title }}</span>
+    </nav>
+
+    {# Список смысловых блоков страницы #}
+    {% if blocks %}
+      <div class="space-y-12 lg:space-y-16">
+        {% for block in blocks %}
+
+          {# БЛОК: ГЛАВНЫЙ БАННЕР / HERO #}
+          {% if block.block_type == 'hero' %}
+            <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-950 text-white p-8 sm:p-12 lg:p-16 shadow-xl">
+              {% if block.image %}
+                <div class="absolute inset-0 z-0 opacity-25">
+                  <img src="{{ block.image.url }}" alt="{{ block.title }}" class="w-full h-full object-cover">
+                </div>
+              {% endif %}
+              <div class="relative z-10 max-w-3xl">
+                <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold font-heading uppercase tracking-wide leading-tight mb-4">
+                  {{ block.title|default:page.title }}
+                </h1>
+                {% if block.subtitle %}
+                  <p class="text-base sm:text-xl text-blue-100 font-medium mb-6 leading-relaxed">
+                    {{ block.subtitle }}
+                  </p>
+                {% endif %}
+                {% if block.content %}
+                  <div class="text-sm sm:text-base text-blue-200/90 mb-8 leading-relaxed">
+                    {{ block.content|linebreaks }}
+                  </div>
+                {% endif %}
+                {% if block.button_text and block.button_url %}
+                  <a href="{{ block.button_url }}"
+                     class="btn inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-blue-900 font-bold hover:bg-blue-50 transition shadow-lg text-sm">
+                    {{ block.button_text }} →
+                  </a>
+                {% endif %}
+              </div>
+            </section>
+
+          {# БЛОК: ТЕКСТ / СТАТЬЯ #}
+          {% elif block.block_type == 'text' %}
+            <section class="card-base p-6 sm:p-10 lg:p-12 bg-white">
+              {% if block.title %}
+                <h2 class="text-2xl sm:text-4xl font-bold font-heading text-gray-900 uppercase tracking-wide mb-3">
+                  {{ block.title }}
+                </h2>
+              {% endif %}
+              {% if block.subtitle %}
+                <p class="text-sm sm:text-base text-gray-500 font-medium mb-6">
+                  {{ block.subtitle }}
+                </p>
+              {% endif %}
+
+              <div class="flex flex-col {% if block.image %}lg:flex-row gap-8 items-start{% endif %}">
+                <div class="flex-1 text-sm sm:text-base text-gray-700 leading-relaxed space-y-4">
+                  {{ block.content|linebreaks }}
+                  {% if block.button_text and block.button_url %}
+                    <div class="pt-4">
+                      <a href="{{ block.button_url }}" class="btn btn-primary text-xs sm:text-sm font-semibold">
+                        {{ block.button_text }} →
+                      </a>
+                    </div>
+                  {% endif %}
+                </div>
+                {% if block.image %}
+                  <div class="lg:w-2/5 shrink-0 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                    <img src="{{ block.image.url }}" alt="{{ block.title }}" class="w-full h-auto object-cover">
+                  </div>
+                {% endif %}
+              </div>
+            </section>
+
+          {# БЛОК: СЕТКА КАРТОЧЕК / ОСОБЕННОСТИ #}
+          {% elif block.block_type == 'cards' %}
+            <section class="space-y-6">
+              {% if block.title or block.subtitle %}
+                <div class="text-center max-w-2xl mx-auto">
+                  {% if block.title %}
+                    <h2 class="text-2xl sm:text-4xl font-bold font-heading text-gray-900 uppercase tracking-wide mb-2">
+                      {{ block.title }}
+                    </h2>
+                  {% endif %}
+                  {% if block.subtitle %}
+                    <p class="text-sm sm:text-base text-gray-600">{{ block.subtitle }}</p>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for card in block.parsed_cards %}
+                  <div class="card-base p-6 bg-white flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition">
+                    <div>
+                      <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg mb-4">
+                        ★
+                      </div>
+                      <h3 class="text-lg font-bold text-gray-900 mb-2">
+                        {{ card.title }}
+                      </h3>
+                      {% if card.text %}
+                        <p class="text-xs sm:text-sm text-gray-600 leading-relaxed mb-4">
+                          {{ card.text }}
+                        </p>
+                      {% endif %}
+                    </div>
+                    {% if card.url %}
+                      <div class="pt-2 border-t border-gray-100 mt-auto">
+                        <a href="{{ card.url }}" class="text-xs font-semibold text-blue-700 hover:text-blue-800 inline-flex items-center gap-1">
+                          {% trans "Подробнее" %} →
+                        </a>
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+              </div>
+            </section>
+
+          {# БЛОК: АККОРДЕОН / ВОПРОСЫ И ОТВЕТЫ #}
+          {% elif block.block_type == 'accordion' %}
+            <section class="card-base p-6 sm:p-10 bg-white space-y-6">
+              {% if block.title or block.subtitle %}
+                <div class="border-b border-gray-100 pb-4">
+                  {% if block.title %}
+                    <h2 class="text-2xl sm:text-3xl font-bold font-heading text-gray-900 uppercase tracking-wide mb-1">
+                      {{ block.title }}
+                    </h2>
+                  {% endif %}
+                  {% if block.subtitle %}
+                    <p class="text-xs sm:text-sm text-gray-500">{{ block.subtitle }}</p>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <div class="space-y-3">
+                {% for item in block.parsed_accordion %}
+                  <details class="group bg-gray-50/60 rounded-2xl border border-gray-200 p-4 sm:p-5 transition hover:bg-gray-50 open:bg-blue-50/20 open:border-blue-200">
+                    <summary class="flex justify-between items-center font-bold text-sm sm:text-base text-gray-900 cursor-pointer list-none gap-4">
+                      <span>{{ item.question }}</span>
+                      <span class="text-blue-700 font-bold transition group-open:rotate-180 text-sm">▾</span>
+                    </summary>
+                    <div class="mt-3 pt-3 border-t border-gray-200/80 text-xs sm:text-sm text-gray-700 leading-relaxed">
+                      {{ item.answer|linebreaks }}
+                    </div>
+                  </details>
+                {% endfor %}
+              </div>
+            </section>
+
+          {# БЛОК: ПРИЗЫВ К ДЕЙСТВИЮ (CTA) #}
+          {% elif block.block_type == 'cta' %}
+            <section class="rounded-3xl bg-blue-700 text-white p-8 sm:p-12 text-center shadow-lg">
+              <div class="max-w-2xl mx-auto space-y-4">
+                <h2 class="text-2xl sm:text-4xl font-bold font-heading uppercase tracking-wide">
+                  {{ block.title|default:_("Присоединяйся к нам!") }}
+                </h2>
+                {% if block.subtitle %}
+                  <p class="text-sm sm:text-base text-blue-100 leading-relaxed">
+                    {{ block.subtitle }}
+                  </p>
+                {% endif %}
+                {% if block.content %}
+                  <div class="text-xs sm:text-sm text-blue-200">
+                    {{ block.content|linebreaks }}
+                  </div>
+                {% endif %}
+                {% if block.button_text and block.button_url %}
+                  <div class="pt-2">
+                    <a href="{{ block.button_url }}"
+                       class="btn inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-blue-900 font-bold hover:bg-blue-50 transition shadow-md text-sm">
+                      {{ block.button_text }} →
+                    </a>
+                  </div>
+                {% endif %}
+              </div>
+            </section>
+
+          {# БЛОК: ЦИТАТА / ВРЕЗКА #}
+          {% elif block.block_type == 'quote' %}
+            <section class="card-base p-6 sm:p-10 bg-gradient-to-br from-amber-50/60 to-orange-50/40 border border-amber-200/80">
+              <div class="max-w-3xl mx-auto text-center space-y-4">
+                <span class="text-4xl sm:text-5xl text-amber-500 font-serif leading-none block">“</span>
+                <blockquote class="text-lg sm:text-2xl font-medium text-gray-900 italic leading-relaxed">
+                  {{ block.content }}
+                </blockquote>
+                {% if block.title or block.subtitle %}
+                  <div class="pt-2">
+                    {% if block.title %}
+                      <div class="font-bold text-sm text-gray-900">{{ block.title }}</div>
+                    {% endif %}
+                    {% if block.subtitle %}
+                      <div class="text-xs text-gray-500 mt-0.5">{{ block.subtitle }}</div>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </section>
+
+          {# БЛОК: ГАЛЕРЕЯ / ИЗОБРАЖЕНИЕ #}
+          {% elif block.block_type == 'gallery' %}
+            <section class="card-base p-6 bg-white space-y-4">
+              {% if block.image %}
+                <div class="rounded-2xl overflow-hidden border border-gray-200 shadow-sm max-h-[500px]">
+                  <img src="{{ block.image.url }}" alt="{{ block.title }}" class="w-full h-full object-cover">
+                </div>
+              {% endif %}
+              {% if block.title or block.subtitle or block.content %}
+                <div class="text-center max-w-xl mx-auto">
+                  {% if block.title %}
+                    <h3 class="text-lg font-bold text-gray-900">{{ block.title }}</h3>
+                  {% endif %}
+                  {% if block.subtitle %}
+                    <p class="text-xs text-gray-500 mt-1">{{ block.subtitle }}</p>
+                  {% endif %}
+                  {% if block.content %}
+                    <p class="text-xs text-gray-600 mt-2">{{ block.content }}</p>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </section>
+
+          {% endif %}
+
+        {% endfor %}
+      </div>
+    {% else %}
+      {# Пустая страница без блоков #}
+      <div class="card-base p-8 sm:p-12 bg-white text-center">
+        <h1 class="text-3xl sm:text-4xl font-bold font-heading text-gray-900 uppercase mb-4">
+          {{ page.title }}
+        </h1>
+        {% if page.summary %}
+          <p class="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto mb-8">
+            {{ page.summary }}
+          </p>
+        {% endif %}
+        <p class="text-xs text-gray-400">
+          {% trans "Содержимое страницы формируется." %}
+        </p>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

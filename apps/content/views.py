@@ -1,14 +1,26 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import F, Q
-from django.shortcuts import get_object_or_404
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
 
-from .forms import FAQItemForm, GlossaryTermForm, KnowledgeArticleForm
+from apps.accounts.models import Role
+
+from .forms import (
+    CustomPageForm,
+    FAQItemForm,
+    GlossaryTermForm,
+    KnowledgeArticleForm,
+    PageBlockFormSet,
+)
 from .models import (
+    CustomPage,
     FAQCategory,
     FAQItem,
     GlossaryTerm,
@@ -259,3 +271,133 @@ class GlossaryTermCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         messages.success(self.request, _("Термин успешно добавлен в глоссарий!"))
         return super().form_valid(form)
+
+
+class PageBuilderCreateView(LoginRequiredMixin, CreateView):
+    """Конструктор создания страницы сайта."""
+
+    model = CustomPage
+    form_class = CustomPageForm
+    template_name = "content/page_builder_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_role = getattr(request.user, "role", "")
+        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
+            raise PermissionDenied(_("У вас нет прав на создание страниц сайта."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["block_formset"] = PageBlockFormSet(self.request.POST, self.request.FILES)
+        else:
+            context["block_formset"] = PageBlockFormSet()
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        block_formset = context["block_formset"]
+        if not block_formset.is_valid():
+            return self.render_to_response(
+                self.get_context_data(form=form, block_formset=block_formset)
+            )
+
+        with transaction.atomic():
+            self.object = form.save(commit=False)
+            self.object.author = self.request.user
+            self.object.save()
+            block_formset.instance = self.object
+            block_formset.save()
+
+        messages.success(
+            self.request,
+            _(f"Страница «{self.object.title}» успешно создана в конструкторе!"),
+        )
+        return redirect("content:page_edit", slug=self.object.slug)
+
+
+class PageBuilderUpdateView(LoginRequiredMixin, UpdateView):
+    """Конструктор редактирования страницы сайта и её смысловых блоков."""
+
+    model = CustomPage
+    form_class = CustomPageForm
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+    template_name = "content/page_builder_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        user_role = getattr(request.user, "role", "")
+        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
+            raise PermissionDenied(_("У вас нет прав на редактирование страниц сайта."))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["block_formset"] = PageBlockFormSet(
+                self.request.POST, self.request.FILES, instance=self.object
+            )
+        else:
+            context["block_formset"] = PageBlockFormSet(instance=self.object)
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        block_formset = context["block_formset"]
+        if not block_formset.is_valid():
+            return self.render_to_response(
+                self.get_context_data(form=form, block_formset=block_formset)
+            )
+
+        with transaction.atomic():
+            self.object = form.save()
+            block_formset.instance = self.object
+            block_formset.save()
+
+        messages.success(self.request, _(f"Страница «{self.object.title}» успешно обновлена!"))
+        return redirect("content:page_edit", slug=self.object.slug)
+
+
+class PageBuilderDeleteView(LoginRequiredMixin, View):
+    """Удаление сконструированной страницы."""
+
+    def post(self, request, slug):
+        user_role = getattr(request.user, "role", "")
+        if not (request.user.is_hq_staff or user_role in {Role.OWNER, Role.ADMIN}):
+            raise PermissionDenied(_("У вас нет прав на удаление страниц."))
+        page = get_object_or_404(CustomPage, slug=slug)
+        title = page.title
+        page.delete()
+        messages.success(request, _(f"Страница «{title}» удалена."))
+        return redirect(f"{reverse_lazy('requests:moderation')}?tab=pages")
+
+
+class CustomPageDetailView(DetailView):
+    """Публичное отображение сконструированной страницы со всеми активными блоками."""
+
+    model = CustomPage
+    slug_field = "slug"
+    slug_url_kwarg = "slug"
+    template_name = "content/custom_page_detail.html"
+    context_object_name = "page"
+
+    def get_object(self, queryset=None):
+        page = get_object_or_404(
+            CustomPage.objects.prefetch_related("blocks"), slug=self.kwargs["slug"]
+        )
+        user = self.request.user
+        is_staff = user.is_authenticated and (
+            user.is_hq_staff or getattr(user, "role", "") in {Role.OWNER, Role.ADMIN}
+        )
+        if not page.is_published and not is_staff:
+            raise Http404(_("Страница не найдена или снята с публикации."))
+        return page
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["blocks"] = self.object.ordered_blocks()
+        return context

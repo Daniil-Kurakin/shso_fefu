@@ -453,6 +453,11 @@
                 <span class="text-blue-600 font-bold">📖</span>
                 <span>{% trans "Пополнить словарь РСО" %}</span>
               </a>
+              <a href="{% url 'requests:moderation' %}?tab=pages"
+                 class="flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-blue-50 text-sm font-medium text-gray-700 hover:text-blue-800 transition">
+                <span class="text-blue-600 font-bold">📄</span>
+                <span>{% trans "Конструктор страниц" %}</span>
+              </a>
             {% endif %}
 
             {% if user.is_staff %}

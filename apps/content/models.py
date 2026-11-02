@@ -375,3 +375,128 @@ class GlossaryTerm(models.Model):
             if first_char in {'"', "«", "“"} and len(clean_term) > 1:
                 first_char = clean_term[1].upper()
             self.letter = first_char
+
+
+class CustomPage(models.Model):
+    """Кастомная страница сайта, создаваемая и настраиваемая через конструктор страниц."""
+
+    title = models.CharField(_("заголовок страницы"), max_length=200)
+    slug = models.SlugField(_("URL (slug)"), max_length=200, unique=True, allow_unicode=True)
+    summary = models.CharField(
+        _("краткое описание / SEO"),
+        max_length=350,
+        blank=True,
+        help_text=_("Используется для поисковой оптимизации (meta description) и карточек"),
+    )
+    is_published = models.BooleanField(_("опубликована"), default=True)
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="custom_pages",
+        verbose_name=_("автор"),
+    )
+    created_at = models.DateTimeField(_("создана"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("обновлена"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("страница")
+        verbose_name_plural = _("страницы сайта (конструктор)")
+        ordering = ["title"]
+
+    def __str__(self):
+        return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return reverse("content:page_detail", kwargs={"slug": self.slug})
+
+    def ordered_blocks(self):
+        return self.blocks.filter(is_active=True).order_by("order", "id")
+
+
+class PageBlock(models.Model):
+    """Смысловой блок/секция внутри настраиваемой страницы конструктора."""
+
+    class BlockType(models.TextChoices):
+        HERO = "hero", _("Баннер / Главный экран")
+        TEXT = "text", _("Текстовый блок / Статья")
+        CARDS = "cards", _("Сетка карточек / Особенности")
+        ACCORDION = "accordion", _("Аккордеон / FAQ")
+        CTA = "cta", _("Баннер с кнопкой (CTA)")
+        QUOTE = "quote", _("Цитата / Врезка")
+        GALLERY = "gallery", _("Изображение / Медиа")
+
+    page = models.ForeignKey(
+        CustomPage,
+        on_delete=models.CASCADE,
+        related_name="blocks",
+        verbose_name=_("страница"),
+    )
+    block_type = models.CharField(
+        _("тип блока"),
+        max_length=20,
+        choices=BlockType.choices,
+        default=BlockType.TEXT,
+    )
+    title = models.CharField(_("заголовок"), max_length=255, blank=True)
+    subtitle = models.CharField(_("подзаголовок / описание"), max_length=255, blank=True)
+    content = models.TextField(
+        _("содержимое"),
+        blank=True,
+        help_text=_(
+            "Для текста: текст/абзацы. Для карточек: строка вида «Заголовок | Описание | Ссылка». "
+            "Для аккордеона: строка вида «Вопрос | Ответ»."
+        ),
+    )
+    image = models.ImageField(
+        _("изображение"),
+        upload_to="pages/blocks/%Y/",
+        blank=True,
+        null=True,
+    )
+    button_text = models.CharField(_("текст кнопки"), max_length=100, blank=True)
+    button_url = models.CharField(_("ссылка кнопки"), max_length=255, blank=True)
+    order = models.PositiveIntegerField(_("порядок"), default=0)
+    is_active = models.BooleanField(_("активен"), default=True)
+
+    class Meta:
+        verbose_name = _("блок страницы")
+        verbose_name_plural = _("блоки страницы")
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        label = self.title or self.get_block_type_display()
+        return f"{self.page.title} — [{self.get_block_type_display()}] {label}"
+
+    def parsed_cards(self):
+        """Парсит content в список карточек [title, text, url]."""
+        items = []
+        for line in (self.content or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            item_title = parts[0]
+            item_text = parts[1] if len(parts) > 1 else ""
+            item_url = parts[2] if len(parts) > 2 else ""
+            items.append({"title": item_title, "text": item_text, "url": item_url})
+        return items
+
+    def parsed_accordion(self):
+        """Парсит content в список вопросов-ответов [question, answer]."""
+        items = []
+        for line in (self.content or "").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            parts = [p.strip() for p in line.split("|")]
+            q = parts[0]
+            a = parts[1] if len(parts) > 1 else ""
+            items.append({"question": q, "answer": a})
+        return items

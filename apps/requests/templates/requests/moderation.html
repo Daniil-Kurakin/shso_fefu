@@ -93,10 +93,21 @@
           </span>
         {% endif %}
       </a>
+
+      {# Вкладка 5: Конструктор страниц #}
+      <a href="?tab=pages"
+         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+           {% if tab == 'pages' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        <span>📄 {% trans "Конструктор страниц" %}</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+          {{ pages_count }}
+        </span>
+      </a>
     </div>
   </div>
 
   {# ФИЛЬТРЫ СТАТУСА #}
+  {% if tab != 'pages' %}
   <div class="mb-6 flex flex-wrap items-center gap-2 text-xs">
     <span class="text-gray-400 font-semibold mr-1">{% trans "Фильтр:" %}</span>
     <a href="?tab={{ tab }}&status=all"
@@ -120,6 +131,7 @@
       {% trans "Отклонённые" %}
     </a>
   </div>
+  {% endif %}
 
   {# ==================== ВКЛАДКА 1: ПОМЕЩЕНИЯ ==================== #}
   {% if tab == 'rooms' %}
@@ -639,6 +651,111 @@
       <div class="text-center py-12 card-base bg-white">
         <span class="text-3xl block mb-2">📰</span>
         <p class="text-sm font-medium text-gray-600">{% trans "Новостей на согласовании в этой категории не найдено." %}</p>
+      </div>
+    {% endif %}
+
+  {# ==================== ВКЛАДКА 5: КОНСТРУКТОР СТРАНИЦ ==================== #}
+  {% elif tab == 'pages' %}
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-gray-200">
+      <div>
+        <h2 class="text-lg font-bold text-gray-900">
+          {% trans "Страницы сайта и визуальный конструктор" %}
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">
+          {% trans "Создавайте и редактируйте страницы со свободными смысловыми блоками: баннеры, статьи, сетки карточек, FAQ и призывы к действию." %}
+        </p>
+      </div>
+      <a href="{% url 'content:page_create' %}"
+         class="btn btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        {% trans "Создать новую страницу" %}
+      </a>
+    </div>
+
+    {% if custom_pages %}
+      <div class="space-y-4">
+        {% for page in custom_pages %}
+          <div class="card-base p-5 sm:p-6 border border-gray-200/80 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="space-y-1.5 flex-1">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">
+                  {{ page.title }}
+                </h3>
+                {% if page.is_published %}
+                  <span class="badge badge-success text-[11px] font-bold">
+                    ● {% trans "Опубликована" %}
+                  </span>
+                {% else %}
+                  <span class="badge badge-gray text-[11px] font-bold">
+                    ○ {% trans "Черновик" %}
+                  </span>
+                {% endif %}
+                <span class="badge badge-primary text-[11px]">
+                  🧱 {% trans "Блоков:" %} {{ page.blocks.count }}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                <span class="font-mono text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                  /pages/{{ page.slug }}/
+                </span>
+                <span>•</span>
+                <span>{% trans "Обновлена:" %} {{ page.updated_at|date:"d.m.Y H:i" }}</span>
+                {% if page.author %}
+                  <span>•</span>
+                  <span>{% trans "Автор:" %} {{ page.author.get_full_name }}</span>
+                {% endif %}
+              </div>
+
+              {% if page.summary %}
+                <p class="text-xs text-gray-600 line-clamp-2 mt-1">
+                  {{ page.summary }}
+                </p>
+              {% endif %}
+            </div>
+
+            {# Действия над страницей #}
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <a href="{{ page.get_absolute_url }}" target="_blank"
+                 class="btn btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <span>↗</span>
+                {% trans "Просмотреть" %}
+              </a>
+              <a href="{% url 'content:page_edit' slug=page.slug %}"
+                 class="btn btn-primary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <span>✏️</span>
+                {% trans "Конструктор" %}
+              </a>
+              <form method="post" class="inline" onsubmit="return confirm('{% trans "Вы действительно хотите удалить страницу «" %}{{ page.title }}{% trans "»?" %}');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_page">
+                <input type="hidden" name="target_id" value="{{ page.pk }}">
+                <input type="hidden" name="tab" value="pages">
+                <button type="submit"
+                        class="btn btn-outline text-xs px-3 py-2 font-semibold text-red-600 border-red-200 hover:bg-red-50"
+                        title="{% trans "Удалить страницу" %}">
+                  🗑️
+                </button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16 card-base bg-white border border-dashed border-gray-300 rounded-2xl">
+        <span class="text-4xl block mb-3">📄</span>
+        <h3 class="text-base font-bold text-gray-900 mb-1">
+          {% trans "В конструкторе пока нет созданных страниц" %}
+        </h3>
+        <p class="text-xs text-gray-500 max-w-md mx-auto mb-5">
+          {% trans "Создайте новую информационную страницу, добавьте баннеры, текстовые секции, карточки или вопросы и ответы без правок в коде." %}
+        </p>
+        <a href="{% url 'content:page_create' %}"
+           class="btn btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold">
+          + {% trans "Создать первую страницу" %}
+        </a>
       </div>
     {% endif %}
   {% endif %}
