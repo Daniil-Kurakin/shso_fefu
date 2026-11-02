@@ -283,3 +283,47 @@ class TestContentConstructors:
         res = client.get(url)
         assert res.status_code == 200
         assert "Страница для админки" in res.content.decode("utf-8")
+
+    def test_page_block_typography_and_image_customization(self, client):
+        page = CustomPage.objects.create(
+            title="Страница со стилями", slug="styles-page", is_published=True
+        )
+        block = PageBlock.objects.create(
+            page=page,
+            block_type="text",
+            title="Заголовок",
+            content="<p>Текст с <strong>HTML</strong></p>",
+            font_family="heading",
+            text_size="3xl",
+            text_align="center",
+            text_color="blue",
+            image_size="small",
+            image_align="center",
+            image_radius="full",
+        )
+        assert "font-heading" in block.get_font_css()
+        assert block.get_text_size_css() == "text-3xl"
+        assert block.get_text_align_css() == "text-center"
+        assert block.get_text_color_css() == "text-blue-700"
+        assert block.get_image_size_css() == "max-w-xs"
+        assert block.get_image_align_css() == "mx-auto"
+        assert block.get_image_radius_css() == "rounded-full"
+        assert "<strong>HTML</strong>" in str(block.rendered_content)
+
+        res = client.get(reverse("content:page_detail", kwargs={"slug": "styles-page"}))
+        assert res.status_code == 200
+        content_str = res.content.decode("utf-8")
+        assert "font-heading" in content_str
+        assert "text-3xl" in content_str
+        assert "text-blue-700" in content_str
+
+    def test_django_admin_page_and_blocks(self, client, admin_user):
+        client.force_login(admin_user)
+        page_admin_url = reverse("admin:content_custompage_changelist")
+        res = client.get(page_admin_url)
+        assert res.status_code == 200
+
+        block_admin_url = reverse("admin:content_pageblock_changelist")
+        res = client.get(block_admin_url)
+        assert res.status_code == 200
+

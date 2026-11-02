@@ -6,6 +6,8 @@ from django.core.cache import cache
 from django.db import DatabaseError, models
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import linebreaks
+from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
@@ -432,6 +434,50 @@ class PageBlock(models.Model):
         QUOTE = "quote", _("Цитата / Врезка")
         GALLERY = "gallery", _("Изображение / Медиа")
 
+    class FontFamily(models.TextChoices):
+        SANS = "sans", _("Montserrat (Основной текст)")
+        HEADING = "heading", _("Coolvetica (Заголовочный)")
+        SERIF = "serif", _("С засечками (Serif)")
+        MONO = "mono", _("Моноширинный (Mono)")
+
+    class TextSize(models.TextChoices):
+        SM = "sm", _("Мелкий (14px)")
+        BASE = "base", _("Стандартный (16px)")
+        LG = "lg", _("Крупный (18px)")
+        XL = "xl", _("Очень крупный (20px)")
+        XL2 = "2xl", _("Заголовочный (24px)")
+        XL3 = "3xl", _("Большой заголовок (30px)")
+        XL4 = "4xl", _("Акцентный заголовок (36px)")
+
+    class TextAlign(models.TextChoices):
+        LEFT = "left", _("По левому краю")
+        CENTER = "center", _("По центру")
+        RIGHT = "right", _("По правому краю")
+        JUSTIFY = "justify", _("По ширине")
+
+    class TextColor(models.TextChoices):
+        DEFAULT = "default", _("Тёмно-серый (по умолчанию)")
+        BLUE = "blue", _("Синий брендовый")
+        WHITE = "white", _("Белый")
+        MUTED = "muted", _("Приглушённый серый")
+
+    class ImageSize(models.TextChoices):
+        SMALL = "small", _("Маленький (~320px)")
+        MEDIUM = "medium", _("Средний (~480px)")
+        LARGE = "large", _("Крупный (~720px)")
+        FULL = "full", _("На всю ширину (100%)")
+        ORIGINAL = "original", _("Естественный размер")
+
+    class ImageAlign(models.TextChoices):
+        CENTER = "center", _("По центру")
+        LEFT = "left", _("Слева")
+        RIGHT = "right", _("Справа")
+
+    class ImageRadius(models.TextChoices):
+        ROUNDED = "rounded", _("Скругленные углы (16px)")
+        FULL = "full", _("Круг / Овал")
+        NONE = "none", _("Прямые углы (без скругления)")
+
     page = models.ForeignKey(
         CustomPage,
         on_delete=models.CASCADE,
@@ -450,16 +496,71 @@ class PageBlock(models.Model):
         _("содержимое"),
         blank=True,
         help_text=_(
-            "Для текста: текст/абзацы. Для карточек: строка вида «Заголовок | Описание | Ссылка». "
+            "Для текста: текст/абзацы или HTML-разметка. "
+            "Для карточек: строка вида «Заголовок | Описание | Ссылка». "
             "Для аккордеона: строка вида «Вопрос | Ответ»."
         ),
     )
+
+    # Настройки оформления текста
+    font_family = models.CharField(
+        _("шрифт текста"),
+        max_length=20,
+        choices=FontFamily.choices,
+        default=FontFamily.SANS,
+        blank=True,
+    )
+    text_size = models.CharField(
+        _("размер текста"),
+        max_length=10,
+        choices=TextSize.choices,
+        default=TextSize.BASE,
+        blank=True,
+    )
+    text_align = models.CharField(
+        _("выравнивание текста"),
+        max_length=10,
+        choices=TextAlign.choices,
+        default=TextAlign.LEFT,
+        blank=True,
+    )
+    text_color = models.CharField(
+        _("цвет текста"),
+        max_length=15,
+        choices=TextColor.choices,
+        default=TextColor.DEFAULT,
+        blank=True,
+    )
+
+    # Изображение и настройки его отображения
     image = models.ImageField(
         _("изображение"),
         upload_to="pages/blocks/%Y/",
         blank=True,
         null=True,
     )
+    image_size = models.CharField(
+        _("размер изображения"),
+        max_length=15,
+        choices=ImageSize.choices,
+        default=ImageSize.MEDIUM,
+        blank=True,
+    )
+    image_align = models.CharField(
+        _("выравнивание изображения"),
+        max_length=10,
+        choices=ImageAlign.choices,
+        default=ImageAlign.CENTER,
+        blank=True,
+    )
+    image_radius = models.CharField(
+        _("скругление углов фото"),
+        max_length=15,
+        choices=ImageRadius.choices,
+        default=ImageRadius.ROUNDED,
+        blank=True,
+    )
+
     button_text = models.CharField(_("текст кнопки"), max_length=100, blank=True)
     button_url = models.CharField(_("ссылка кнопки"), max_length=255, blank=True)
     order = models.PositiveIntegerField(_("порядок"), default=0)
@@ -473,6 +574,115 @@ class PageBlock(models.Model):
     def __str__(self):
         label = self.title or self.get_block_type_display()
         return f"{self.page.title} — [{self.get_block_type_display()}] {label}"
+
+    def save(self, *args, **kwargs):
+        if not self.font_family:
+            self.font_family = self.FontFamily.SANS
+        if not self.text_size:
+            self.text_size = self.TextSize.BASE
+        if not self.text_align:
+            self.text_align = self.TextAlign.LEFT
+        if not self.text_color:
+            self.text_color = self.TextColor.DEFAULT
+        if not self.image_size:
+            self.image_size = self.ImageSize.MEDIUM
+        if not self.image_align:
+            self.image_align = self.ImageAlign.CENTER
+        if not self.image_radius:
+            self.image_radius = self.ImageRadius.ROUNDED
+        super().save(*args, **kwargs)
+
+    def get_font_css(self) -> str:
+        """Возвращает CSS-классы шрифта."""
+        mapping = {
+            self.FontFamily.HEADING: "font-heading uppercase",
+            self.FontFamily.SANS: "font-sans",
+            self.FontFamily.SERIF: "font-serif",
+            self.FontFamily.MONO: "font-mono",
+        }
+        return mapping.get(self.font_family, "font-sans")
+
+    def get_text_size_css(self) -> str:
+        """Возвращает CSS-класс размера шрифта."""
+        mapping = {
+            self.TextSize.SM: "text-sm",
+            self.TextSize.BASE: "text-base",
+            self.TextSize.LG: "text-lg",
+            self.TextSize.XL: "text-xl",
+            self.TextSize.XL2: "text-2xl",
+            self.TextSize.XL3: "text-3xl",
+            self.TextSize.XL4: "text-4xl",
+        }
+        return mapping.get(self.text_size, "text-base")
+
+    def get_text_align_css(self) -> str:
+        """Возвращает CSS-класс выравнивания текста."""
+        mapping = {
+            self.TextAlign.LEFT: "text-left",
+            self.TextAlign.CENTER: "text-center",
+            self.TextAlign.RIGHT: "text-right",
+            self.TextAlign.JUSTIFY: "text-justify",
+        }
+        return mapping.get(self.text_align, "text-left")
+
+    def get_text_color_css(self) -> str:
+        """Возвращает CSS-класс цвета текста."""
+        mapping = {
+            self.TextColor.DEFAULT: "text-gray-800",
+            self.TextColor.BLUE: "text-blue-700",
+            self.TextColor.WHITE: "text-white",
+            self.TextColor.MUTED: "text-gray-500",
+        }
+        return mapping.get(self.text_color, "text-gray-800")
+
+    def get_image_size_css(self) -> str:
+        """Возвращает CSS-класс максимальной ширины изображения."""
+        mapping = {
+            self.ImageSize.SMALL: "max-w-xs",
+            self.ImageSize.MEDIUM: "max-w-md",
+            self.ImageSize.LARGE: "max-w-2xl",
+            self.ImageSize.FULL: "w-full max-w-full",
+            self.ImageSize.ORIGINAL: "max-w-fit",
+        }
+        return mapping.get(self.image_size, "max-w-md")
+
+    def get_image_align_css(self) -> str:
+        """Возвращает CSS-класс выравнивания изображения (margin auto)."""
+        mapping = {
+            self.ImageAlign.CENTER: "mx-auto",
+            self.ImageAlign.LEFT: "mr-auto",
+            self.ImageAlign.RIGHT: "ml-auto",
+        }
+        return mapping.get(self.image_align, "mx-auto")
+
+    def get_image_radius_css(self) -> str:
+        """Возвращает CSS-класс скругления углов изображения."""
+        mapping = {
+            self.ImageRadius.ROUNDED: "rounded-2xl",
+            self.ImageRadius.FULL: "rounded-full",
+            self.ImageRadius.NONE: "rounded-none",
+        }
+        return mapping.get(self.image_radius, "rounded-2xl")
+
+    @property
+    def rendered_content(self):
+        """Рендерит контент: безопасно поддерживает HTML-теги или авто-абзацы."""
+        text = self.content or ""
+        html_tags = (
+            "<p>",
+            "<div>",
+            "<br>",
+            "<span",
+            "<h1",
+            "<h2",
+            "<h3",
+            "<ul",
+            "<ol",
+            "<table>",
+        )
+        if any(tag in text.lower() for tag in html_tags):
+            return mark_safe(text)  # noqa: S308  # Владелец сайта формирует разметку
+        return mark_safe(linebreaks(text))  # noqa: S308
 
     def parsed_cards(self):
         """Парсит content в список карточек [title, text, url]."""

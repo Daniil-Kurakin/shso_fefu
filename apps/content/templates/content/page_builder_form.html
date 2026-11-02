@@ -229,28 +229,70 @@
                   </p>
                 </div>
 
-                {# Изображение #}
-                <div class="sm:col-span-6">
-                  <label class="block font-semibold text-gray-700 mb-1">
-                    {{ b_form.image.label }}
-                  </label>
-                  {% if b_form.instance.image %}
-                    <div class="mb-2 flex items-center gap-2">
-                      <img src="{{ b_form.instance.image.url }}" alt="" class="w-12 h-12 rounded-lg object-cover border border-gray-200">
-                      <span class="text-[11px] text-gray-500 truncate max-w-xs">{{ b_form.instance.image.name }}</span>
+                {# Настройки оформления текста #}
+                <div class="sm:col-span-12 pt-2 border-t border-gray-100">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px] block mb-2">
+                    ✍️ {% trans "Оформление текста" %}
+                  </span>
+                  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.font_family.label }}</label>
+                      {{ b_form.font_family }}
                     </div>
-                  {% endif %}
-                  {{ b_form.image }}
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.text_size.label }}</label>
+                      {{ b_form.text_size }}
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.text_align.label }}</label>
+                      {{ b_form.text_align }}
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.text_color.label }}</label>
+                      {{ b_form.text_color }}
+                    </div>
+                  </div>
+                </div>
+
+                {# Изображение и его настройки #}
+                <div class="sm:col-span-12 pt-2 border-t border-gray-100">
+                  <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px] block mb-2">
+                    🖼️ {% trans "Изображение и параметры отображения" %}
+                  </span>
+                  <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div class="sm:col-span-1">
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.image.label }}</label>
+                      {% if b_form.instance.image %}
+                        <div class="mb-2 flex items-center gap-2">
+                          <img src="{{ b_form.instance.image.url }}" alt="" class="w-10 h-10 rounded-lg object-cover border border-gray-200">
+                          <span class="text-[10px] text-gray-500 truncate max-w-[120px]">{{ b_form.instance.image.name }}</span>
+                        </div>
+                      {% endif %}
+                      {{ b_form.image }}
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.image_size.label }}</label>
+                      {{ b_form.image_size }}
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.image_align.label }}</label>
+                      {{ b_form.image_align }}
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ b_form.image_radius.label }}</label>
+                      {{ b_form.image_radius }}
+                    </div>
+                  </div>
                 </div>
 
                 {# Кнопка: текст и ссылка #}
-                <div class="sm:col-span-3">
+                <div class="sm:col-span-6 pt-2 border-t border-gray-100">
                   <label class="block font-semibold text-gray-700 mb-1">
                     {{ b_form.button_text.label }}
                   </label>
                   {{ b_form.button_text }}
                 </div>
-                <div class="sm:col-span-3">
+                <div class="sm:col-span-6 pt-2 border-t border-gray-100">
                   <label class="block font-semibold text-gray-700 mb-1">
                     {{ b_form.button_url.label }}
                   </label>
@@ -340,19 +382,64 @@
           {% trans "Подсказка: Для карточек вводите по строке «Заголовок | Текст | Ссылка». Для FAQ: «Вопрос | Ответ»." %}
         </p>
       </div>
-      <div class="sm:col-span-6">
-        <label class="block font-semibold text-gray-700 mb-1">
-          {{ block_formset.empty_form.image.label }}
-        </label>
-        {{ block_formset.empty_form.image }}
+      {# Настройки оформления текста #}
+      <div class="sm:col-span-12 pt-2 border-t border-gray-100">
+        <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px] block mb-2">
+          ✍️ {% trans "Оформление текста" %}
+        </span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.font_family.label }}</label>
+            {{ block_formset.empty_form.font_family }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.text_size.label }}</label>
+            {{ block_formset.empty_form.text_size }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.text_align.label }}</label>
+            {{ block_formset.empty_form.text_align }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.text_color.label }}</label>
+            {{ block_formset.empty_form.text_color }}
+          </div>
+        </div>
       </div>
-      <div class="sm:col-span-3">
+
+      {# Изображение и его настройки #}
+      <div class="sm:col-span-12 pt-2 border-t border-gray-100">
+        <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px] block mb-2">
+          🖼️ {% trans "Изображение и параметры отображения" %}
+        </span>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.image.label }}</label>
+            {{ block_formset.empty_form.image }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.image_size.label }}</label>
+            {{ block_formset.empty_form.image_size }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.image_align.label }}</label>
+            {{ block_formset.empty_form.image_align }}
+          </div>
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1 text-[11px]">{{ block_formset.empty_form.image_radius.label }}</label>
+            {{ block_formset.empty_form.image_radius }}
+          </div>
+        </div>
+      </div>
+
+      {# Кнопка: текст и ссылка #}
+      <div class="sm:col-span-6 pt-2 border-t border-gray-100">
         <label class="block font-semibold text-gray-700 mb-1">
           {{ block_formset.empty_form.button_text.label }}
         </label>
         {{ block_formset.empty_form.button_text }}
       </div>
-      <div class="sm:col-span-3">
+      <div class="sm:col-span-6 pt-2 border-t border-gray-100">
         <label class="block font-semibold text-gray-700 mb-1">
           {{ block_formset.empty_form.button_url.label }}
         </label>

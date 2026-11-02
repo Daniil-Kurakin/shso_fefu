@@ -126,13 +126,64 @@ class GlossaryTermAdmin(admin.ModelAdmin):
 class PageBlockInline(admin.StackedInline):
     model = PageBlock
     extra = 1
-    fields = (
-        ("block_type", "order", "is_active"),
-        ("title", "subtitle"),
-        "content",
-        ("button_text", "button_url"),
-        "image",
+    fieldsets = (
+        (
+            _("Содержимое блока"),
+            {
+                "fields": (
+                    ("block_type", "order", "is_active"),
+                    ("title", "subtitle"),
+                    "content",
+                )
+            },
+        ),
+        (
+            _("Оформление текста (шрифт, кегль, выравнивание, цвет)"),
+            {
+                "fields": (("font_family", "text_size", "text_align", "text_color"),),
+            },
+        ),
+        (
+            _("Оформление изображения (размер, выравнивание, скругление)"),
+            {
+                "fields": (
+                    "image",
+                    ("image_size", "image_align", "image_radius"),
+                ),
+            },
+        ),
+        (
+            _("Кнопка перехода"),
+            {
+                "fields": (("button_text", "button_url"),),
+            },
+        ),
     )
+
+
+@admin.register(PageBlock)
+class PageBlockAdmin(admin.ModelAdmin):
+    list_display = (
+        "__str__",
+        "page",
+        "block_type",
+        "font_family",
+        "text_size",
+        "image_size",
+        "order",
+        "is_active",
+    )
+    list_filter = (
+        "block_type",
+        "font_family",
+        "text_size",
+        "image_size",
+        "is_active",
+        "page",
+    )
+    search_fields = ("title", "subtitle", "content", "page__title")
+    list_editable = ("order", "is_active")
+    fieldsets = PageBlockInline.fieldsets
 
 
 @admin.register(CustomPage)

@@ -99,8 +99,8 @@
               {% endif %}
 
               <div class="flex flex-col {% if block.image %}lg:flex-row gap-8 items-start{% endif %}">
-                <div class="flex-1 text-sm sm:text-base text-gray-700 leading-relaxed space-y-4">
-                  {{ block.content|linebreaks }}
+                <div class="flex-1 {{ block.get_font_css }} {{ block.get_text_size_css }} {{ block.get_text_align_css }} {{ block.get_text_color_css }} leading-relaxed space-y-4">
+                  {{ block.rendered_content }}
                   {% if block.button_text and block.button_url %}
                     <div class="pt-4">
                       <a href="{{ block.button_url }}" class="btn btn-primary text-xs sm:text-sm font-semibold">
@@ -110,7 +110,7 @@
                   {% endif %}
                 </div>
                 {% if block.image %}
-                  <div class="lg:w-2/5 shrink-0 rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+                  <div class="{{ block.get_image_size_css }} {{ block.get_image_align_css }} shrink-0 {{ block.get_image_radius_css }} overflow-hidden border border-gray-200 shadow-sm">
                     <img src="{{ block.image.url }}" alt="{{ block.title }}" class="w-full h-auto object-cover">
                   </div>
                 {% endif %}
@@ -223,10 +223,10 @@
           {# БЛОК: ЦИТАТА / ВРЕЗКА #}
           {% elif block.block_type == 'quote' %}
             <section class="card-base p-6 sm:p-10 bg-gradient-to-br from-amber-50/60 to-orange-50/40 border border-amber-200/80">
-              <div class="max-w-3xl mx-auto text-center space-y-4">
+              <div class="max-w-3xl mx-auto {{ block.get_text_align_css }} space-y-4">
                 <span class="text-4xl sm:text-5xl text-amber-500 font-serif leading-none block">“</span>
-                <blockquote class="text-lg sm:text-2xl font-medium text-gray-900 italic leading-relaxed">
-                  {{ block.content }}
+                <blockquote class="{{ block.get_font_css }} {{ block.get_text_size_css }} {{ block.get_text_color_css }} font-medium italic leading-relaxed">
+                  {{ block.rendered_content }}
                 </blockquote>
                 {% if block.title or block.subtitle %}
                   <div class="pt-2">
@@ -245,12 +245,12 @@
           {% elif block.block_type == 'gallery' %}
             <section class="card-base p-6 bg-white space-y-4">
               {% if block.image %}
-                <div class="rounded-2xl overflow-hidden border border-gray-200 shadow-sm max-h-[500px]">
+                <div class="{{ block.get_image_size_css }} {{ block.get_image_align_css }} {{ block.get_image_radius_css }} overflow-hidden border border-gray-200 shadow-sm max-h-[600px]">
                   <img src="{{ block.image.url }}" alt="{{ block.title }}" class="w-full h-full object-cover">
                 </div>
               {% endif %}
               {% if block.title or block.subtitle or block.content %}
-                <div class="text-center max-w-xl mx-auto">
+                <div class="{{ block.get_text_align_css }} max-w-xl mx-auto">
                   {% if block.title %}
                     <h3 class="text-lg font-bold text-gray-900">{{ block.title }}</h3>
                   {% endif %}
@@ -258,7 +258,9 @@
                     <p class="text-xs text-gray-500 mt-1">{{ block.subtitle }}</p>
                   {% endif %}
                   {% if block.content %}
-                    <p class="text-xs text-gray-600 mt-2">{{ block.content }}</p>
+                    <div class="{{ block.get_font_css }} {{ block.get_text_size_css }} {{ block.get_text_color_css }} mt-2">
+                      {{ block.rendered_content }}
+                    </div>
                   {% endif %}
                 </div>
               {% endif %}

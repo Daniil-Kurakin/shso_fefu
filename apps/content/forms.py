@@ -149,7 +149,14 @@ class PageBlockForm(forms.ModelForm):
             "title",
             "subtitle",
             "content",
+            "font_family",
+            "text_size",
+            "text_align",
+            "text_color",
             "image",
+            "image_size",
+            "image_align",
+            "image_radius",
             "button_text",
             "button_url",
             "order",
@@ -174,13 +181,20 @@ class PageBlockForm(forms.ModelForm):
                     "rows": 4,
                     "class": TEXTAREA_CLS,
                     "placeholder": _(
-                        "Текст, параграфы или разметка. "
+                        "Текст, параграфы или HTML-разметка. "
                         "Для карточек: Заголовок | Текст | Ссылка. "
                         "Для FAQ: Вопрос | Ответ."
                     ),
                 }
             ),
+            "font_family": forms.Select(attrs={"class": SELECT_CLS}),
+            "text_size": forms.Select(attrs={"class": SELECT_CLS}),
+            "text_align": forms.Select(attrs={"class": SELECT_CLS}),
+            "text_color": forms.Select(attrs={"class": SELECT_CLS}),
             "image": forms.FileInput(attrs={"class": FILE_CLS}),
+            "image_size": forms.Select(attrs={"class": SELECT_CLS}),
+            "image_align": forms.Select(attrs={"class": SELECT_CLS}),
+            "image_radius": forms.Select(attrs={"class": SELECT_CLS}),
             "button_text": forms.TextInput(
                 attrs={
                     "class": INPUT_CLS,
