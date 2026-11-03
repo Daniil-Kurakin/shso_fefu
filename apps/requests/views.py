@@ -4,12 +4,20 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DetailView, TemplateView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    TemplateView,
+    UpdateView,
+)
 
 from apps.accounts.models import Role
 from apps.content.models import CustomPage
@@ -18,11 +26,13 @@ from apps.squads.models import SquadPageRevision
 
 from .forms import (
     BookedPremiseFormSet,
+    HQRequestForm,
+    HQRequestResponseForm,
     PassRequestForm,
     PassVisitorFormSet,
     RoomBookingRequestForm,
 )
-from .models import BookedPremise, PassRequest, RoomBookingRequest
+from .models import BookedPremise, HQRequest, HQRequestResponse, PassRequest, RoomBookingRequest
 
 
 class CommandStaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
@@ -344,6 +354,13 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             context["custom_pages"] = CustomPage.objects.none()
             context["pages_count"] = 0
 
+        # 6. Запросы штаба
+        hq_qs = HQRequest.objects.annotate(responses_total=Count("responses")).order_by(
+            "-created_at"
+        )
+        context["hq_requests"] = hq_qs
+        context["hq_requests_count"] = hq_qs.count()
+
         # Бейджи количества ожидающих согласования
         context["pending_rooms_count"] = RoomBookingRequest.objects.filter(
             status=RoomBookingRequest.Status.SUBMITTED
@@ -452,4 +469,204 @@ class AdminModerationView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
             page.delete()
             messages.success(request, _(f"Страница «{title}» удалена."))
 
+        elif action == "delete_hq_request":
+            if not getattr(request.user, "can_manage_hq_requests", False):
+                raise PermissionDenied(
+                    _("Управление запросами штаба доступно только администраторам и владельцу.")
+                )
+            req_item = get_object_or_404(HQRequest, pk=target_id)
+            title = req_item.title
+            req_item.delete()
+            messages.success(request, _(f"Запрос «{title}» удален."))
+
         return redirect(f"{reverse('requests:moderation')}?tab={tab}")
+
+
+class HQRequestAdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Создание и редактирование запросов штаба разрешено только администраторам и владельцу."""
+
+    def test_func(self):
+        return bool(self.request.user.is_authenticated and self.request.user.can_manage_hq_requests)
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        raise PermissionDenied(
+            _("Управление запросами штаба доступно только администраторам и владельцу.")
+        )
+
+
+class HQRequestListView(ListView):
+    """
+    Каталог запросов от штаба.
+    Доступен для просмотра всем пользователям сайта.
+    """
+
+    model = HQRequest
+    template_name = "requests/hq_request_list.html"
+    context_object_name = "hq_requests"
+    paginate_by = 12
+
+    def get_queryset(self):
+        qs = (
+            HQRequest.objects.select_related("created_by")
+            .annotate(annotated_responses_count=Count("responses"))
+            .order_by("status", "-event_date", "-created_at")
+        )
+        level = self.request.GET.get("level", "").strip()
+        if level:
+            qs = qs.filter(level=level)
+
+        query = self.request.GET.get("q", "").strip()
+        if query:
+            qs = qs.filter(
+                Q(title__icontains=query)
+                | Q(customer__icontains=query)
+                | Q(description__icontains=query)
+                | Q(location__icontains=query)
+            )
+
+        status_val = self.request.GET.get("status", "").strip()
+        if status_val in [HQRequest.Status.OPEN, HQRequest.Status.CLOSED]:
+            qs = qs.filter(status=status_val)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["levels"] = HQRequest.Level.choices
+        context["selected_level"] = self.request.GET.get("level", "").strip()
+        context["selected_status"] = self.request.GET.get("status", "").strip()
+        context["search_query"] = self.request.GET.get("q", "").strip()
+        context["total_count"] = self.get_queryset().count()
+        return context
+
+
+class HQRequestDetailView(DetailView):
+    """
+    Детальная страница запроса штаба.
+    Отображает: название, описание, картинку, заказчика, уровень,
+    ссылку на добро.рф (если заполнено), дату, время, локацию,
+    количество откликнувшихся и кнопку «Откликнуться».
+    """
+
+    model = HQRequest
+    template_name = "requests/hq_request_detail.html"
+    context_object_name = "hq_request"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        hq_req = self.object
+
+        user_responded = False
+        user_response = None
+        user_can_respond = False
+
+        if user.is_authenticated:
+            user_can_respond = user.is_fighter_or_staff
+            user_response = hq_req.responses.filter(user=user).first()
+            user_responded = user_response is not None
+
+            # Администраторам и владельцу отображаем полный список откликнувшихся
+            if user.can_manage_hq_requests:
+                context["responses_list"] = (
+                    hq_req.responses.select_related("user")
+                    .prefetch_related("user__memberships__squad")
+                    .order_by("-created_at")
+                )
+
+        context["user_responded"] = user_responded
+        context["user_response"] = user_response
+        context["user_can_respond"] = user_can_respond
+        context["response_form"] = HQRequestResponseForm()
+        return context
+
+
+class HQRequestCreateView(HQRequestAdminRequiredMixin, CreateView):
+    """Создание нового запроса штаба."""
+
+    model = HQRequest
+    form_class = HQRequestForm
+    template_name = "requests/hq_request_form.html"
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        messages.success(self.request, _(f"Запрос «{self.object.title}» успешно создан!"))
+        return response
+
+
+class HQRequestUpdateView(HQRequestAdminRequiredMixin, UpdateView):
+    """Редактирование запроса штаба."""
+
+    model = HQRequest
+    form_class = HQRequestForm
+    template_name = "requests/hq_request_form.html"
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, _(f"Запрос «{self.object.title}» успешно обновлен!"))
+        return response
+
+
+class HQRequestDeleteView(HQRequestAdminRequiredMixin, DeleteView):
+    """Удаление запроса штаба."""
+
+    model = HQRequest
+    template_name = "requests/hq_request_confirm_delete.html"
+    success_url = reverse_lazy("requests:hq_list")
+
+    def form_valid(self, form):
+        title = self.object.title
+        response = super().form_valid(form)
+        messages.success(self.request, _(f"Запрос «{title}» успешно удален."))
+        return response
+
+
+class HQRequestRespondView(LoginRequiredMixin, View):
+    """
+    Отклик бойца или комсостава на запрос штаба.
+    Поддерживает действия 'respond' (откликнуться) и 'cancel' (отозвать отклик).
+    """
+
+    def post(self, request, pk):
+        hq_request = get_object_or_404(HQRequest, pk=pk)
+
+        if not request.user.is_fighter_or_staff:
+            messages.error(
+                request,
+                _("Откликаться на запросы штаба могут только бойцы и комсостав отрядов."),
+            )
+            return redirect(hq_request.get_absolute_url())
+
+        action = request.POST.get("action", "respond")
+
+        if action == "cancel":
+            HQRequestResponse.objects.filter(request=hq_request, user=request.user).delete()
+            messages.info(request, _(f"Вы отменили отклик на запрос «{hq_request.title}»."))
+            return redirect(hq_request.get_absolute_url())
+
+        if hq_request.status == HQRequest.Status.CLOSED:
+            messages.error(request, _("Прием откликов на этот запрос уже завершен."))
+            return redirect(hq_request.get_absolute_url())
+
+        form = HQRequestResponseForm(request.POST)
+        comment = ""
+        if form.is_valid():
+            comment = form.cleaned_data.get("comment", "").strip()
+
+        resp, created = HQRequestResponse.objects.get_or_create(
+            request=hq_request,
+            user=request.user,
+            defaults={"comment": comment},
+        )
+        if not created and comment:
+            resp.comment = comment
+            resp.save(update_fields=["comment"])
+
+        messages.success(
+            request,
+            _(f"Вы успешно откликнулись на запрос «{hq_request.title}»!"),
+        )
+        return redirect(hq_request.get_absolute_url())

@@ -8,7 +8,15 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from .models import BookedPremise, CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from .models import (
+    BookedPremise,
+    CampusPremise,
+    HQRequest,
+    HQRequestResponse,
+    PassRequest,
+    PassVisitor,
+    RoomBookingRequest,
+)
 
 
 class BookedPremiseInline(admin.TabularInline):
@@ -230,3 +238,41 @@ class PassRequestAdmin(admin.ModelAdmin):
             pr.purge_personal_data()
             count += 1
         self.message_user(request, _(f"Персональные данные очищены для {count} заявок."))
+
+
+class HQRequestResponseInline(admin.TabularInline):
+    model = HQRequestResponse
+    extra = 0
+    fields = ("user", "comment", "created_at")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(HQRequest)
+class HQRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "customer",
+        "level",
+        "event_date",
+        "event_time",
+        "location",
+        "status",
+        "responses_count_display",
+        "created_at",
+    )
+    list_filter = ("level", "status", "event_date")
+    search_fields = ("title", "description", "customer", "location")
+    raw_id_fields = ("created_by",)
+    inlines = [HQRequestResponseInline]
+
+    @admin.display(description=_("Откликов"))
+    def responses_count_display(self, obj):
+        return obj.responses.count()
+
+
+@admin.register(HQRequestResponse)
+class HQRequestResponseAdmin(admin.ModelAdmin):
+    list_display = ("request", "user", "created_at")
+    list_filter = ("created_at", "request__level")
+    search_fields = ("request__title", "user__email", "user__full_name", "comment")
+    raw_id_fields = ("request", "user")

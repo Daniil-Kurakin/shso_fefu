@@ -326,4 +326,3 @@ class TestContentConstructors:
         block_admin_url = reverse("admin:content_pageblock_changelist")
         res = client.get(block_admin_url)
         assert res.status_code == 200
-

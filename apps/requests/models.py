@@ -630,3 +630,121 @@ class PassVisitor(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.get_document_type_display()})"
+
+
+class HQRequest(models.Model):
+    """
+    Запрос от штаба (мероприятие, задача, акция),
+    на который могут откликаться бойцы и комсостав отрядов.
+    """
+
+    class Level(models.TextChoices):
+        UNIVERSITY = "university", _("Вузовский")
+        CITY = "city", _("Городской")
+        REGIONAL = "regional", _("Региональный")
+        DISTRICT = "district", _("Окружной")
+        ALL_RUSSIAN = "all_russian", _("Всероссийский")
+        INTERNATIONAL = "international", _("Международный")
+
+    class Status(models.TextChoices):
+        OPEN = "open", _("Открыт")
+        CLOSED = "closed", _("Завершен")
+
+    title = models.CharField(_("название запроса"), max_length=255)
+    description = models.TextField(_("описание"))
+    image = models.ImageField(
+        _("картинка / афиша"),
+        upload_to="hq_requests/%Y/%m/",
+        blank=True,
+        null=True,
+    )
+    customer = models.CharField(
+        _("заказчик"),
+        max_length=255,
+        help_text=_("Организация или заказчик мероприятия"),
+    )
+    level = models.CharField(
+        _("уровень запроса"),
+        max_length=30,
+        choices=Level.choices,
+        default=Level.UNIVERSITY,
+    )
+    dobro_ru_url = models.URLField(
+        _("ссылка на добро.рф"),
+        blank=True,
+        help_text=_("Ссылка на мероприятие на dobro.ru (отображается, только если заполнена)"),
+    )
+    event_date = models.DateField(_("дата проведения"))
+    event_time = models.TimeField(_("время проведения"), blank=True, null=True)
+    location = models.CharField(_("локация"), max_length=255)
+    status = models.CharField(
+        _("статус"),
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_hq_requests",
+        verbose_name=_("автор (администратор)"),
+    )
+    created_at = models.DateTimeField(_("создан"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("обновлен"), auto_now=True)
+
+    class Meta:
+        verbose_name = _("запрос штаба")
+        verbose_name_plural = _("запросы штаба")
+        ordering = ["-event_date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.get_level_display()})"
+
+    def get_absolute_url(self):
+        return reverse("requests:hq_detail", kwargs={"pk": self.pk})
+
+    @property
+    def responses_count(self) -> int:
+        return self.responses.count()
+
+    def is_user_responded(self, user) -> bool:
+        if not user or not user.is_authenticated:
+            return False
+        return self.responses.filter(user=user).exists()
+
+
+class HQRequestResponse(models.Model):
+    """Отклик бойца или представителя комсостава на запрос штаба."""
+
+    request = models.ForeignKey(
+        HQRequest,
+        on_delete=models.CASCADE,
+        related_name="responses",
+        verbose_name=_("запрос"),
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="hq_request_responses",
+        verbose_name=_("боец / заявитель"),
+    )
+    comment = models.TextField(_("комментарий"), blank=True)
+    created_at = models.DateTimeField(_("дата отклика"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("отклик на запрос")
+        verbose_name_plural = _("отклики на запросы")
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["request", "user"],
+                name="unique_hq_request_response_per_user",
+            )
+        ]
+
+    def __str__(self):
+        user_name = self.user.get_full_name() if self.user_id else "—"
+        req_title = self.request.title if self.request_id else "—"
+        return f"{user_name} -> {req_title}"

@@ -3,7 +3,15 @@ from django.forms import inlineformset_factory
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import BookedPremise, CampusPremise, PassRequest, PassVisitor, RoomBookingRequest
+from .models import (
+    BookedPremise,
+    CampusPremise,
+    HQRequest,
+    HQRequestResponse,
+    PassRequest,
+    PassVisitor,
+    RoomBookingRequest,
+)
 
 INPUT_CLS = (
     "w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm "
@@ -342,3 +350,84 @@ PassVisitorFormSet = inlineformset_factory(
     extra=1,
     can_delete=True,
 )
+
+
+class HQRequestForm(forms.ModelForm):
+    """Форма создания и редактирования запроса штаба (для админов и владельца)."""
+
+    class Meta:
+        model = HQRequest
+        fields = (
+            "title",
+            "description",
+            "image",
+            "customer",
+            "level",
+            "dobro_ru_url",
+            "event_date",
+            "event_time",
+            "location",
+            "status",
+        )
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": _("Название запроса / мероприятия"),
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLS,
+                    "rows": 5,
+                    "placeholder": _(
+                        "Подробное описание задачи, условий участия и задач отряда..."
+                    ),
+                }
+            ),
+            "customer": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": _(
+                        "Заказчик (например: Ректорат ДВФУ, Росмолодёжь, ВДЦ «Океан»)"
+                    ),
+                }
+            ),
+            "level": forms.Select(attrs={"class": INPUT_CLS}),
+            "dobro_ru_url": forms.URLInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": "https://dobro.ru/event/...",
+                }
+            ),
+            "event_date": forms.DateInput(attrs={"class": INPUT_CLS, "type": "date"}),
+            "event_time": forms.TimeInput(
+                attrs={"class": INPUT_CLS, "type": "time", "data-timepicker": "true"}
+            ),
+            "location": forms.TextInput(
+                attrs={
+                    "class": INPUT_CLS,
+                    "placeholder": _("Локация (например: Корпус А, Набережная, Синий зал)"),
+                }
+            ),
+            "status": forms.Select(attrs={"class": INPUT_CLS}),
+        }
+
+
+class HQRequestResponseForm(forms.ModelForm):
+    """Форма отклика бойца или комсостава на запрос штаба."""
+
+    class Meta:
+        model = HQRequestResponse
+        fields = ("comment",)
+        widgets = {
+            "comment": forms.Textarea(
+                attrs={
+                    "class": INPUT_CLS,
+                    "rows": 3,
+                    "placeholder": _(
+                        "Ваш комментарий (отряд, контакты или вопросы, если необходимо)..."
+                    ),
+                }
+            ),
+        }

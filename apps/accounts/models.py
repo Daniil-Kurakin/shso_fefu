@@ -166,6 +166,29 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Права владельца сайта: доступ к Django админ-панели."""
         return bool(self.is_superuser or self.role == Role.OWNER)
 
+    @property
+    def can_manage_hq_requests(self) -> bool:
+        """Права создания и управления запросами штаба: только админы и владелец."""
+        if not self.is_authenticated:
+            return False
+        return bool(self.is_superuser or self.role in {Role.OWNER, Role.ADMIN})
+
+    @property
+    def is_fighter_or_staff(self) -> bool:
+        """Права бойца или комсостава: может откликаться на запросы штаба."""
+        if not self.is_authenticated:
+            return False
+        if self.is_superuser or self.role in {
+            Role.OWNER,
+            Role.ADMIN,
+            Role.CURATOR,
+            Role.SQUAD_STAFF,
+        }:
+            return True
+        from apps.squads.models import Membership
+
+        return Membership.objects.filter(user=self, is_active=True).exists()
+
     def get_managed_squads(self):
         """Возвращает queryset отрядов, которыми пользователь вправе управлять."""
         from apps.squads.models import Squad

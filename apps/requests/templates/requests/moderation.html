@@ -105,11 +105,21 @@
           </span>
         </a>
       {% endif %}
+
+      {# Вкладка 6: Запросы штаба #}
+      <a href="?tab=hq_requests"
+         class="inline-flex items-center gap-2 px-5 py-3 border-b-2 font-semibold text-xs tracking-wider transition
+           {% if tab == 'hq_requests' %}border-blue-600 text-blue-700{% else %}border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300{% endif %}">
+        <span>📢 {% trans "Запросы штаба" %}</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+          {{ hq_requests_count }}
+        </span>
+      </a>
     </div>
   </div>
 
   {# ФИЛЬТРЫ СТАТУСА #}
-  {% if tab != 'pages' %}
+  {% if tab != 'pages' and tab != 'hq_requests' %}
   <div class="mb-6 flex flex-wrap items-center gap-2 text-xs">
     <span class="text-gray-400 font-semibold mr-1">{% trans "Фильтр:" %}</span>
     <a href="?tab={{ tab }}&status=all"
@@ -758,6 +768,114 @@
            class="btn btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold">
           + {% trans "Создать первую страницу" %}
         </a>
+      </div>
+    {% endif %}
+
+  {# ======================= ВКЛАДКА 6: ЗАПРОСЫ ШТАБА ======================= #}
+  {% elif tab == 'hq_requests' %}
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-900 font-heading">
+          {% trans "Запросы от штаба" %}
+        </h2>
+        <p class="text-xs text-gray-500 mt-1">
+          {% trans "Мероприятия, волонтерские и трудовые задачи. Бойцы и комсостав могут откликаться на них." %}
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="{% url 'requests:hq_list' %}"
+           class="btn btn-secondary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold">
+          <span>↗</span>
+          <span>{% trans "Открыть каталог" %}</span>
+        </a>
+        {% if user.can_manage_hq_requests %}
+          <a href="{% url 'requests:hq_create' %}"
+             class="btn btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold">
+            <span>+</span>
+            <span>{% trans "Создать запрос" %}</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if hq_requests %}
+      <div class="space-y-4">
+        {% for req in hq_requests %}
+          <div class="card-base p-5 sm:p-6 border border-gray-200/80 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="space-y-1.5 flex-1">
+              <div class="flex flex-wrap items-center gap-2.5">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">
+                  <a href="{{ req.get_absolute_url }}" class="hover:text-blue-700 transition">{{ req.title }}</a>
+                </h3>
+                <span class="badge badge-primary text-[11px] font-bold">
+                  🎯 {{ req.get_level_display }}
+                </span>
+                {% if req.status == "open" %}
+                  <span class="badge badge-success text-[11px] font-bold">
+                    ● {% trans "Открыт" %}
+                  </span>
+                {% else %}
+                  <span class="badge badge-gray text-[11px] font-bold">
+                    ○ {% trans "Завершен" %}
+                  </span>
+                {% endif %}
+                <span class="badge bg-purple-100 text-purple-800 text-[11px] font-bold">
+                  👥 {% trans "Откликов:" %} {{ req.responses_total|default:req.responses.count }}
+                </span>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                <span>🏢 <strong>{{ req.customer }}</strong></span>
+                <span>•</span>
+                <span>📅 {{ req.event_date|date:"d.m.Y" }}{% if req.event_time %} ({{ req.event_time|time:"H:i" }}){% endif %}</span>
+                <span>•</span>
+                <span>📍 {{ req.location }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+              <a href="{{ req.get_absolute_url }}"
+                 class="btn btn-secondary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <span>↗</span>
+                {% trans "Просмотреть" %}
+              </a>
+              {% if user.can_manage_hq_requests %}
+                <a href="{% url 'requests:hq_edit' req.pk %}"
+                   class="btn btn-primary inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                  <span>✏️</span>
+                  {% trans "Редактировать" %}
+                </a>
+                <form method="post" class="inline" onsubmit="return confirm('{% trans "Вы действительно хотите удалить запрос «" %}{{ req.title }}{% trans "»?" %}');">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete_hq_request">
+                  <input type="hidden" name="target_id" value="{{ req.pk }}">
+                  <input type="hidden" name="tab" value="hq_requests">
+                  <button type="submit"
+                          class="btn btn-outline text-xs px-3 py-2 font-semibold text-red-600 border-red-200 hover:bg-red-50"
+                          title="{% trans "Удалить запрос" %}">
+                    🗑️
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-16 card-base bg-white border border-dashed border-gray-300 rounded-2xl">
+        <span class="text-4xl block mb-3">📢</span>
+        <h3 class="text-base font-bold text-gray-900 mb-1">
+          {% trans "Запросов пока нет" %}
+        </h3>
+        <p class="text-xs text-gray-500 max-w-md mx-auto mb-5">
+          {% trans "Создайте запрос на мероприятие или акцию штаба, указав заказчика, дату, время и ссылку на ДОБРО.РФ." %}
+        </p>
+        {% if user.can_manage_hq_requests %}
+          <a href="{% url 'requests:hq_create' %}"
+             class="btn btn-primary inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold">
+            + {% trans "Создать первый запрос" %}
+          </a>
+        {% endif %}
       </div>
     {% endif %}
   {% endif %}

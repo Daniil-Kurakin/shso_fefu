@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{{ hq_request.title }} — {% trans "Запросы" %} — {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-10">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Навигация назад + действия администратора #}
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <a href="{% url 'requests:hq_list' %}"
+         class="inline-flex items-center gap-2 text-xs font-bold text-gray-600 hover:text-blue-700 transition">
+        <span>←</span>
+        <span>{% trans "Все запросы от штаба" %}</span>
+      </a>
+
+      {% if user.is_authenticated and user.can_manage_hq_requests %}
+        <div class="flex items-center gap-2">
+          <a href="{% url 'requests:hq_edit' hq_request.pk %}"
+             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition">
+            <span>✏️</span>
+            <span>{% trans "Редактировать" %}</span>
+          </a>
+          <a href="{% url 'requests:hq_delete' hq_request.pk %}"
+             class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition">
+            <span>🗑️</span>
+            <span>{% trans "Удалить" %}</span>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {# Карточка запроса #}
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+
+      {# Обложка / Изображение #}
+      {% if hq_request.image %}
+        <div class="relative w-full max-h-96 overflow-hidden bg-gray-900 flex items-center justify-center">
+          <img src="{{ hq_request.image.url }}"
+               alt="{{ hq_request.title }}"
+               class="w-full h-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+        </div>
+      {% endif %}
+
+      <div class="p-6 sm:p-8 lg:p-10">
+        {# Бейджи и уровень #}
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+            🎯 {{ hq_request.get_level_display }}
+          </span>
+
+          {% if hq_request.status == "open" %}
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              ● {% trans "Открыт для откликов" %}
+            </span>
+          {% else %}
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-300">
+              {% trans "Завершен" %}
+            </span>
+          {% endif %}
+
+          {# Ссылка на добро.рф — ВИДНО ТОЛЬКО ЕСЛИ ЗАПОЛНЕНО АДМИНОМ #}
+          {% if hq_request.dobro_ru_url %}
+            <a href="{{ hq_request.dobro_ru_url }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-300 transition">
+              <span>🧡</span>
+              <span>{% trans "Мероприятие на ДОБРО.РФ" %} ↗</span>
+            </a>
+          {% endif %}
+        </div>
+
+        {# Заголовок #}
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 tracking-tight font-heading">
+          {{ hq_request.title }}
+        </h1>
+
+        {# Заказчик #}
+        <div class="mt-2.5 flex items-center gap-2 text-sm text-gray-600 font-medium">
+          <span class="text-base">🏢</span>
+          <span>{% trans "Заказчик:" %} <strong class="text-gray-900">{{ hq_request.customer }}</strong></span>
+        </div>
+
+        {# Сетка ключевых параметров #}
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 rounded-2xl bg-gray-50 border border-gray-100">
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{% trans "Дата проведения" %}</div>
+            <div class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+              <span>📅</span>
+              <span>{{ hq_request.event_date|date:"d E Y" }}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{% trans "Время" %}</div>
+            <div class="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+              <span>⏰</span>
+              <span>{{ hq_request.event_time|time:"H:i"|default:"По согласованию" }}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{% trans "Локация" %}</div>
+            <div class="text-sm font-bold text-gray-900 flex items-center gap-1.5 truncate">
+              <span>📍</span>
+              <span class="truncate">{{ hq_request.location }}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">{% trans "Откликнулось" %}</div>
+            <div class="text-sm font-bold text-blue-700 flex items-center gap-1.5">
+              <span>👥</span>
+              <span>{{ hq_request.responses.count }} {% trans "чел." %}</span>
+            </div>
+          </div>
+        </div>
+
+        {# Описание запроса #}
+        <div class="mt-8">
+          <h2 class="text-base font-bold text-gray-900 uppercase tracking-wider mb-3">
+            {% trans "Описание запроса" %}
+          </h2>
+          <div class="prose prose-blue max-w-none text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+            {{ hq_request.description }}
+          </div>
+        </div>
+
+        {# Блок ссылки на dobro.ru если заполнено #}
+        {% if hq_request.dobro_ru_url %}
+          <div class="mt-8 p-5 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🧡</span>
+              <div>
+                <h3 class="text-sm font-bold text-orange-950">{% trans "Регистрация через платформу ДОБРО.РФ" %}</h3>
+                <p class="text-xs text-orange-800 mt-0.5">{% trans "Официальные волонтерские часы и электронная запись в ЛК волонтера." %}</p>
+              </div>
+            </div>
+            <a href="{{ hq_request.dobro_ru_url }}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 shadow-sm transition">
+              <span>{% trans "Перейти на ДОБРО.РФ" %}</span>
+              <span>↗</span>
+            </a>
+          </div>
+        {% endif %}
+
+        {# Блок отклика #}
+        <div class="mt-10 pt-8 border-t border-gray-200">
+          {% if not user.is_authenticated %}
+            {# Неавторизованный пользователь #}
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center">
+              <h3 class="text-base font-bold text-blue-900">{% trans "Хотите принять участие?" %}</h3>
+              <p class="mt-1.5 text-xs text-blue-800 max-w-lg mx-auto">
+                {% trans "Откликаться на запросы штаба могут бойцы и комсостав студенческих отрядов ДВФУ. Войдите в аккаунт, чтобы откликнуться." %}
+              </p>
+              <div class="mt-4">
+                <a href="{% url 'accounts:login' %}?next={{ request.path }}"
+                   class="inline-flex items-center px-6 py-2.5 rounded-xl text-xs font-bold bg-blue-700 text-white hover:bg-blue-800 transition shadow-xs">
+                  {% trans "Войти в аккаунт" %}
+                </a>
+              </div>
+            </div>
+
+          {% elif not user_can_respond %}
+            {# Пользователь авторизован, но является кандидатом (не боец и не комсостав) #}
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+              <span class="text-2xl">ℹ️</span>
+              <h3 class="mt-2 text-sm font-bold text-amber-900">{% trans "Отклик доступен бойцам и комсоставу" %}</h3>
+              <p class="mt-1 text-xs text-amber-800 max-w-md mx-auto">
+                {% trans "На запросы штаба могут откликаться только действительные бойцы и комсостав студенческих отрядов. Если вы уже боец, подтвердите членство в вашем отряде у командира." %}
+              </p>
+            </div>
+
+          {% else %}
+            {# Боец или комсостав #}
+            {% if hq_request.status == "closed" %}
+              <div class="bg-gray-100 border border-gray-300 rounded-2xl p-6 text-center text-gray-600">
+                <h3 class="text-sm font-bold">{% trans "Прием откликов завершен" %}</h3>
+                <p class="mt-1 text-xs text-gray-500">{% trans "Штаб завершил набор участников на данный запрос." %}</p>
+              </div>
+
+            {% elif user_responded %}
+              {# Пользователь уже откликнулся #}
+              <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <span class="text-3xl text-emerald-600">✓</span>
+                    <div>
+                      <h3 class="text-base font-bold text-emerald-950">{% trans "Вы откликнулись на этот запрос!" %}</h3>
+                      <p class="text-xs text-emerald-800 mt-0.5">
+                        {% trans "Ваша заявка зафиксирована. Штаб или заказчик свяжется с вами перед началом мероприятия." %}
+                      </p>
+                      {% if user_response.comment %}
+                        <div class="mt-2 text-xs text-emerald-900 bg-white/70 p-2.5 rounded-xl border border-emerald-200/60">
+                          <strong>{% trans "Ваш комментарий:" %}</strong> {{ user_response.comment }}
+                        </div>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <form method="post" action="{% url 'requests:hq_respond' hq_request.pk %}" class="shrink-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit"
+                            onclick="return confirm('{% trans "Вы уверены, что хотите отозвать свой отклик?" %}')"
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 transition">
+                      {% trans "Отменить отклик" %}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+            {% else %}
+              {# Форма подачи отклика #}
+              <div class="bg-blue-50/60 border border-blue-200 rounded-2xl p-6">
+                <h3 class="text-base font-bold text-gray-900 mb-2">{% trans "Готовы принять участие?" %}</h3>
+                <p class="text-xs text-gray-600 mb-4">
+                  {% trans "Нажмите кнопку «Откликнуться», чтобы штаб включил вас в состав участников. При необходимости оставьте комментарий." %}
+                </p>
+
+                <form method="post" action="{% url 'requests:hq_respond' hq_request.pk %}" class="flex flex-col gap-3">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="respond">
+
+                  <div>
+                    <textarea name="comment"
+                              rows="2"
+                              placeholder="{% trans "Комментарий (необязательно: если есть пожелания по роли, времени или отряду)..." %}"
+                              class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-xs focus:ring-2 focus:ring-blue-500 bg-white"></textarea>
+                  </div>
+
+                  <div class="flex justify-end">
+                    <button type="submit"
+                            class="px-6 py-3 rounded-xl text-xs font-bold bg-blue-700 text-white hover:bg-blue-800 shadow-sm transition">
+                      {% trans "Откликнуться на запрос" %}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            {% endif %}
+
+          {% endif %}
+        </div>
+
+        {# Для администраторов и владельца: таблица откликнувшихся #}
+        {% if user.is_authenticated and user.can_manage_hq_requests %}
+          <div class="mt-12 pt-8 border-t border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span>👥</span>
+                <span>{% trans "Откликнувшиеся бойцы и комсостав" %} ({{ responses_list|length|default:0 }})</span>
+              </h2>
+            </div>
+
+            {% if responses_list %}
+              <div class="overflow-x-auto rounded-2xl border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 text-xs text-left">
+                  <thead class="bg-gray-50 text-gray-600 font-bold uppercase tracking-wider">
+                    <tr>
+                      <th class="px-4 py-3">{% trans "Боец" %}</th>
+                      <th class="px-4 py-3">{% trans "Отряд / Роль" %}</th>
+                      <th class="px-4 py-3">{% trans "Контакты" %}</th>
+                      <th class="px-4 py-3">{% trans "Дата отклика" %}</th>
+                      <th class="px-4 py-3">{% trans "Комментарий" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 bg-white">
+                    {% for resp in responses_list %}
+                      <tr class="hover:bg-gray-50/70 transition">
+                        <td class="px-4 py-3 font-bold text-gray-900 whitespace-nowrap">
+                          {{ resp.user.get_full_name }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          {% with active_m=resp.user.memberships.first %}
+                            {% if active_m %}
+                              {{ active_m.squad.name }} ({{ active_m.position.name }})
+                            {% else %}
+                              {{ resp.user.get_role_display }}
+                            {% endif %}
+                          {% endwith %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          <div>{{ resp.user.email }}</div>
+                          {% if resp.user.phone %}
+                            <div class="text-gray-400 text-[11px]">{{ resp.user.phone }}</div>
+                          {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                          {{ resp.created_at|date:"d.m.Y H:i" }}
+                        </td>
+                        <td class="px-4 py-3 text-gray-700">
+                          {{ resp.comment|default:"—" }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="p-6 text-center text-xs text-gray-500 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                {% trans "На этот запрос пока никто не откликнулся." %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

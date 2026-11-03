@@ -16,4 +16,11 @@ urlpatterns = [
     path("passes/create/", views.PassRequestCreateView.as_view(), name="pass_create"),
     path("passes/<int:pk>/", views.PassRequestDetailView.as_view(), name="pass_detail"),
     path("passes/<int:pk>/cancel/", views.PassRequestCancelView.as_view(), name="pass_cancel"),
+    # Запросы от штаба
+    path("hq/", views.HQRequestListView.as_view(), name="hq_list"),
+    path("hq/create/", views.HQRequestCreateView.as_view(), name="hq_create"),
+    path("hq/<int:pk>/", views.HQRequestDetailView.as_view(), name="hq_detail"),
+    path("hq/<int:pk>/edit/", views.HQRequestUpdateView.as_view(), name="hq_edit"),
+    path("hq/<int:pk>/delete/", views.HQRequestDeleteView.as_view(), name="hq_delete"),
+    path("hq/<int:pk>/respond/", views.HQRequestRespondView.as_view(), name="hq_respond"),
 ]

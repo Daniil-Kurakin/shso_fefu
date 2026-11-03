@@ -37,6 +37,10 @@
              class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Вакансии" %}
           </a>
+          <a href="{% url 'requests:hq_list' %}"
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+            {% trans "Запросы" %}
+          </a>
           <a href="{% url 'content:knowledge_index' %}"
              class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "База знаний" %}
@@ -197,6 +201,8 @@
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
       <a href="{% url 'vacancies:list' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
+      <a href="{% url 'requests:hq_list' %}"
+         class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Запросы" %}</a>
       <a href="{% url 'content:knowledge_index' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "База знаний" %}</a>
       <a href="{% url 'content:contacts' %}"
