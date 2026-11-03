@@ -166,6 +166,11 @@ class Membership(models.Model):
     start_date = models.DateField(_("дата вступления"), default=timezone.now)
     end_date = models.DateField(_("дата выхода"), null=True, blank=True)
     is_active = models.BooleanField(_("активное членство"), default=True)
+    is_veteran = models.BooleanField(
+        _("ветеран отряда"),
+        default=False,
+        help_text=_("Статус ветерана отряда (завершил активную деятельность)"),
+    )
     created_at = models.DateTimeField(_("создано"), auto_now_add=True)
 
     class Meta:
@@ -181,7 +186,12 @@ class Membership(models.Model):
         ]
 
     def __str__(self):
-        status = _("активен") if self.is_active else _("в архиве")
+        if self.is_veteran:
+            status = _("ветеран")
+        elif self.is_active:
+            status = _("активен")
+        else:
+            status = _("в архиве")
         user_name = self.user.get_full_name() if self.user_id else "—"
         squad_name = self.squad.name if self.squad_id else "—"
         pos_name = self.position.name if self.position_id else "—"
@@ -220,6 +230,36 @@ class Membership(models.Model):
                         "Один человек может состоять только в одном отряде одновременно."
                     )
                 )
+
+    def convert_to_veteran(self):
+        """Переводит бойца в статус ветерана отряда."""
+        self.is_active = False
+        self.is_veteran = True
+        if not self.end_date:
+            self.end_date = timezone.now().date()
+        self.save()
+
+        # Если был комсоставом, отзываем роль SQUAD_STAFF при отсутствии других должностей
+        if self.user_id and self.user.role == Role.SQUAD_STAFF:
+            has_other_staff = (
+                Membership.objects.filter(
+                    user=self.user,
+                    is_active=True,
+                    position__is_staff=True,
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            )
+            if not has_other_staff:
+                self.user.role = Role.MEMBER
+                self.user.save(update_fields=["role"])
+
+    def restore_to_active(self):
+        """Возвращает ветерана в активный состав бойцов отряда."""
+        self.is_active = True
+        self.is_veteran = False
+        self.end_date = None
+        self.save()
 
 
 class SquadPageRevision(models.Model):

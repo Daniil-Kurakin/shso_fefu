@@ -1,9 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import CreateView, DetailView, FormView, ListView
 
 from apps.news.models import News
@@ -102,6 +103,13 @@ class SquadDetailView(DetailView):
         )
         context["commanders"] = [m for m in active_memberships if m.position.is_staff]
         context["fighters"] = [m for m in active_memberships if not m.position.is_staff]
+
+        # Ветераны отряда
+        context["veterans"] = (
+            squad.memberships.filter(is_veteran=True)
+            .select_related("user", "position")
+            .order_by("-end_date", "-start_date", "user__full_name")
+        )
 
         # Новости данного отряда
         context["squad_news"] = News.objects.published().filter(squad=squad)[:4]
@@ -254,3 +262,38 @@ class SquadMemberAddView(LoginRequiredMixin, FormView):
         context = super().get_context_data(**kwargs)
         context["squad"] = self.squad
         return context
+
+
+class SquadMemberToVeteranView(LoginRequiredMixin, View):
+    """Перевод бойца в ветераны отряда или возврат в активный состав (комсостав отряда или штаб)."""
+
+    def post(self, request, slug, membership_id):
+        squad = get_object_or_404(Squad, slug=slug)
+        if not request.user.can_manage_squad(squad):
+            raise PermissionDenied(
+                _("Переводить бойцов в ветераны может только комсостав этого отряда или штаб.")
+            )
+
+        membership = get_object_or_404(Membership, pk=membership_id, squad=squad)
+        action = request.POST.get("action", "to_veteran")
+
+        if action == "to_veteran":
+            membership.convert_to_veteran()
+            msg = _("Боец %(name)s переведен в статус ветерана отряда «%(squad)s».") % {
+                "name": membership.user.get_full_name(),
+                "squad": squad.name,
+            }
+            messages.success(request, msg)
+        elif action == "to_active":
+            try:
+                membership.restore_to_active()
+                msg = _("Ветеран %(name)s возвращен в активный состав отряда «%(squad)s».") % {
+                    "name": membership.user.get_full_name(),
+                    "squad": squad.name,
+                }
+                messages.success(request, msg)
+            except ValidationError as e:
+                msg = e.messages[0] if hasattr(e, "messages") and e.messages else str(e)
+                messages.error(request, msg)
+
+        return redirect(squad.get_absolute_url())

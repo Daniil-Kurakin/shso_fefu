@@ -46,6 +46,10 @@
               <span class="badge badge-success">
                 {{ active_membership.position.name }}
               </span>
+            {% elif user.is_veteran %}
+              <span class="badge bg-amber-100 text-amber-800 border border-amber-200 font-bold">
+                🎖️ {% trans "Ветеран отряда" %}
+              </span>
             {% else %}
               <span class="badge badge-gray">
                 {% trans "Кандидат" %}
@@ -406,8 +410,17 @@
             <div class="space-y-2">
               {% for past in past_memberships %}
                 <div class="text-xs text-gray-600 flex justify-between items-center py-1">
-                  <span>{{ past.squad.name }} ({{ past.position.name }})</span>
-                  <span class="text-gray-400">{{ past.start_date|date:"Y" }}</span>
+                  <div class="flex items-center gap-1.5">
+                    <span>{{ past.squad.name }} ({{ past.position.name }})</span>
+                    {% if past.is_veteran %}
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">
+                        🎖️ {% trans "Ветеран" %}
+                      </span>
+                    {% endif %}
+                  </div>
+                  <span class="text-gray-400">
+                    {{ past.start_date|date:"Y" }}{% if past.end_date %}–{{ past.end_date|date:"Y" }}{% endif %}
+                  </span>
                 </div>
               {% endfor %}
             </div>

@@ -7,7 +7,7 @@ from .models import Direction, Membership, Position, Squad, SquadPageRevision, S
 class MembershipInline(admin.TabularInline):
     model = Membership
     extra = 0
-    fields = ("user", "position", "start_date", "end_date", "is_active")
+    fields = ("user", "position", "start_date", "end_date", "is_active", "is_veteran")
     raw_id_fields = ("user",)
 
 
@@ -54,11 +54,37 @@ class SquadAdmin(admin.ModelAdmin):
 
 @admin.register(Membership)
 class MembershipAdmin(admin.ModelAdmin):
-    list_display = ("user", "squad", "position", "start_date", "end_date", "is_active")
-    list_filter = ("is_active", "squad", "position")
+    list_display = (
+        "user",
+        "squad",
+        "position",
+        "start_date",
+        "end_date",
+        "is_active",
+        "is_veteran",
+    )
+    list_filter = ("is_active", "is_veteran", "squad", "position")
     search_fields = ("user__email", "user__full_name", "squad__name")
     raw_id_fields = ("user",)
     ordering = ("-is_active", "-start_date")
+    actions = ["action_convert_to_veteran", "action_restore_to_active"]
+
+    @admin.action(description=_("Перевести выбранных бойцов в ветераны"))
+    def action_convert_to_veteran(self, request, queryset):
+        for m in queryset:
+            m.convert_to_veteran()
+        self.message_user(request, _(f"Переведено в ветераны: {queryset.count()}"))
+
+    @admin.action(description=_("Вернуть выбранных в активный состав"))
+    def action_restore_to_active(self, request, queryset):
+        restored = 0
+        for m in queryset:
+            try:
+                m.restore_to_active()
+                restored += 1
+            except Exception as e:
+                self.message_user(request, f"Ошибка при возврате {m.user}: {e}", level="error")
+        self.message_user(request, _(f"Возвращено в активный состав: {restored}"))
 
 
 @admin.register(SquadPageRevision)

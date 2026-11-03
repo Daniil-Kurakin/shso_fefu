@@ -11,4 +11,9 @@ urlpatterns = [
     path("<str:slug>/edit/", views.SquadRevisionCreateView.as_view(), name="revision_create"),
     path("<str:slug>/transfer/", views.SquadTransferCreateView.as_view(), name="transfer_create"),
     path("<str:slug>/members/add/", views.SquadMemberAddView.as_view(), name="member_add"),
+    path(
+        "<str:slug>/members/<int:membership_id>/to-veteran/",
+        views.SquadMemberToVeteranView.as_view(),
+        name="member_to_veteran",
+    ),
 ]

@@ -189,6 +189,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
         return Membership.objects.filter(user=self, is_active=True).exists()
 
+    @property
+    def is_veteran(self) -> bool:
+        """Пользователь является ветераном отряда (завершил активную деятельность)."""
+        if not self.is_authenticated:
+            return False
+        from apps.squads.models import Membership
+
+        return Membership.objects.filter(user=self, is_veteran=True).exists()
+
     def get_managed_squads(self):
         """Возвращает queryset отрядов, которыми пользователь вправе управлять."""
         from apps.squads.models import Squad

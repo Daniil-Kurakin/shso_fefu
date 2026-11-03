@@ -161,8 +161,8 @@
                   <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shrink-0">
                     {{ m.user.get_short_name|first|upper }}
                   </div>
-                  <div>
-                    <div class="font-semibold text-sm text-gray-900">
+                  <div class="flex-1 min-w-0">
+                    <div class="font-semibold text-sm text-gray-900 truncate">
                       {{ m.user.get_full_name }}
                     </div>
                     <div class="text-xs text-blue-700 font-medium">
@@ -172,6 +172,18 @@
                       {% endif %}
                     </div>
                   </div>
+                  {% if can_edit %}
+                    <form method="post" action="{% url 'squads:member_to_veteran' slug=squad.slug membership_id=m.pk %}" class="shrink-0">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="to_veteran">
+                      <button type="submit"
+                              onclick="return confirm('{% trans "Перевести в ветераны отряда?" %}');"
+                              class="px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition"
+                              title="{% trans "Перевести в ветераны" %}">
+                        🎖️ {% trans "В ветераны" %}
+                      </button>
+                    </form>
+                  {% endif %}
                 </div>
               {% endfor %}
             </div>
@@ -197,9 +209,23 @@
           {% if fighters %}
             <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto pr-1 text-sm text-gray-700 space-y-2">
               {% for m in fighters %}
-                <li class="pt-2 flex items-center justify-between">
-                  <span>{{ m.user.get_full_name }}</span>
-                  <span class="text-xs text-gray-400">{{ m.position.name }}</span>
+                <li class="pt-2 flex items-center justify-between gap-2">
+                  <span class="truncate">{{ m.user.get_full_name }}</span>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-xs text-gray-400">{{ m.position.name }}</span>
+                    {% if can_edit %}
+                      <form method="post" action="{% url 'squads:member_to_veteran' slug=squad.slug membership_id=m.pk %}" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="to_veteran">
+                        <button type="submit"
+                                onclick="return confirm('{% trans "Перевести бойца в ветераны отряда?" %}');"
+                                class="px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition"
+                                title="{% trans "Перевести в ветераны" %}">
+                          🎖️ {% trans "В ветераны" %}
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
                 </li>
               {% endfor %}
             </ul>
@@ -217,6 +243,50 @@
                 <span>{% trans "Добавить бойца в отряд" %}</span>
               </a>
             </div>
+          {% endif %}
+        </div>
+
+        {# Ветераны отряда #}
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h3 class="font-bold text-lg text-gray-900 mb-4 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+              <span>🎖️</span>
+              <span>{% trans "Ветераны отряда" %}</span>
+            </span>
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800">
+              {{ veterans|length }}
+            </span>
+          </h3>
+
+          {% if veterans %}
+            <ul class="divide-y divide-gray-100 max-h-64 overflow-y-auto pr-1 text-sm text-gray-700 space-y-2">
+              {% for m in veterans %}
+                <li class="pt-2 flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <span class="font-medium text-gray-900 truncate block">{{ m.user.get_full_name }}</span>
+                    <span class="text-[11px] text-gray-400">
+                      {{ m.position.name }}{% if m.start_date or m.end_date %} · {{ m.start_date|date:"Y" }}{% if m.end_date %}–{{ m.end_date|date:"Y" }}{% endif %}{% endif %}
+                    </span>
+                  </div>
+                  {% if can_edit %}
+                    <form method="post" action="{% url 'squads:member_to_veteran' slug=squad.slug membership_id=m.pk %}" class="shrink-0">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="to_active">
+                      <button type="submit"
+                              onclick="return confirm('{% trans "Вернуть ветерана в активный состав бойцов отряда?" %}');"
+                              class="text-[11px] text-gray-400 hover:text-blue-600 underline transition"
+                              title="{% trans "Вернуть в активный состав" %}">
+                        {% trans "Вернуть" %}
+                      </button>
+                    </form>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-xs text-gray-400 italic">
+              {% trans "В отряде пока нет ветеранов" %}
+            </p>
           {% endif %}
         </div>
 
