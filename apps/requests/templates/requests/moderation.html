@@ -33,14 +33,26 @@
       </p>
     </div>
 
-    {# Ссылка на Django-админку для владельца #}
-    {% if user.role == 'owner' or user.is_superuser %}
-      <a href="{% url 'admin:index' %}"
-         class="btn btn-outline inline-flex items-center gap-2 text-xs self-start sm:self-center text-purple-700 border-purple-200 hover:bg-purple-50">
-        <span>🛡️</span>
-        {% trans "Панель владельца (Django)" %}
+    {# Быстрые действия: Календарь и Django-панель #}
+    <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
+      <a href="{% url 'events:calendar' %}"
+         class="btn btn-secondary inline-flex items-center gap-1.5 text-xs">
+        <span>📅</span>
+        {% trans "Календарь" %}
       </a>
-    {% endif %}
+      <a href="{% url 'events:create' %}"
+         class="btn btn-primary inline-flex items-center gap-1.5 text-xs">
+        <span>+</span>
+        {% trans "Событие" %}
+      </a>
+      {% if user.role == 'owner' or user.is_superuser %}
+        <a href="{% url 'admin:index' %}"
+           class="btn btn-outline inline-flex items-center gap-2 text-xs text-purple-700 border-purple-200 hover:bg-purple-50">
+          <span>🛡️</span>
+          {% trans "Панель владельца (Django)" %}
+        </a>
+      {% endif %}
+    </div>
   </div>
 
   {# НАВИГАЦИОННЫЕ ВКЛАДКИ #}

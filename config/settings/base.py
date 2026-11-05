@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.news",
     "apps.vacancies",
     "apps.requests",
+    "apps.events",
     "apps.bot",
     "apps.content",
 ]

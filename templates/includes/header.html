@@ -33,6 +33,10 @@
              class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Новости" %}
           </a>
+          <a href="{% url 'events:calendar' %}"
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+            {% trans "Календарь" %}
+          </a>
           <a href="{% url 'vacancies:list' %}"
              class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
             {% trans "Вакансии" %}
@@ -199,6 +203,8 @@
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Отряды" %}</a>
       <a href="{% url 'news:list' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Новости" %}</a>
+      <a href="{% url 'events:calendar' %}"
+         class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Календарь" %}</a>
       <a href="{% url 'vacancies:list' %}"
          class="px-3.5 py-2.5 rounded-xl text-gray-800 hover:bg-gray-50 transition-colors">{% trans "Вакансии" %}</a>
       <a href="{% url 'requests:hq_list' %}"

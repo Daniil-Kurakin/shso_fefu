@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Календарь событий" %} — {% trans "ШСО ДВФУ" %}{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {# Шапка страницы #}
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold uppercase tracking-wider mb-3">
+          {% trans "Жизнь движения" %}
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight font-heading">
+          {% trans "Календарь событий" %}
+        </h1>
+        <p class="mt-2 text-base text-gray-600 max-w-2xl">
+          {% trans "Все мероприятия, школы комсоставов, спартакиады и актуальные запросы от штаба в одном месте." %}
+        </p>
+      </div>
+
+      {% if can_add_event %}
+        <div class="shrink-0 flex items-center gap-3">
+          <a href="{% url 'events:create' %}"
+             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-700 text-white text-sm font-bold hover:bg-blue-800 shadow-sm transition-colors">
+            <span>+</span>
+            <span>{% trans "Добавить событие" %}</span>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {# Панель управления: Месяц, переключатели, фильтры и поиск #}
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 mb-8 space-y-5">
+
+      {# Верхняя строка: Выбор месяца + Переключение вида (Сетка / Список) #}
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+        {# Навигация по месяцам #}
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-gray-100 p-1 rounded-2xl border border-gray-200">
+            <a href="?year={{ prev_year }}&month={{ prev_month }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+               class="p-2 rounded-xl text-gray-600 hover:bg-white hover:text-blue-700 hover:shadow-xs transition"
+               title="{% trans "Предыдущий месяц" %}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+              </svg>
+            </a>
+
+            <div class="px-4 py-1.5 text-base sm:text-lg font-bold text-gray-900 min-w-[170px] text-center font-heading">
+              {{ month_name }} {{ year }}
+            </div>
+
+            <a href="?year={{ next_year }}&month={{ next_month }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+               class="p-2 rounded-xl text-gray-600 hover:bg-white hover:text-blue-700 hover:shadow-xs transition"
+               title="{% trans "Следующий месяц" %}">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          {% if year != today.year or month != today.month %}
+            <a href="?year={{ today.year }}&month={{ today.month }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+               class="px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition border border-blue-200">
+              {% trans "Сегодня" %}
+            </a>
+          {% endif %}
+        </div>
+
+        {# Переключатель вида (Сетка / Список) #}
+        <div class="flex items-center gap-2">
+          <div class="flex bg-gray-100 p-1 rounded-xl border border-gray-200">
+            <a href="?year={{ year }}&month={{ month }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&view=month"
+               class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition {% if view_mode == 'month' %}bg-white text-blue-700 shadow-xs{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+              ▦ {% trans "Сетка месяца" %}
+            </a>
+            <a href="?year={{ year }}&month={{ month }}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&view=list"
+               class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition {% if view_mode == 'list' %}bg-white text-blue-700 shadow-xs{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+              ☰ {% trans "Список событий" %}
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      {# Нижняя строка: фильтры по типу и поисковая строка #}
+      <div class="pt-4 border-t border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+        {# Табы фильтрации типа #}
+        <div class="flex flex-wrap items-center gap-2">
+          <a href="?year={{ year }}&month={{ month }}&type=all{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+             class="px-3 py-1.5 rounded-full text-xs font-bold transition {% if filter_type == 'all' %}bg-gray-900 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            {% trans "Все" %} ({{ total_items_count }})
+          </a>
+          <a href="?year={{ year }}&month={{ month }}&type=events{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+             class="px-3 py-1.5 rounded-full text-xs font-bold transition {% if filter_type == 'events' %}bg-emerald-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            📅 {% trans "События штаба" %} ({{ events_count }})
+          </a>
+          <a href="?year={{ year }}&month={{ month }}&type=requests{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}"
+             class="px-3 py-1.5 rounded-full text-xs font-bold transition {% if filter_type == 'requests' %}bg-blue-600 text-white shadow-xs{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+            📢 {% trans "Запросы штаба" %} ({{ requests_count }})
+          </a>
+        </div>
+
+        {# Поиск #}
+        <form method="get" class="relative min-w-[240px] sm:min-w-[280px]">
+          <input type="hidden" name="year" value="{{ year }}">
+          <input type="hidden" name="month" value="{{ month }}">
+          {% if filter_type %}<input type="hidden" name="type" value="{{ filter_type }}">{% endif %}
+          {% if view_mode %}<input type="hidden" name="view" value="{{ view_mode }}">{% endif %}
+
+          <input type="text"
+                 name="q"
+                 value="{{ search_query }}"
+                 placeholder="{% trans "Поиск по календарю..." %}"
+                 class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent">
+          <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </form>
+
+      </div>
+    </div>
+
+    {# РЕЖИМ 1: СЕТКА МЕСЯЦА #}
+    {% if view_mode == 'month' %}
+      <div class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+
+        {# Заголовки дней недели #}
+        <div class="grid grid-cols-7 border-b border-gray-200 bg-gray-50 text-center text-xs font-bold text-gray-600 py-3">
+          {% for wd in weekday_names %}
+            <div class="{% if forloop.counter > 5 %}text-red-500{% endif %}">
+              {{ wd }}
+            </div>
+          {% endfor %}
+        </div>
+
+        {# Сетка дней #}
+        <div class="divide-y divide-gray-200">
+          {% for week in calendar_grid %}
+            <div class="grid grid-cols-7 divide-x divide-gray-200 min-h-[110px] sm:min-h-[135px]">
+              {% for day in week %}
+                <div class="p-2 sm:p-2.5 flex flex-col justify-between transition-colors
+                  {% if not day.is_current_month %}bg-gray-50/50 text-gray-300{% else %}bg-white{% endif %}
+                  {% if day.is_today %}ring-2 ring-inset ring-blue-500 bg-blue-50/20{% endif %}">
+
+                  {# Номер дня #}
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="text-xs sm:text-sm font-bold
+                      {% if day.is_today %}w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center shadow-2xs
+                      {% elif not day.is_current_month %}text-gray-300
+                      {% else %}text-gray-800{% endif %}">
+                      {{ day.day }}
+                    </span>
+
+                    {% if day.items %}
+                      <span class="text-[10px] text-gray-400 font-semibold hidden sm:inline">
+                        {{ day.items|length }}
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  {# События дня #}
+                  <div class="space-y-1 flex-1 overflow-y-auto max-h-[85px] sm:max-h-[105px] pr-0.5">
+                    {% for item in day.items %}
+                      <a href="{{ item.url }}"
+                         class="group block px-2 py-1 rounded-lg text-[11px] font-semibold border transition shadow-2xs truncate {{ item.color_class }}"
+                         title="{{ item.title }} ({{ item.organizer }} · {{ item.location }})">
+                        <div class="flex items-center gap-1.5 truncate">
+                          <span class="w-1.5 h-1.5 rounded-full shrink-0 {{ item.dot_color }}"></span>
+                          {% if item.start_time %}
+                            <span class="text-[10px] opacity-75 shrink-0">{{ item.start_time|time:"H:i" }}</span>
+                          {% endif %}
+                          <span class="truncate">{{ item.title }}</span>
+                        </div>
+                      </a>
+                    {% endfor %}
+                  </div>
+
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    {# РЕЖИМ 2: ХРОНОЛОГИЧЕСКИЙ СПИСОК #}
+    {% else %}
+      {% if agenda_list %}
+        <div class="space-y-6">
+          {% for day in agenda_list %}
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-200 p-6 sm:p-7">
+              {# Заголовок дня #}
+              <div class="flex items-center gap-3 pb-4 border-b border-gray-100 mb-5">
+                <span class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 font-extrabold flex items-center justify-center text-base border border-blue-100">
+                  {{ day.date.day }}
+                </span>
+                <div>
+                  <h2 class="text-base font-bold text-gray-900 font-heading">
+                    {{ day.date|date:"l, d E Y" }}
+                  </h2>
+                  <span class="text-xs text-gray-400 font-medium">
+                    {% trans "Событий в этот день:" %} {{ day.items|length }}
+                  </span>
+                </div>
+              </div>
+
+              {# Список карточек за день #}
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for item in day.items %}
+                  <div class="p-4 sm:p-5 rounded-2xl border border-gray-200 bg-gray-50/50 hover:bg-white hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between gap-2 mb-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border {{ item.color_class }}">
+                          {{ item.badge_text }}
+                        </span>
+                        {% if item.start_time %}
+                          <span class="text-xs font-bold text-gray-600 flex items-center gap-1">
+                            <span>⏰</span>
+                            <span>{{ item.start_time|time:"H:i" }}{% if item.end_time %} – {{ item.end_time|time:"H:i" }}{% endif %}</span>
+                          </span>
+                        {% endif %}
+                      </div>
+
+                      <h3 class="text-base font-bold text-gray-900 hover:text-blue-700 transition">
+                        <a href="{{ item.url }}">{{ item.title }}</a>
+                      </h3>
+
+                      <div class="mt-2 text-xs text-gray-600 space-y-1">
+                        <div class="flex items-center gap-1.5 truncate">
+                          <span>🏢</span>
+                          <span class="font-medium text-gray-800 truncate">{{ item.organizer }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 truncate">
+                          <span>📍</span>
+                          <span class="truncate">{{ item.location }}</span>
+                        </div>
+                      </div>
+
+                      {% if item.description %}
+                        <p class="mt-3 text-xs text-gray-500 line-clamp-2 leading-relaxed">
+                          {{ item.description }}
+                        </p>
+                      {% endif %}
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-gray-200/60 flex items-center justify-between">
+                      <a href="{{ item.url }}"
+                         class="text-xs font-bold text-blue-700 hover:text-blue-900 transition flex items-center gap-1">
+                        <span>{% trans "Подробнее" %}</span>
+                        <span>→</span>
+                      </a>
+
+                      {% if item.is_request %}
+                        <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
+                          👥 {{ item.responses_count }} {% trans "откл." %}
+                        </span>
+                      {% else %}
+                        <a href="{% url 'events:export_ics' item.id %}"
+                           class="text-[11px] font-semibold text-gray-500 hover:text-gray-800 transition"
+                           title="{% trans "Сохранить в свой календарь (.ics)" %}">
+                          📅 .ics
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-sm">
+          <span class="text-5xl">📅</span>
+          <h3 class="mt-4 text-lg font-bold text-gray-900">{% trans "Событий не найдено" %}</h3>
+          <p class="mt-2 text-sm text-gray-500 max-w-md mx-auto">
+            {% trans "На выбранный месяц и фильтры события отсутствуют. Попробуйте выбрать другой месяц или сбросить фильтры." %}
+          </p>
+        </div>
+      {% endif %}
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
