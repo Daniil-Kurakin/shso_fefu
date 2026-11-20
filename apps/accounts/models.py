@@ -5,6 +5,8 @@ from django.db.models.functions import Lower
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.validators import validate_image_file
+
 
 class Role(models.TextChoices):
     """Системные роли. «Кандидат» — не роль, а состояние: пользователь без членства в отряде."""
@@ -58,6 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         upload_to="avatars/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     bio = models.TextField(
         _("о себе"),
@@ -279,6 +282,7 @@ class UserPortfolioItem(models.Model):
         upload_to="portfolio/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     created_at = models.DateTimeField(_("дата создания"), auto_now_add=True)
     updated_at = models.DateTimeField(_("дата обновления"), auto_now=True)

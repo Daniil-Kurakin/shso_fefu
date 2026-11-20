@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -11,12 +12,15 @@ from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import FormView, TemplateView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+
+from apps.core.ratelimit import get_client_ip, rate_limit
 
 from .forms import (
     PortfolioItemForm,
@@ -29,14 +33,17 @@ from .models import Role, User, UserPortfolioItem
 logger = logging.getLogger(__name__)
 
 
-def get_client_ip(request: HttpRequest) -> str:
-    """Извлечение IP-адреса клиента для аудита согласия по 152-ФЗ."""
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(",")[0].strip()
-    else:
-        ip = request.META.get("REMOTE_ADDR", "")
-    return ip or "127.0.0.1"
+@method_decorator(rate_limit("login", max_attempts=5, timeout=300), name="dispatch")
+class LoginView(auth_views.LoginView):
+    template_name = "accounts/login.html"
+
+
+@method_decorator(rate_limit("password_reset", max_attempts=5, timeout=3600), name="dispatch")
+class PasswordResetView(auth_views.PasswordResetView):
+    template_name = "accounts/password_reset.html"
+    email_template_name = "accounts/emails/password_reset_email.txt"
+    subject_template_name = "accounts/emails/password_reset_subject.txt"
+    success_url = reverse_lazy("accounts:password_reset_done")
 
 
 def send_activation_email(request: HttpRequest, user: User) -> None:
@@ -70,6 +77,7 @@ def send_activation_email(request: HttpRequest, user: User) -> None:
     logger.info("Письмо с активацией отправлено пользователю %s", user.email)
 
 
+@method_decorator(rate_limit("register", max_attempts=5, timeout=3600), name="dispatch")
 class RegisterView(FormView):
     """
     Регистрация пользователя на сайте.

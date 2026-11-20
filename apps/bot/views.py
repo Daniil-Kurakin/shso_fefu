@@ -12,15 +12,24 @@ from django.views.decorators.http import require_POST
 
 from apps.bot.models import TelegramLinkToken, TelegramProfile
 from apps.bot.services.notifier import send_telegram_raw
+from apps.core.ratelimit import rate_limit
 
 logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
+@rate_limit("tg_webhook", max_attempts=60, timeout=60)
 def telegram_webhook(request):
-    """Приём входящих событий от Telegram Bot API."""
+    """Приём входящих событий от Telegram Bot API с валидацией секретного токена."""
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
+
+    webhook_secret = getattr(settings, "TELEGRAM_WEBHOOK_SECRET", None)
+    if webhook_secret:
+        token_header = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+        if token_header != webhook_secret:
+            logger.warning("Отклонён вебхук Telegram с неверным секретным токеном.")
+            return HttpResponse("Forbidden", status=403)
 
     try:
         data = json.loads(request.body.decode("utf-8"))
@@ -93,6 +102,7 @@ def disconnect_telegram(request):
 
 @login_required
 @require_POST
+@rate_limit("tg_bind", max_attempts=5, timeout=300)
 def bind_telegram_manual(request):
     """
     Ручная привязка Telegram по chat_id / username.

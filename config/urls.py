@@ -13,9 +13,11 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
 ]
 
+admin_url_path = getattr(settings, "ADMIN_URL", "admin/").strip("/") + "/"
+
 # Адреса вида /ru/... и /en/...; корень «/» перенаправляется на язык пользователя.
 urlpatterns += i18n_patterns(
-    path("admin/", admin.site.urls),
+    path(admin_url_path, admin.site.urls),
     path("accounts/", include("apps.accounts.urls")),
     path("news/", include("apps.news.urls")),
     path("squads/", include("apps.squads.urls")),

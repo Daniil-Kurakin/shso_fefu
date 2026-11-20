@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from apps.bot.services.notifier import notify_user_async
+from apps.core.validators import validate_document_file, validate_image_file
 
 
 class CampusPremise(models.Model):
@@ -458,6 +459,7 @@ class PassRequest(models.Model):
         upload_to="pass_notes/%Y/%m/",
         blank=True,
         null=True,
+        validators=[validate_document_file],
         help_text=_("Скан служебной записки с подписью руководства (при наличии)"),
     )
     status = models.CharField(
@@ -657,6 +659,7 @@ class HQRequest(models.Model):
         upload_to="hq_requests/%Y/%m/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     customer = models.CharField(
         _("заказчик"),

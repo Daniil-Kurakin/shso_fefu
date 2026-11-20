@@ -60,8 +60,10 @@ services:
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --url http://web:8000
-    env_file: .env
+    command: tunnel --no-autoupdate --protocol http2 --region us --url http://web:8000
+    extra_hosts:
+      - "us-region1.v2.argotunnel.com:198.41.218.2"
+      - "us-region2.v2.argotunnel.com:198.41.218.4"
     depends_on:
       - web
     restart: unless-stopped

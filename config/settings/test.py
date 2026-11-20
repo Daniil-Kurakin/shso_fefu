@@ -11,3 +11,4 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 Q_CLUSTER = {**Q_CLUSTER, "sync": True}
+RATELIMIT_ENABLE = False

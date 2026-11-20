@@ -11,6 +11,9 @@ from django.utils.safestring import mark_safe
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.sanitizer import sanitize_html
+from apps.core.validators import validate_document_file, validate_image_file
+
 VLADIVOSTOK_TZ = ZoneInfo("Asia/Vladivostok")
 
 
@@ -114,6 +117,7 @@ class StaffMember(models.Model):
         upload_to="content/staff/%Y/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     order = models.PositiveIntegerField(_("порядок вывода"), default=0)
     user = models.ForeignKey(
@@ -253,6 +257,7 @@ class KnowledgeArticle(models.Model):
         upload_to="content/knowledge/%Y/",
         blank=True,
         null=True,
+        validators=[validate_document_file],
         help_text=_("Шаблон заявления, регламент или памятка"),
     )
     pinned = models.BooleanField(
@@ -538,6 +543,7 @@ class PageBlock(models.Model):
         upload_to="pages/blocks/%Y/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     image_size = models.CharField(
         _("размер изображения"),
@@ -666,7 +672,7 @@ class PageBlock(models.Model):
 
     @property
     def rendered_content(self):
-        """Рендерит контент: безопасно поддерживает HTML-теги или авто-абзацы."""
+        """Рендерит контент: безопасно санитизирует HTML-теги для защиты от XSS или авто-абзацы."""
         text = self.content or ""
         html_tags = (
             "<p>",
@@ -681,8 +687,8 @@ class PageBlock(models.Model):
             "<table>",
         )
         if any(tag in text.lower() for tag in html_tags):
-            return mark_safe(text)  # noqa: S308  # Владелец сайта формирует разметку
-        return mark_safe(linebreaks(text))  # noqa: S308
+            return mark_safe(sanitize_html(text))  # noqa: S308
+        return mark_safe(sanitize_html(linebreaks(text)))  # noqa: S308
 
     def parsed_cards(self):
         """Парсит content в список карточек [title, text, url]."""

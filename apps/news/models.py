@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from apps.core.validators import validate_image_file
+
 
 class NewsQuerySet(models.QuerySet):
     def published(self):
@@ -69,6 +71,7 @@ class News(models.Model):
         upload_to="news/covers/%Y/%m/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     status = models.CharField(
         _("статус публикации"),
@@ -171,7 +174,11 @@ class NewsImage(models.Model):
         related_name="gallery_images",
         verbose_name=_("новость"),
     )
-    image = models.ImageField(_("изображение"), upload_to="news/gallery/%Y/%m/")
+    image = models.ImageField(
+        _("изображение"),
+        upload_to="news/gallery/%Y/%m/",
+        validators=[validate_image_file],
+    )
     caption = models.CharField(_("подпись"), max_length=255, blank=True)
     order = models.PositiveIntegerField(_("порядок"), default=0)
 

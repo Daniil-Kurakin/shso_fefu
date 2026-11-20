@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from apps.accounts.models import Role
+from apps.core.validators import validate_document_file, validate_image_file
 
 
 class Direction(models.Model):
@@ -81,6 +82,7 @@ class Squad(models.Model):
         upload_to="squads/logos/",
         blank=True,
         null=True,
+        validators=[validate_image_file],
     )
     motto = models.CharField(_("девиз"), max_length=255, blank=True)
     description = models.TextField(_("описание отряда"), blank=True)
@@ -418,6 +420,7 @@ class SquadTransferRequest(models.Model):
         _("документ / заявление (PDF или скан)"),
         upload_to="transfers/%Y/%m/",
         help_text=_("Заявление бойца и согласие командиров"),
+        validators=[validate_document_file],
     )
     status = models.CharField(
         _("статус заявки"),
