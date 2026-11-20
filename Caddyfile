@@ -1,0 +1,28 @@
+{
+    # Email администратора для регистрации сертификатов Let's Encrypt / ZeroSSL
+    email admin@xn----7sbdfj2duafqj9a.xn--p1ai
+}
+
+# Редирект www на основной домен
+www.xn----7sbdfj2duafqj9a.xn--p1ai, www.штабсо-двфу.рф {
+    redir https://xn----7sbdfj2duafqj9a.xn--p1ai{uri} permanent
+}
+
+# Основной домен
+xn----7sbdfj2duafqj9a.xn--p1ai, штабсо-двфу.рф {
+    encode zstd gzip
+
+    # Отдача пользовательских медиафайлов напрямую
+    handle_path /media/* {
+        root * /app/media
+        file_server
+    }
+
+    # Проксирование всех запросов в Gunicorn
+    handle {
+        reverse_proxy web:8000 {
+            header_up X-Forwarded-Proto https
+            header_up Host {host}
+        }
+    }
+}
