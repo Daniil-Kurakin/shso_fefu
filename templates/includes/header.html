@@ -22,42 +22,42 @@
         {# Навигация (desktop) — строгий один слой без переноса (flex-nowrap) #}
         <nav class="hidden md:flex items-center gap-1 lg:gap-1.5 xl:gap-2 text-xs font-semibold tracking-wider flex-nowrap shrink-0">
           <a href="{% url 'core:home' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Главная" %}
           </a>
           <a href="{% url 'squads:list' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Отряды" %}
           </a>
           <a href="{% url 'news:list' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Новости" %}
           </a>
           <a href="{% url 'events:calendar' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Календарь" %}
           </a>
           <a href="{% url 'vacancies:list' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Вакансии" %}
           </a>
           <a href="{% url 'requests:hq_list' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Запросы" %}
           </a>
           <a href="{% url 'content:knowledge_index' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "База знаний" %}
           </a>
           <a href="{% url 'content:contacts' %}"
-             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-all whitespace-nowrap">
+             class="px-2.5 lg:px-3 py-1.5 rounded-full text-gray-800 bg-gray-100/70 hover:bg-blue-50/90 hover:text-blue-700 hover:border-blue-300 border border-gray-200/60 shadow-xs backdrop-blur-xs transition-colors whitespace-nowrap">
             {% trans "Контакты" %}
           </a>
 
           {# Кнопка заявок и бронирования доступна ТОЛЬКО комсоставу отрядов и штабу #}
           {% if user.is_authenticated and user.is_squad_command_staff %}
             <a href="{% url 'requests:dashboard' %}"
-               class="inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 rounded-full text-blue-800 bg-blue-100/80 hover:bg-blue-600 hover:text-white border border-blue-200 shadow-xs backdrop-blur-xs transition-all font-bold whitespace-nowrap">
+               class="inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 rounded-full text-blue-800 bg-blue-100/80 hover:bg-blue-600 hover:text-white border border-blue-200 shadow-xs backdrop-blur-xs transition-colors font-bold whitespace-nowrap">
               <span>⚡</span>
               <span>{% trans "Заявки" %}</span>
             </a>
