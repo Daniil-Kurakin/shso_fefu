@@ -17,5 +17,7 @@ htmlcov/
 !.vscode/settings.json
 !.vscode/extensions.json
 node_modules/
+/frontend/dist/
+/test-results/
 bin/tailwindcss*
 /brandbook/

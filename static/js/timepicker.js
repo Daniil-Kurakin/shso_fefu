@@ -40,48 +40,6 @@
     }
 
     createModal() {
-      if (document.getElementById('radial-timepicker-modal')) return;
-
-      const modalHtml = `
-        <div id="radial-timepicker-modal" class="tp-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="tp-title">
-          <div class="tp-backdrop"></div>
-          <div class="tp-dialog">
-            <div class="tp-header">
-              <span id="tp-title" class="tp-title">Выбор времени</span>
-              <div class="tp-time-display">
-                <button type="button" class="tp-digits tp-digit-hour" data-mode="hours">12</button>
-                <span class="tp-colon">:</span>
-                <button type="button" class="tp-digits tp-digit-minute" data-mode="minutes">00</button>
-              </div>
-            </div>
-
-            <div class="tp-clock-wrap">
-              <div class="tp-clock-face" id="tp-clock-face">
-                <svg id="tp-hand-svg" class="tp-hand-svg" viewBox="0 0 260 260">
-                  <line id="tp-hand-line" x1="130" y1="130" x2="130" y2="34" stroke="#0045B5" stroke-width="2"/>
-                  <circle id="tp-hand-head" cx="130" cy="34" r="16" fill="#0045B5" fill-opacity="0.2"/>
-                  <circle cx="130" cy="130" r="4" fill="#0045B5"/>
-                </svg>
-                <div id="tp-numbers-container" class="tp-numbers-container"></div>
-              </div>
-            </div>
-
-            <div id="tp-minutes-quick" class="tp-minutes-quick" style="display:none;">
-              <button type="button" class="tp-preset-btn" data-min="00">:00</button>
-              <button type="button" class="tp-preset-btn" data-min="15">:15</button>
-              <button type="button" class="tp-preset-btn" data-min="30">:30</button>
-              <button type="button" class="tp-preset-btn" data-min="45">:45</button>
-            </div>
-
-            <div class="tp-actions">
-              <button type="button" class="tp-btn-cancel">Отмена</button>
-              <button type="button" class="tp-btn-submit">Готово</button>
-            </div>
-          </div>
-        </div>
-      `;
-
-      document.body.insertAdjacentHTML('beforeend', modalHtml);
       this.modal = document.getElementById('radial-timepicker-modal');
 
       // Закрытие по клику на фон
@@ -141,7 +99,7 @@
 
       // ESC закрывает окно
       window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && this.modal.style.display !== 'none') {
+        if (e.key === 'Escape' && !this.modal.hidden) {
           this.close();
         }
       });
@@ -247,12 +205,7 @@
             btn.type = 'button';
             btn.className = 'tp-clock-icon-btn';
             btn.title = 'Открыть циферблат выбора времени';
-            btn.innerHTML = `
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/>
-              </svg>
-            `;
+            btn.append(document.getElementById('tp-icon-template').content.cloneNode(true));
             btn.addEventListener('click', (ev) => {
               ev.preventDefault();
               this.open(input);
@@ -280,7 +233,7 @@
       this.mode = 'hours';
       this.updateDisplay();
       this.renderClock();
-      this.modal.style.display = 'flex';
+      this.modal.hidden = false;
       document.body.style.overflow = 'hidden';
     }
 
@@ -293,7 +246,7 @@
       if (this.modal) {
         const clockFace = this.modal.querySelector('#tp-clock-face');
         if (clockFace) clockFace.classList.remove('tp-dragging');
-        this.modal.style.display = 'none';
+        this.modal.hidden = true;
       }
       document.body.style.overflow = '';
       this.currentInput = null;
@@ -334,11 +287,11 @@
       if (this.mode === 'hours') {
         hourBtn.classList.add('tp-active');
         minBtn.classList.remove('tp-active');
-        quickMin.style.display = 'none';
+        quickMin.hidden = true;
       } else {
         hourBtn.classList.remove('tp-active');
         minBtn.classList.add('tp-active');
-        quickMin.style.display = 'flex';
+        quickMin.hidden = false;
       }
     }
 

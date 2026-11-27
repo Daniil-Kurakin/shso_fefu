@@ -74,3 +74,17 @@ static/            статика проекта
 - Секреты только в `.env` (он в `.gitignore`) или переменных окружения сервера.
 
 Рекомендуемые настройки GitHub: Settings → Branches → защитить `main` (требовать PR и прохождение проверок `lint` и `test`).
+## Сборка интерфейса
+
+Docker собирает интерфейс автоматически. При запуске Django напрямую установите
+Node.js 22.12+ и выполните `npm ci` и `npm run build` из корня проекта.
+Повторите сборку после изменений в HTML, CSS или скриптах. Django раздаёт
+результат через staticfiles, а `collectstatic` включает его в боевую статику.
+
+HTML находится в шаблонах Django, стили в `static/css/` и `frontend/tailwind.css`,
+скрипты в `frontend/` и `static/js/`. TypeScript проверяется перед сборкой,
+Vite собирает скрипты, а Tailwind CLI генерирует CSS из классов в исходниках.
+
+После сборки проверки форм можно запустить через Playwright. При первом запуске
+установите Chromium командой `npx playwright install chromium`, затем выполните
+`npm run test:frontend`.

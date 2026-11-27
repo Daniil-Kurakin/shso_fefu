@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Проверка форм</title>
+  <script src="/site.js" defer></script>
+</head>
+<body>
+  <input id="id_premises-TOTAL_FORMS" value="1">
+  <div id="premises-container">
+    <div class="premise-item">
+      <span class="premise-index">1</span>
+      <label for="id_premises-0-room">Аудитория</label>
+      <input id="id_premises-0-room" name="premises-0-room" value="101">
+      <input type="time" name="premises-0-start_time">
+      <button type="button" class="remove-premise-btn">Удалить</button>
+    </div>
+  </div>
+  <button type="button" id="add-premise-btn">Добавить аудиторию</button>
+  <input id="id_blocks-TOTAL_FORMS" value="0">
+  <div id="blocks-container"></div>
+  <button type="button" id="add-block-btn">Добавить блок</button>
+  <template id="empty-block-template">
+    <div class="block-card">
+      <span class="block-number-badge"></span>
+      <input name="blocks-__prefix__-order">
+    </div>
+  </template>
+  <form action="/filtered">
+    <select name="status" data-auto-submit>
+      <option value="">Все</option>
+      <option value="open">Открытые</option>
+    </select>
+  </form>
+</body>
+</html>

@@ -1,3 +1,14 @@
+FROM node:22-bookworm-slim AS frontend
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY tsconfig.json vite.config.mjs ./
+COPY frontend/ ./frontend/
+COPY apps/ ./apps/
+COPY templates/ ./templates/
+COPY static/js/ ./static/js/
+RUN npm run build
+
 FROM python:3.12-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -17,6 +28,7 @@ COPY pyproject.toml uv.lock* ./
 RUN if [ "$INSTALL_DEV" = "true" ]; then uv sync; else uv sync --no-dev; fi
 
 COPY . .
+COPY --from=frontend /build/frontend/dist /opt/shso-static
 
 RUN useradd --create-home --uid 1000 app \
     && mkdir -p /app/media /app/staticfiles \

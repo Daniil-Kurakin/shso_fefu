@@ -30,7 +30,8 @@ function initPasswordToggles() {
         showIcon.classList.toggle('hidden', isPassword);
         hideIcon.classList.toggle('hidden', !isPassword);
       }
-      btn.setAttribute('aria-label', isPassword ? 'Скрыть пароль' : 'Показать пароль');
+      const label = isPassword ? btn.dataset.labelHide : btn.dataset.labelShow;
+      if (label) btn.setAttribute('aria-label', label);
     });
   });
 }

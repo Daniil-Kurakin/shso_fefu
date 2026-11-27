@@ -50,7 +50,7 @@
 
           <div class="flex items-center gap-2 shrink-0">
             <select name="status"
-                    onchange="this.form.submit()"
+                    data-auto-submit
                     class="px-3.5 py-2.5 text-sm rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600">
               <option value="">{% trans "Все статусы" %}</option>
               <option value="open" {% if selected_status == "open" %}selected{% endif %}>{% trans "Открытые" %}</option>

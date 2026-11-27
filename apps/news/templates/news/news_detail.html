@@ -5,7 +5,7 @@
 {% block meta_description %}{{ news.lead|default:news.content|striptags|truncatewords:30 }}{% endblock %}
 
 {% block content %}
-  <article class="bg-gray-50 min-h-screen py-10" x-data="{ copied: false }">
+  <article class="bg-gray-50 min-h-screen py-10">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
       {# Навигация / Хлебные крошки #}
@@ -121,17 +121,17 @@
           <div class="flex items-center gap-2">
             <span class="text-xs text-gray-500 font-medium mr-1">{% trans "Поделиться:" %}</span>
             
-            <a :href="'https://vk.com/share.php?url=' + encodeURIComponent(window.location.href) + '&title=' + encodeURIComponent('{{ news.title|escapejs }}')"
+            <a href="https://vk.com/share.php?url={{ request.build_absolute_uri|urlencode:"" }}&amp;title={{ news.title|urlencode:"" }}"
                target="_blank" rel="noopener noreferrer"
                class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors">
               VK
             </a>
             
-            <button @click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2500)"
+            <button data-copy-url
                     type="button"
                     class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              <span x-show="!copied">📋 {% trans "Ссылка" %}</span>
-              <span x-show="copied" x-cloak class="text-green-600">✓ {% trans "Скопировано!" %}</span>
+              <span data-copy-label>📋 {% trans "Ссылка" %}</span>
+              <span data-copied-label hidden class="text-green-600">✓ {% trans "Скопировано!" %}</span>
             </button>
           </div>
 

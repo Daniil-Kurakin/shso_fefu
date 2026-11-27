@@ -131,7 +131,7 @@
                         </a>
                         {% if booking.status == "submitted" or booking.status == "approved" %}
                           <form method="post" action="{% url 'requests:room_cancel' booking.pk %}"
-                                onsubmit="return confirm('{% trans "Вы уверены, что хотите отменить эту бронь?" %}');">
+                                data-confirm-submit="{% trans "Вы уверены, что хотите отменить эту бронь?" %}">
                             {% csrf_token %}
                             <button type="submit"
                                     class="px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">
@@ -241,7 +241,7 @@
                         </a>
                         {% if pr.status == "submitted" or pr.status == "approved" %}
                           <form method="post" action="{% url 'requests:pass_cancel' pr.pk %}"
-                                onsubmit="return confirm('{% trans "Вы уверены, что хотите отменить эту заявку на пропуск?" %}');">
+                                data-confirm-submit="{% trans "Вы уверены, что хотите отменить эту заявку на пропуск?" %}">
                             {% csrf_token %}
                             <button type="submit"
                                     class="px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors">

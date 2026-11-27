@@ -1,62 +1,45 @@
 {% load i18n static %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" x-data class="scroll-smooth">
+<html lang="{{ LANGUAGE_CODE }}" class="scroll-smooth">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{% block meta_description %}{% trans "Официальный сайт Штаба студенческих отрядов Дальневосточного федерального университета" %}{% endblock %}">
-    <title>{% block title %}{% trans "ШСО ДВФУ" %}{% endblock %}</title>
-
+    <meta name="description"
+          content="{% block meta_description %}{% trans "Официальный сайт Штаба студенческих отрядов Дальневосточного федерального университета" %}{% endblock %}">
+    <title>
+      {% block title %}
+        {% trans "ШСО ДВФУ" %}
+      {% endblock %}
+    </title>
     {# Favicon #}
-    <link rel="icon" type="image/x-icon" href="{% static 'images/brand/favicon.ico' %}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/brand/favicon-32x32.png' %}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/brand/apple-touch-icon.png' %}">
-
-    {# Google Fonts: Montserrat (предзагрузка веб-шрифтов) #}
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600;1,700&display=swap" rel="stylesheet">
-
+    <link rel="icon"
+          type="image/x-icon"
+          href="{% static 'images/brand/favicon.ico' %}">
+    <link rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="{% static 'images/brand/favicon-32x32.png' %}">
+    <link rel="apple-touch-icon"
+          sizes="180x180"
+          href="{% static 'images/brand/apple-touch-icon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     {# Вынесенные модульные стили: шрифты, брендбук и UI-компоненты #}
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
-
-    {# Tailwind CSS v4 — браузерная сборка через CDN #}
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" defer></script>
-
-    {# HTMX — декларативный AJAX #}
-    <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
-
-    {# Alpine.js — реактивность компонентов #}
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
-    {# Интерактивный радиальный циферблат времени #}
-    <script src="{% static 'js/timepicker.js' %}" defer></script>
-
     {% block extra_head %}{% endblock %}
   </head>
-
-  <body class="min-h-screen bg-white text-gray-900 antialiased flex flex-col"
-        hx-boost="true">
-
+  <body class="min-h-screen bg-white text-gray-900 antialiased flex flex-col">
     {# Шапка сайта #}
     {% include "includes/header.html" %}
-
     {# Flash-уведомления #}
     {% include "includes/messages.html" %}
-
     {# Основной контент страницы #}
     <main class="flex-1">
       {% block content %}{% endblock %}
     </main>
-
     {# Подвал сайта #}
     {% include "includes/footer.html" %}
-
-    {# Модульные скрипты #}
-    <script src="{% static 'js/main.js' %}" defer></script>
-    <script src="{% static 'js/forms.js' %}" defer></script>
-    <script src="{% static 'js/accordion.js' %}" defer></script>
-
+    {% include "includes/timepicker.html" %}
+    <script src="{% static 'js/site.js' %}" defer></script>
     {% block extra_body %}{% endblock %}
   </body>
 </html>

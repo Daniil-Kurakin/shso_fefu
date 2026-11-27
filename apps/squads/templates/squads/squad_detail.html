@@ -177,7 +177,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="to_veteran">
                       <button type="submit"
-                              onclick="return confirm('{% trans "Перевести в ветераны отряда?" %}');"
+                              data-confirm-click="{% trans "Перевести в ветераны отряда?" %}"
                               class="px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition"
                               title="{% trans "Перевести в ветераны" %}">
                         🎖️ {% trans "В ветераны" %}
@@ -218,7 +218,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="to_veteran">
                         <button type="submit"
-                                onclick="return confirm('{% trans "Перевести бойца в ветераны отряда?" %}');"
+                                data-confirm-click="{% trans "Перевести бойца в ветераны отряда?" %}"
                                 class="px-2 py-0.5 rounded-md text-[10px] font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition"
                                 title="{% trans "Перевести в ветераны" %}">
                           🎖️ {% trans "В ветераны" %}
@@ -273,7 +273,7 @@
                       {% csrf_token %}
                       <input type="hidden" name="action" value="to_active">
                       <button type="submit"
-                              onclick="return confirm('{% trans "Вернуть ветерана в активный состав бойцов отряда?" %}');"
+                              data-confirm-click="{% trans "Вернуть ветерана в активный состав бойцов отряда?" %}"
                               class="text-[11px] text-gray-400 hover:text-blue-600 underline transition"
                               title="{% trans "Вернуть в активный состав" %}">
                         {% trans "Вернуть" %}

@@ -7,7 +7,8 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   initFlashMessages();
-  initMobileNav();
+  initDisclosures();
+  initShareButtons();
 });
 
 /**
@@ -16,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initFlashMessages() {
   const alerts = document.querySelectorAll('[data-auto-dismiss]');
   alerts.forEach((alert) => {
+    alert.querySelector('[data-dismiss-alert]')?.addEventListener('click', () => alert.remove());
     const delay = parseInt(alert.getAttribute('data-auto-dismiss'), 10) || 5000;
     setTimeout(() => {
       alert.style.transition = 'opacity 0.4s ease-out, transform 0.4s ease-out';
@@ -29,24 +31,74 @@ function initFlashMessages() {
 /**
  * Управление мобильным меню навигации
  */
-function initMobileNav() {
-  const toggleBtn = document.querySelector('[data-mobile-menu-toggle]');
-  const menu = document.querySelector('[data-mobile-menu]');
+function initDisclosures() {
+  document.querySelectorAll('[data-disclosure]').forEach((group, index) => {
+    const owned = (selector) => [...group.querySelectorAll(selector)]
+      .find((node) => node.closest('[data-disclosure]') === group);
+    const button = owned('[data-disclosure-toggle]');
+    const panel = owned('[data-disclosure-panel]');
+    if (!button || !panel) return;
 
-  if (!toggleBtn || !menu) return;
-
-  toggleBtn.addEventListener('click', () => {
-    const isExpanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-    toggleBtn.setAttribute('aria-expanded', !isExpanded);
-    menu.classList.toggle('hidden');
-  });
-
-  // Закрытие мобильного меню по нажатию клавиши Escape
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !menu.classList.contains('hidden')) {
-      toggleBtn.setAttribute('aria-expanded', 'false');
-      menu.classList.add('hidden');
+    panel.id ||= 'disclosure-' + index;
+    button.setAttribute('aria-controls', panel.id);
+    const setOpen = (open, restoreFocus = false) => {
+      panel.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+      if (open && panel.getAttribute('role') === 'dialog') panel.querySelector('textarea')?.focus();
+      if (!open && restoreFocus) button.focus();
+    };
+    button.addEventListener('click', () => setOpen(panel.hidden));
+    panel.querySelector('[data-disclosure-close]')?.addEventListener('click', () => setOpen(false, true));
+    panel.addEventListener('click', (event) => {
+      if (event.target === panel && panel.hasAttribute('data-dismiss-backdrop')) setOpen(false, true);
+    });
+    if (group.hasAttribute('data-dismiss-outside')) {
+      document.addEventListener('click', (event) => {
+        if (!group.contains(event.target)) setOpen(false);
+      });
     }
+    group.addEventListener('keydown', (event) => {
+      if (panel.hidden || event.defaultPrevented) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false, true);
+      }
+      if (event.key === 'Tab' && panel.getAttribute('role') === 'dialog') {
+        const controls = panel.querySelectorAll('textarea, button');
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey ? document.activeElement === first : document.activeElement === last) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus();
+        }
+      }
+    });
+  });
+}
+
+function initShareButtons() {
+  document.querySelectorAll('[data-copy-url]').forEach((button) => {
+    if (!navigator.clipboard) {
+      button.hidden = true;
+      return;
+    }
+    let timer;
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+      } catch {
+        return;
+      }
+      const label = button.querySelector('[data-copy-label]');
+      const copied = button.querySelector('[data-copied-label]');
+      label.hidden = true;
+      copied.hidden = false;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        label.hidden = false;
+        copied.hidden = true;
+      }, 2500);
+    });
   });
 }
 

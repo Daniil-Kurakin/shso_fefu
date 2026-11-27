@@ -8,3 +8,7 @@ media
 staticfiles
 .pytest_cache
 .ruff_cache
+node_modules
+frontend/dist
+test-results
+graphify-out

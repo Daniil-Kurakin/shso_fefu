@@ -177,6 +177,11 @@ MODELTRANSLATION_FALLBACK_LANGUAGES = ("ru",)
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+FRONTEND_ASSETS = Path("/opt/shso-static")
+if not FRONTEND_ASSETS.is_dir():
+    FRONTEND_ASSETS = BASE_DIR / "frontend" / "dist"
+if FRONTEND_ASSETS.is_dir():
+    STATICFILES_DIRS.append(FRONTEND_ASSETS)
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", str(BASE_DIR / "media")))
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024

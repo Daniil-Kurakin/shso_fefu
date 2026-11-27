@@ -59,7 +59,7 @@
             name="recruiting"
             value="1"
             {% if current_recruiting == "1" %}checked{% endif %}
-            onchange="this.form.submit()"
+            data-auto-submit
             class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300"
           >
           <span>{% trans "Открыт набор" %}</span>
