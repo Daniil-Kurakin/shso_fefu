@@ -157,76 +157,17 @@
             </div>
           {% endif %}
 
-          <div class="space-y-4">
+          <div data-visitor-list class="space-y-4">
             {% for v_form in visitor_formset %}
-              <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-gray-700">
-                    {% trans "Посетитель" %} #{{ forloop.counter }}
-                  </span>
-                  {% if v_form.instance.pk %}
-                    <label class="text-xs text-red-600 flex items-center gap-1 cursor-pointer">
-                      {{ v_form.DELETE }} {% trans "Удалить" %}
-                    </label>
-                  {% endif %}
-                </div>
-
-                {{ v_form.id }}
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div class="sm:col-span-2">
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">
-                      {{ v_form.full_name.label }} <span class="text-red-500">*</span>
-                    </label>
-                    {{ v_form.full_name }}
-                    {% if v_form.full_name.errors %}
-                      <p class="text-xs text-red-600 mt-1">{{ v_form.full_name.errors.0 }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">
-                      {{ v_form.phone.label }}
-                    </label>
-                    {{ v_form.phone }}
-                    {% if v_form.phone.errors %}
-                      <p class="text-xs text-red-600 mt-1">{{ v_form.phone.errors.0 }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">
-                      {{ v_form.document_type.label }} <span class="text-red-500">*</span>
-                    </label>
-                    {{ v_form.document_type }}
-                    {% if v_form.document_type.errors %}
-                      <p class="text-xs text-red-600 mt-1">{{ v_form.document_type.errors.0 }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">
-                      {{ v_form.document_data.label }} <span class="text-red-500">*</span>
-                    </label>
-                    {{ v_form.document_data }}
-                    {% if v_form.document_data.errors %}
-                      <p class="text-xs text-red-600 mt-1">{{ v_form.document_data.errors.0 }}</p>
-                    {% endif %}
-                  </div>
-
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-600 mb-1">
-                      {{ v_form.organization.label }}
-                    </label>
-                    {{ v_form.organization }}
-                    {% if v_form.organization.errors %}
-                      <p class="text-xs text-red-600 mt-1">{{ v_form.organization.errors.0 }}</p>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+              {% include "requests/pass_visitor_fields.html" %}
             {% endfor %}
           </div>
+          <template id="empty-visitor-template">
+            {% include "requests/pass_visitor_fields.html" with v_form=visitor_formset.empty_form %}
+          </template>
+          <button type="button" id="add-visitor-btn" hidden class="btn btn-outline mt-3">
+            {% trans "Добавить посетителя" %}
+          </button>
         </div>
 
         {# Согласие 152-ФЗ #}

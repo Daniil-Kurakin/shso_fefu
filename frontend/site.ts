@@ -4,10 +4,12 @@ import "../static/js/forms.js";
 import "../static/js/accordion.js";
 import { initPageBuilder } from "./page-builder";
 import { initRoomBooking } from "./room-booking";
+import { initPassVisitors } from "./pass-visitors";
 
 document.addEventListener("DOMContentLoaded", () => {
   initPageBuilder();
   initRoomBooking();
+  initPassVisitors();
 });
 
 document.addEventListener("submit", (event) => {
